@@ -3,7 +3,9 @@ import { Toaster, toast } from "sonner";
 import { ConvergenceChartInteractive } from "./components/ConvergenceChartInteractive";
 import { CountryContextCard } from "./components/CountryContextCard";
 import { CountrySelector } from "./components/CountrySelector";
+import { ExportModal } from "./components/ExportModal";
 import { GrowthRateControls } from "./components/GrowthRateControls";
+import { GrowthCalculator } from "./components/GrowthCalculator";
 import { MetricSelector } from "./components/MetricSelector";
 import { ProjectionTable } from "./components/ProjectionTable";
 import { ResultSummary } from "./components/ResultSummary";
@@ -18,6 +20,7 @@ import { copyTextToClipboard } from "./lib/clipboard";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
+import type { HeadlineData } from "./lib/headlineGenerator";
 import {
 	DEFAULT_SHARE_STATE,
 	parseShareStateFromSearch,
@@ -55,6 +58,13 @@ export default function App() {
 	const [useTargetAdjusted, setUseTargetAdjusted] = useState(
 		initialShareState.adjT ?? true,
 	);
+	const [catchUpYears, setCatchUpYears] = useState(
+		initialShareState.goal ?? 25,
+	);
+	const [showMilestones, setShowMilestones] = useState(
+		initialShareState.ms ?? true,
+	);
+	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -98,7 +108,7 @@ export default function App() {
 			? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
 			: 2;
 
-	const { yearsToConvergence, convergenceYear, projection, gap } =
+	const { yearsToConvergence, convergenceYear, projection, gap, milestones } =
 		useConvergence({
 			chaserValue,
 			targetValue,
@@ -119,12 +129,16 @@ export default function App() {
 			view,
 			adjC: useChaserAdjusted,
 			adjT: useTargetAdjusted,
+			goal: catchUpYears,
+			ms: showMilestones,
 		};
 	}, [
 		baseYear,
+		catchUpYears,
 		chaserGrowthRate,
 		chaserIso,
 		indicatorCode,
+		showMilestones,
 		targetGrowthRate,
 		targetIso,
 		view,
@@ -188,6 +202,35 @@ export default function App() {
 			`mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
 		);
 	}, [baseYear, chaserIso, indicatorCode, targetIso]);
+
+	const headlineData: HeadlineData | undefined = useMemo(() => {
+		if (!chaserCountry || !targetCountry) return undefined;
+		return {
+			chaserName: chaserCountry.name,
+			chaserIso,
+			targetName: targetCountry.name,
+			targetIso,
+			metricName,
+			chaserGrowthRate,
+			targetGrowthRate,
+			yearsToConvergence,
+			convergenceYear,
+			gap,
+			appUrl,
+		};
+	}, [
+		chaserCountry,
+		targetCountry,
+		chaserIso,
+		targetIso,
+		metricName,
+		chaserGrowthRate,
+		targetGrowthRate,
+		yearsToConvergence,
+		convergenceYear,
+		gap,
+		appUrl,
+	]);
 
 	const countriesByIso3 = useMemo(() => {
 		const map: Record<string, { name: string }> = {};
@@ -399,24 +442,11 @@ export default function App() {
 								Copy link
 							</button>
 							<ShareMenu
-								appUrl={appUrl}
-								ogImageUrl={ogImageUrl}
 								chartAvailable={chartAvailable}
 								disabled={countriesLoading}
-								baseYear={baseYear}
-								onBaseYearChange={(year) => {
-									if (!Number.isFinite(year)) return;
-									setBaseYear(Math.max(1950, Math.min(2100, year)));
-								}}
-								onReset={() => {
-									resetToDefaults();
-									toast.success("Reset to defaults");
-								}}
 								chartSvgRef={chartSvgRef}
-								exportBasename={exportBasename}
-								onDownloadObservedCsv={onDownloadObservedCsv}
-								onDownloadProjectionCsv={onDownloadProjectionCsv}
-								onDownloadReportJson={onDownloadReportJson}
+								headlineData={headlineData}
+								onOpenExportModal={() => setIsExportModalOpen(true)}
 							/>
 							<ThemeToggle theme={theme} onToggle={toggleTheme} />
 						</div>
@@ -580,6 +610,7 @@ export default function App() {
 									targetIsAdjusted={
 										targetAdjustment != null && useTargetAdjusted
 									}
+									milestones={showMilestones ? milestones : []}
 								/>
 							</div>
 						)}
@@ -592,6 +623,15 @@ export default function App() {
 										Projection
 									</h3>
 									<div className="flex items-center gap-2">
+										<label className="inline-flex items-center gap-1.5 text-xs text-ink-muted select-none">
+											<input
+												type="checkbox"
+												checked={showMilestones}
+												onChange={(e) => setShowMilestones(e.target.checked)}
+												className="accent-[var(--color-accent)]"
+											/>
+											Milestones
+										</label>
 										<div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
 											<button
 												type="button"
@@ -639,6 +679,7 @@ export default function App() {
 										chaserName={chaserCountry.name}
 										targetName={targetCountry.name}
 										convergenceYear={convergenceYear}
+										milestones={showMilestones ? milestones : undefined}
 										unit={metricUnit}
 										theme={theme}
 										chaserHasNote={chaserAdjustment != null && useChaserAdjusted}
@@ -658,6 +699,16 @@ export default function App() {
 									onTargetRateChange={setTargetGrowthRate}
 									chaserName={chaserCountry.name}
 									targetName={targetCountry.name}
+								/>
+								<GrowthCalculator
+									chaserName={chaserCountry.name}
+									targetName={targetCountry.name}
+									chaserValue={chaserValue}
+									targetValue={targetValue}
+									chaserGrowthRate={chaserGrowthRate}
+									targetGrowthRate={targetGrowthRate}
+									years={catchUpYears}
+									onYearsChange={setCatchUpYears}
 								/>
 								{/* Country context cards on mobile */}
 								{(chaserAdjustment || targetAdjustment) && (
@@ -712,6 +763,16 @@ export default function App() {
 									chaserName={chaserCountry.name}
 									targetName={targetCountry.name}
 									compact
+								/>
+								<GrowthCalculator
+									chaserName={chaserCountry.name}
+									targetName={targetCountry.name}
+									chaserValue={chaserValue}
+									targetValue={targetValue}
+									chaserGrowthRate={chaserGrowthRate}
+									targetGrowthRate={targetGrowthRate}
+									years={catchUpYears}
+									onYearsChange={setCatchUpYears}
 								/>
 								{/* Country context cards on desktop */}
 								{(chaserAdjustment || targetAdjustment) && (
@@ -782,6 +843,25 @@ export default function App() {
 					</p>
 				</footer>
 			</div>
+
+			{/* Export Modal */}
+			<ExportModal
+				isOpen={isExportModalOpen}
+				onClose={() => setIsExportModalOpen(false)}
+				chartSvgRef={chartSvgRef}
+				chartAvailable={chartAvailable}
+				ogImageUrl={ogImageUrl}
+				exportBasename={exportBasename}
+				baseYear={baseYear}
+				onBaseYearChange={(year) => {
+					if (!Number.isFinite(year)) return;
+					setBaseYear(Math.max(1950, Math.min(2100, year)));
+				}}
+				onReset={resetToDefaults}
+				onDownloadObservedCsv={onDownloadObservedCsv}
+				onDownloadProjectionCsv={onDownloadProjectionCsv}
+				onDownloadReportJson={onDownloadReportJson}
+			/>
 		</div>
 	);
 }

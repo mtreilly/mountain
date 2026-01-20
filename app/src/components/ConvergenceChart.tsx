@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 import { forwardRef, useMemo } from "react";
-import { formatMetricValue } from "../lib/convergence";
+import { formatMetricValue, type Milestone } from "../lib/convergence";
 
 export const CHART_GEOMETRY = {
   width: 600,
@@ -13,6 +13,7 @@ interface ConvergenceChartProps {
   chaserName: string;
   targetName: string;
   convergenceYear: number | null;
+  milestones?: Milestone[];
   unit?: string | null;
   theme?: "light" | "dark";
   pixelWidth?: number;
@@ -38,6 +39,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
       svgProps,
       chaserHasNote,
       targetHasNote,
+      milestones,
     }: ConvergenceChartProps,
     ref
   ) {
@@ -233,6 +235,49 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
+      {/* Milestone markers */}
+      {!!milestones?.length && (
+        <g>
+          {milestones
+            .filter((m) => m.year >= scales.xMin && m.year <= scales.xMax)
+            .map((m) => {
+              const x = scales.x(m.year);
+              const y = scales.y(m.chaserValue);
+              const label = `${Math.round(m.percentage * 100)}%`;
+              const labelY = y - 10 < padding.top + 8 ? y + 16 : y - 10;
+              return (
+                <g key={m.percentage}>
+                  <line
+                    x1={padding.left}
+                    x2={x}
+                    y1={y}
+                    y2={y}
+                    stroke={palette.grid}
+                    strokeDasharray="2,4"
+                    strokeOpacity="0.55"
+                  />
+                  <path
+                    d={`M ${x} ${y - 5} L ${x + 5} ${y} L ${x} ${y + 5} L ${x - 5} ${y} Z`}
+                    fill={palette.chaser}
+                    stroke={palette.surfaceRaised}
+                    strokeWidth={1}
+                  />
+                  <text
+                    x={x + 8}
+                    y={labelY}
+                    fill={palette.inkMuted}
+                    fontSize={10}
+                    fontWeight={600}
+                    fontFamily={fontFamily}
+                  >
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
+        </g>
+      )}
 
       {/* End point dots */}
       {projection.length > 0 && (

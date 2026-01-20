@@ -67,6 +67,11 @@ INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, categor
     ('LITERACY', 'Literacy rate (adult)', 'percent', 'World Bank', 'SE.ADT.LITR.ZS', 'education'),
     ('INTERNET', 'Internet users', 'percent of population', 'World Bank', 'IT.NET.USER.ZS', 'infrastructure'),
     ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'World Bank', 'EN.ATM.CO2E.PC', 'environment'),
+    ('ENERGY_USE_PCAP', 'Energy use per capita', 'kg of oil equivalent per capita', 'World Bank', 'EG.USE.PCAP.KG.OE', 'energy'),
+    ('ELECTRICITY_USE_PCAP', 'Electric power consumption per capita', 'kWh per capita', 'World Bank', 'EG.USE.ELEC.KH.PC', 'energy'),
+    ('URBAN_POP_PCT', 'Urban population', 'percent of population', 'World Bank', 'SP.URB.TOTL.IN.ZS', 'demographic'),
+    ('INDUSTRY_VA_PCT_GDP', 'Industry value added', 'percent of GDP', 'World Bank', 'NV.IND.TOTL.ZS', 'economic'),
+    ('CAPITAL_FORMATION_PCT_GDP', 'Gross capital formation', 'percent of GDP', 'World Bank', 'NE.GDI.FTOT.ZS', 'economic'),
     ('FERTILITY', 'Fertility rate', 'births per woman', 'World Bank', 'SP.DYN.TFRT.IN', 'demographic');
 
 -- Seed sample countries (full list should be imported from World Bank)

@@ -1,23 +1,22 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import type { Milestone } from "../lib/convergence";
+import { calculateMilestones } from "../lib/convergence";
 
 interface UseConvergenceParams {
   chaserValue: number;
   targetValue: number;
-  initialChaserGrowthRate?: number;
-  initialTargetGrowthRate?: number;
+  chaserGrowthRate: number;
+  targetGrowthRate: number;
   baseYear?: number;
 }
 
 export function useConvergence({
   chaserValue,
   targetValue,
-  initialChaserGrowthRate = 0.03,
-  initialTargetGrowthRate = 0.01,
+  chaserGrowthRate,
+  targetGrowthRate,
   baseYear = new Date().getFullYear(),
 }: UseConvergenceParams) {
-  const [chaserGrowthRate, setChaserGrowthRate] = useState(initialChaserGrowthRate);
-  const [targetGrowthRate, setTargetGrowthRate] = useState(initialTargetGrowthRate);
-
   // Calculate years to convergence with both growth rates
   // Formula: chaserValue * (1 + chaserRate)^n = targetValue * (1 + targetRate)^n
   // Solving: n = ln(targetValue/chaserValue) / ln((1+chaserRate)/(1+targetRate))
@@ -38,7 +37,7 @@ export function useConvergence({
     return Math.round(baseYear + yearsToConvergence);
   }, [baseYear, yearsToConvergence]);
 
-  const projection = useMemo(() => {
+  const { projection, milestones } = useMemo(() => {
     const points: Array<{ year: number; chaser: number; target: number }> = [];
     const maxYears = Math.min(
       isFinite(yearsToConvergence) ? Math.ceil(yearsToConvergence) + 20 : 100,
@@ -60,13 +59,21 @@ export function useConvergence({
       if (projectedChaser >= projectedTarget) break;
     }
 
+    const milestones: Milestone[] = calculateMilestones(points);
+
     // Thin out points if too many (keep every Nth point)
     if (points.length > 50) {
       const step = Math.ceil(points.length / 50);
-      return points.filter((_, i) => i % step === 0 || i === points.length - 1);
+      const keepYears = new Set(milestones.map((m) => m.year));
+      return {
+        projection: points.filter(
+          (p, i) => i % step === 0 || i === points.length - 1 || keepYears.has(p.year)
+        ),
+        milestones,
+      };
     }
 
-    return points;
+    return { projection: points, milestones };
   }, [chaserValue, targetValue, chaserGrowthRate, targetGrowthRate, baseYear, yearsToConvergence]);
 
   const gap = useMemo(() => {
@@ -77,13 +84,10 @@ export function useConvergence({
   const netGrowthAdvantage = chaserGrowthRate - targetGrowthRate;
 
   return {
-    chaserGrowthRate,
-    setChaserGrowthRate,
-    targetGrowthRate,
-    setTargetGrowthRate,
     yearsToConvergence,
     convergenceYear,
     projection,
+    milestones,
     gap,
     netGrowthAdvantage,
   };

@@ -11,7 +11,7 @@ export function ThemeToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/70 px-3 py-2 text-sm text-zinc-700 shadow-sm hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-200 dark:hover:bg-zinc-900"
+      className="inline-flex items-center gap-2 rounded-xl border border-surface bg-surface-raised px-3 py-2 text-sm text-ink-muted shadow-sm transition-default hover:bg-surface hover:text-ink hover:border-[var(--color-border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "dark" ? (
@@ -35,8 +35,7 @@ export function ThemeToggle({
           />
         </svg>
       )}
-      <span className="font-medium">{theme === "dark" ? "Night" : "Day"}</span>
+      <span className="font-medium hidden sm:inline">{theme === "dark" ? "Night" : "Day"}</span>
     </button>
   );
 }
-

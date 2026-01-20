@@ -2,6 +2,7 @@ import {
 	formatMetricValue,
 	formatPercent,
 	formatYears,
+	type Milestone,
 } from "../lib/convergence";
 
 interface ResultSummaryProps {
@@ -18,6 +19,7 @@ interface ResultSummaryProps {
 	gap: number;
 	chaserIsAdjusted?: boolean;
 	targetIsAdjusted?: boolean;
+	milestones?: Milestone[];
 }
 
 export function ResultSummary({
@@ -34,9 +36,19 @@ export function ResultSummary({
 	gap,
 	chaserIsAdjusted,
 	targetIsAdjusted,
+	milestones,
 }: ResultSummaryProps) {
 	const willConverge =
 		Number.isFinite(yearsToConvergence) && yearsToConvergence > 0;
+
+	const milestoneText =
+		milestones && milestones.length > 0
+			? milestones
+					.map(
+						(m) => `${Math.round(m.percentage * 100)}% (${m.year})`,
+					)
+					.join(", ")
+			: null;
 
 	return (
 		<div className="card p-4 sm:p-5">
@@ -95,6 +107,12 @@ export function ResultSummary({
 				{" · "}
 				{metricName}
 			</p>
+
+			{milestoneText && willConverge && (
+				<p className="text-[11px] text-ink-faint mt-2">
+					Milestones: {milestoneText}
+				</p>
+			)}
 
 			{/* Stats row - compact horizontal layout */}
 			<div className="flex items-center gap-4 sm:gap-6 mt-4 pt-4 border-t border-surface-subtle">
