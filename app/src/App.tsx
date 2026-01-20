@@ -586,75 +586,72 @@ export default function App() {
 							{/* Selectors - Countries mode */}
 							{comparisonMode === "countries" && (
 								<div className="card p-3 sm:p-4">
-									<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
-										{/* Chaser + Swap + Target group */}
-										<div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-2 sm:gap-3 items-end">
-											<CountrySelector
-												label="Chaser"
-												value={chaserIso}
-												onChange={setChaserIso}
-												countries={countries}
-												excludeIso={targetIso}
-												color="chaser"
-											/>
-											<button
-												type="button"
-												onClick={swapCountries}
-												className="hidden sm:flex items-center justify-center w-9 h-9 self-end mb-0.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
-												title="Swap chaser and target"
-												aria-label="Swap chaser and target countries"
-											>
-												<svg
-													className="w-4 h-4"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-													/>
-												</svg>
-											</button>
-											<CountrySelector
-												label="Target"
-												value={targetIso}
-												onChange={setTargetIso}
-												countries={countries}
-												excludeIso={chaserIso}
-												color="target"
-											/>
-										</div>
-										{/* Mobile swap button */}
-										<div className="flex sm:hidden justify-center -mt-1">
-											<button
-												type="button"
-												onClick={swapCountries}
-												className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default"
-												aria-label="Swap chaser and target countries"
-											>
-												<svg
-													className="w-3.5 h-3.5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-													/>
-												</svg>
-												Swap
-											</button>
-										</div>
-										{/* Metric selector */}
-										<div className="lg:w-64 lg:shrink-0">
+									{/* Desktop: single row with all 4 items */}
+									<div className="hidden lg:grid lg:grid-cols-[1fr,auto,1fr,minmax(200px,240px)] lg:gap-3 lg:items-end">
+										<CountrySelector
+											label="Chaser"
+											value={chaserIso}
+											onChange={setChaserIso}
+											countries={countries}
+											excludeIso={targetIso}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={swapCountries}
+											className="flex items-center justify-center w-9 h-[42px] rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target countries"
+										>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+											</svg>
+										</button>
+										<CountrySelector
+											label="Target"
+											value={targetIso}
+											onChange={setTargetIso}
+											countries={countries}
+											excludeIso={chaserIso}
+											color="target"
+										/>
+										<MetricSelector
+											value={indicatorCode}
+											onChange={setIndicatorCode}
+											indicators={indicators}
+											disabled={indicatorsLoading}
+										/>
+									</div>
+									{/* Tablet: 2x2 grid */}
+									<div className="hidden sm:grid lg:hidden sm:grid-cols-[1fr,auto,1fr] sm:gap-3 sm:items-end">
+										<CountrySelector
+											label="Chaser"
+											value={chaserIso}
+											onChange={setChaserIso}
+											countries={countries}
+											excludeIso={targetIso}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={swapCountries}
+											className="flex items-center justify-center w-9 h-[42px] rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target countries"
+										>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+											</svg>
+										</button>
+										<CountrySelector
+											label="Target"
+											value={targetIso}
+											onChange={setTargetIso}
+											countries={countries}
+											excludeIso={chaserIso}
+											color="target"
+										/>
+										<div className="col-span-3 mt-2">
 											<MetricSelector
 												value={indicatorCode}
 												onChange={setIndicatorCode}
@@ -663,58 +660,136 @@ export default function App() {
 											/>
 										</div>
 									</div>
+									{/* Mobile: stacked */}
+									<div className="sm:hidden space-y-2">
+										<CountrySelector
+											label="Chaser"
+											value={chaserIso}
+											onChange={setChaserIso}
+											countries={countries}
+											excludeIso={targetIso}
+											color="chaser"
+										/>
+										<div className="flex justify-center">
+											<button
+												type="button"
+												onClick={swapCountries}
+												className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default"
+												aria-label="Swap chaser and target countries"
+											>
+												<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+												</svg>
+												Swap
+											</button>
+										</div>
+										<CountrySelector
+											label="Target"
+											value={targetIso}
+											onChange={setTargetIso}
+											countries={countries}
+											excludeIso={chaserIso}
+											color="target"
+										/>
+										<MetricSelector
+											value={indicatorCode}
+											onChange={setIndicatorCode}
+											indicators={indicators}
+											disabled={indicatorsLoading}
+										/>
+									</div>
 								</div>
 							)}
 
 							{/* Selectors - Regions mode */}
 							{comparisonMode === "regions" && (
 								<div className="card p-3 sm:p-4">
-									<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
-										{/* Chaser + Swap + Target group */}
-										<div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-2 sm:gap-3 items-end">
-											<RegionSelector
-												label="Chaser Region"
-												value={chaserRegionCode}
-												onChange={setChaserRegionCode}
-												excludeCode={targetRegionCode}
-												color="chaser"
-											/>
-											<button
-												type="button"
-												onClick={() => {
-													const temp = chaserRegionCode;
-													setChaserRegionCode(targetRegionCode);
-													setTargetRegionCode(temp);
-												}}
-												className="hidden sm:flex items-center justify-center w-9 h-9 self-end mb-0.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
-												title="Swap chaser and target"
-												aria-label="Swap chaser and target regions"
-											>
-												<svg
-													className="w-4 h-4"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-													/>
-												</svg>
-											</button>
-											<RegionSelector
-												label="Target Region"
-												value={targetRegionCode}
-												onChange={setTargetRegionCode}
-												excludeCode={chaserRegionCode}
-												color="target"
-											/>
+									{/* Desktop: single row */}
+									<div className="hidden lg:grid lg:grid-cols-[1fr,auto,1fr,minmax(160px,200px)] lg:gap-3 lg:items-end">
+										<RegionSelector
+											label="Chaser Region"
+											value={chaserRegionCode}
+											onChange={setChaserRegionCode}
+											excludeCode={targetRegionCode}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={() => {
+												const temp = chaserRegionCode;
+												setChaserRegionCode(targetRegionCode);
+												setTargetRegionCode(temp);
+											}}
+											className="flex items-center justify-center w-9 h-[42px] rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target regions"
+										>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+											</svg>
+										</button>
+										<RegionSelector
+											label="Target Region"
+											value={targetRegionCode}
+											onChange={setTargetRegionCode}
+											excludeCode={chaserRegionCode}
+											color="target"
+										/>
+										<div className="space-y-1">
+											<label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">Metric</label>
+											<div className="px-3 py-2.5 rounded-lg bg-surface-sunken border border-surface text-center">
+												<span className="text-sm font-semibold text-ink">GDP per capita</span>
+												<span className="ml-2 text-xs text-ink-faint">USD PPP</span>
+											</div>
 										</div>
-										{/* Mobile swap button */}
-										<div className="flex sm:hidden justify-center -mt-1">
+									</div>
+									{/* Tablet: 3 cols + metric below */}
+									<div className="hidden sm:grid lg:hidden sm:grid-cols-[1fr,auto,1fr] sm:gap-3 sm:items-end">
+										<RegionSelector
+											label="Chaser Region"
+											value={chaserRegionCode}
+											onChange={setChaserRegionCode}
+											excludeCode={targetRegionCode}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={() => {
+												const temp = chaserRegionCode;
+												setChaserRegionCode(targetRegionCode);
+												setTargetRegionCode(temp);
+											}}
+											className="flex items-center justify-center w-9 h-[42px] rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target regions"
+										>
+											<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+											</svg>
+										</button>
+										<RegionSelector
+											label="Target Region"
+											value={targetRegionCode}
+											onChange={setTargetRegionCode}
+											excludeCode={chaserRegionCode}
+											color="target"
+										/>
+										<div className="col-span-3 mt-2 px-3 py-2 rounded-lg bg-surface-sunken border border-surface text-center">
+											<span className="text-xs text-ink-muted">GDP per capita</span>
+											<span className="mx-2 text-ink-faint">·</span>
+											<span className="text-xs text-ink-faint">USD PPP · OECD Data</span>
+										</div>
+									</div>
+									{/* Mobile: stacked */}
+									<div className="sm:hidden space-y-2">
+										<RegionSelector
+											label="Chaser Region"
+											value={chaserRegionCode}
+											onChange={setChaserRegionCode}
+											excludeCode={targetRegionCode}
+											color="chaser"
+										/>
+										<div className="flex justify-center">
 											<button
 												type="button"
 												onClick={() => {
@@ -725,29 +800,23 @@ export default function App() {
 												className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default"
 												aria-label="Swap chaser and target regions"
 											>
-												<svg
-													className="w-3.5 h-3.5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-													/>
+												<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
 												</svg>
 												Swap
 											</button>
 										</div>
-										{/* Data source indicator for regions */}
-										<div className="lg:w-48 lg:shrink-0 flex items-end">
-											<div className="w-full px-3 py-2.5 rounded-lg bg-surface-sunken border border-surface text-center">
-												<span className="text-xs text-ink-muted">GDP per capita</span>
-												<span className="block text-[10px] text-ink-faint">USD PPP · OECD Data</span>
-											</div>
+										<RegionSelector
+											label="Target Region"
+											value={targetRegionCode}
+											onChange={setTargetRegionCode}
+											excludeCode={chaserRegionCode}
+											color="target"
+										/>
+										<div className="px-3 py-2 rounded-lg bg-surface-sunken border border-surface text-center">
+											<span className="text-xs text-ink-muted">GDP per capita</span>
+											<span className="mx-2 text-ink-faint">·</span>
+											<span className="text-xs text-ink-faint">USD PPP · OECD Data</span>
 										</div>
 									</div>
 								</div>
