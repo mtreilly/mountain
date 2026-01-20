@@ -1,0 +1,40 @@
+{
+  "name": "convergence-explorer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "start": "pnpm build && wrangler pages dev dist --local --persist-to=.wrangler/state",
+    "pages:dev": "wrangler pages dev dist --local --persist-to=.wrangler/state",
+    "pages:deploy": "pnpm build && wrangler pages deploy dist",
+    "db:init": "wrangler d1 execute convergence-db --local --file=./schema.sql",
+    "db:import": "wrangler d1 execute convergence-db --local --file=./data-import-fixed.sql",
+    "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "wrangler": "^4.59.2"
+  }
+}
