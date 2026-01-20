@@ -283,6 +283,22 @@ export default function App() {
 		setUseTargetAdjusted(true);
 	}, []);
 
+	const swapCountries = useCallback(() => {
+		setChaserIso(targetIso);
+		setTargetIso(chaserIso);
+		setChaserGrowthRate(targetGrowthRate);
+		setTargetGrowthRate(chaserGrowthRate);
+		setUseChaserAdjusted(useTargetAdjusted);
+		setUseTargetAdjusted(useChaserAdjusted);
+	}, [
+		chaserIso,
+		targetIso,
+		chaserGrowthRate,
+		targetGrowthRate,
+		useChaserAdjusted,
+		useTargetAdjusted,
+	]);
+
 	if (countriesLoading) {
 		return (
 			<div className="min-h-screen bg-surface grain flex items-center justify-center">
@@ -421,29 +437,78 @@ export default function App() {
 					{/* Left column - Main content */}
 					<div className="space-y-4 sm:space-y-5">
 						{/* Selectors row - more compact */}
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fade-in-up stagger-1 no-print">
-							<CountrySelector
-								label="Chaser"
-								value={chaserIso}
-								onChange={setChaserIso}
-								countries={countries}
-								excludeIso={targetIso}
-								color="chaser"
-							/>
-							<CountrySelector
-								label="Target"
-								value={targetIso}
-								onChange={setTargetIso}
-								countries={countries}
-								excludeIso={chaserIso}
-								color="target"
-							/>
-							<MetricSelector
-								value={indicatorCode}
-								onChange={setIndicatorCode}
-								indicators={indicators}
-								disabled={indicatorsLoading}
-							/>
+						<div className="animate-fade-in-up stagger-1 no-print">
+							<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr,1fr] gap-3 sm:gap-2 items-end">
+								<CountrySelector
+									label="Chaser"
+									value={chaserIso}
+									onChange={setChaserIso}
+									countries={countries}
+									excludeIso={targetIso}
+									color="chaser"
+								/>
+								<button
+									type="button"
+									onClick={swapCountries}
+									className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
+									title="Swap chaser and target"
+									aria-label="Swap chaser and target countries"
+								>
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+										/>
+									</svg>
+								</button>
+								<CountrySelector
+									label="Target"
+									value={targetIso}
+									onChange={setTargetIso}
+									countries={countries}
+									excludeIso={chaserIso}
+									color="target"
+								/>
+								<MetricSelector
+									value={indicatorCode}
+									onChange={setIndicatorCode}
+									indicators={indicators}
+									disabled={indicatorsLoading}
+								/>
+							</div>
+							{/* Mobile swap button */}
+							<div className="flex sm:hidden justify-center -my-1">
+								<button
+									type="button"
+									onClick={swapCountries}
+									className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
+									aria-label="Swap chaser and target countries"
+								>
+									<svg
+										className="w-3.5 h-3.5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+										/>
+									</svg>
+									Swap
+								</button>
+							</div>
 						</div>
 
 						{/* Loading state */}
