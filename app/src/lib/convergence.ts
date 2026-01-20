@@ -14,6 +14,63 @@ export function calculateYearsToConvergence(
   return Math.log(ratio) / Math.log(1 + growthRate);
 }
 
+export function calculateRequiredChaserGrowthRate(params: {
+  chaserValue: number;
+  targetValue: number;
+  targetGrowthRate: number;
+  years: number;
+}): number | null {
+  const { chaserValue, targetValue, targetGrowthRate, years } = params;
+  if (!Number.isFinite(chaserValue) || !Number.isFinite(targetValue)) return null;
+  if (chaserValue <= 0 || targetValue <= 0) return null;
+  if (!Number.isFinite(targetGrowthRate)) return null;
+  if (!Number.isFinite(years) || years <= 0) return null;
+
+  const ratio = targetValue / chaserValue;
+  const required = Math.pow(ratio, 1 / years) * (1 + targetGrowthRate) - 1;
+  return Number.isFinite(required) ? required : null;
+}
+
+export type ProjectionPoint = { year: number; chaser: number; target: number };
+
+export interface Milestone {
+  percentage: number;
+  year: number;
+  chaserValue: number;
+  targetValue: number;
+}
+
+export function calculateMilestones(
+  projection: ProjectionPoint[],
+  milestonePercentages: number[] = [0.25, 0.5, 0.75]
+): Milestone[] {
+  if (!projection.length) return [];
+
+  const sorted = [...projection].sort((a, b) => a.year - b.year);
+  const remaining = new Set(milestonePercentages);
+  const milestones: Milestone[] = [];
+
+  for (const point of sorted) {
+    if (remaining.size === 0) break;
+    if (!Number.isFinite(point.target) || point.target <= 0) continue;
+    if (!Number.isFinite(point.chaser) || point.chaser < 0) continue;
+    const ratio = point.chaser / point.target;
+    for (const p of [...remaining]) {
+      if (ratio >= p) {
+        milestones.push({
+          percentage: p,
+          year: point.year,
+          chaserValue: point.chaser,
+          targetValue: point.target,
+        });
+        remaining.delete(p);
+      }
+    }
+  }
+
+  return milestones.sort((a, b) => a.percentage - b.percentage);
+}
+
 /**
  * Generate projection data points
  */

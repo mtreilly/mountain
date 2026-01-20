@@ -12,6 +12,8 @@ export interface ShareState {
 	view?: ViewMode;
 	adjC?: boolean; // Chaser adjustment enabled (default: true)
 	adjT?: boolean; // Target adjustment enabled (default: true)
+	goal?: number; // "Catch up in N years" calculator (default: 25)
+	ms?: boolean; // Show milestone markers (default: true)
 }
 
 export const DEFAULT_SHARE_STATE: ShareState = {
@@ -25,6 +27,8 @@ export const DEFAULT_SHARE_STATE: ShareState = {
 	view: "chart",
 	adjC: true,
 	adjT: true,
+	goal: 25,
+	ms: true,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -78,15 +82,19 @@ export function parseShareStateFromSearch(
 	const cgRaw = parseRate(params.get("cg"));
 	const tgRaw = parseRate(params.get("tg"));
 	const baseYearRaw = parseIntSafe(params.get("baseYear"));
+	const goalRaw = parseIntSafe(params.get("goal"));
 
-	const cg = round(clamp(cgRaw ?? defaults.cg, 0.001, 0.15), 0.001);
-	const baseYear = clamp(baseYearRaw ?? defaults.baseYear, 1950, 2100);
+		const cg = round(clamp(cgRaw ?? defaults.cg, -0.1, 0.15), 0.001);
+		const baseYear = clamp(baseYearRaw ?? defaults.baseYear, 1950, 2100);
+		const goal = clamp(goalRaw ?? defaults.goal ?? 25, 1, 150);
 
 	// Parse adjustment toggles ("0" = false, anything else or missing = true)
 	const adjCRaw = params.get("adjC");
 	const adjTRaw = params.get("adjT");
 	const adjC = adjCRaw === "0" ? false : (defaults.adjC ?? true);
 	const adjT = adjTRaw === "0" ? false : (defaults.adjT ?? true);
+	const msRaw = params.get("ms");
+	const ms = msRaw === "0" ? false : (defaults.ms ?? true);
 
 	if (tmode === "static") {
 		return {
@@ -101,10 +109,12 @@ export function parseShareStateFromSearch(
 			view: params.get("view") === "table" ? "table" : "chart",
 			adjC,
 			adjT,
+			goal,
+			ms,
 		};
 	}
 
-	const tg = round(clamp(tgRaw ?? defaults.tg, 0.001, 0.15), 0.001);
+		const tg = round(clamp(tgRaw ?? defaults.tg, -0.1, 0.15), 0.001);
 
 	return {
 		...defaults,
@@ -118,6 +128,8 @@ export function parseShareStateFromSearch(
 		view: params.get("view") === "table" ? "table" : "chart",
 		adjC,
 		adjT,
+		goal,
+		ms,
 	};
 }
 
@@ -137,6 +149,8 @@ export function toSearchParams(state: ShareState): URLSearchParams {
 	// Only include adjustment params when false (non-default) to keep URLs clean
 	if (state.adjC === false) params.set("adjC", "0");
 	if (state.adjT === false) params.set("adjT", "0");
+	if ((state.goal ?? 25) !== 25) params.set("goal", String(clamp(state.goal ?? 25, 1, 150)));
+	if (state.ms === false) params.set("ms", "0");
 	return params;
 }
 

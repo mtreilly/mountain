@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "tsx scripts/test.ts",
     "preview": "vite preview",
     "start": "pnpm build && wrangler pages dev dist --local --persist-to=.wrangler/state",
     "pages:dev": "wrangler pages dev dist --local --persist-to=.wrangler/state",
@@ -16,8 +17,10 @@
     "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql"
   },
   "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.2",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

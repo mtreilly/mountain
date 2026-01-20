@@ -29,6 +29,12 @@ const INDICATORS = [
   { code: "SP.DYN.LE00.IN", name: "LIFE_EXPECT" },
   { code: "IT.NET.USER.ZS", name: "INTERNET" },
   { code: "SP.DYN.TFRT.IN", name: "FERTILITY" },
+  { code: "EN.ATM.CO2E.PC", name: "CO2_PCAP" },
+  { code: "EG.USE.PCAP.KG.OE", name: "ENERGY_USE_PCAP" },
+  { code: "EG.USE.ELEC.KH.PC", name: "ELECTRICITY_USE_PCAP" },
+  { code: "SP.URB.TOTL.IN.ZS", name: "URBAN_POP_PCT" },
+  { code: "NV.IND.TOTL.ZS", name: "INDUSTRY_VA_PCT_GDP" },
+  { code: "NE.GDI.FTOT.ZS", name: "CAPITAL_FORMATION_PCT_GDP" },
 ];
 
 async function fetchJSON<T>(url: string): Promise<T> {

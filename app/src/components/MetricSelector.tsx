@@ -207,8 +207,8 @@ export function MetricSelector({
   );
 
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-ink-muted">Metric</label>
+    <div className="space-y-1">
+      <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">Metric</label>
 
       <button
         ref={triggerRef}
@@ -226,7 +226,7 @@ export function MetricSelector({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         className={[
-          "w-full px-4 py-3 text-left rounded-xl border transition-default",
+          "w-full px-3 py-2.5 text-left rounded-lg border transition-default",
           "bg-surface-raised flex items-center justify-between gap-2",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]",
           "shadow-sm hover:shadow",
@@ -234,11 +234,11 @@ export function MetricSelector({
           disabled ? "opacity-60 cursor-not-allowed" : "",
         ].join(" ")}
       >
-        <span className={`text-base truncate ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}>
-          {selectedIndicator?.name || "Select a metric..."}
+        <span className={`text-sm truncate ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}>
+          {selectedIndicator?.name || "Select..."}
         </span>
         <svg
-          className={`w-5 h-5 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

@@ -8,6 +8,7 @@ interface GrowthRateControlsProps {
   onTargetRateChange: (rate: number) => void;
   chaserName: string;
   targetName: string;
+  compact?: boolean;
 }
 
 const PRESETS = [
@@ -18,6 +19,13 @@ const PRESETS = [
   { label: "Rapid", value: 0.07 },
 ];
 
+const RATE_RANGE = {
+  min: -0.05,
+  maxChaser: 0.12,
+  maxTarget: 0.08,
+  step: 0.001,
+} as const;
+
 export function GrowthRateControls({
   chaserRate,
   targetRate,
@@ -25,41 +33,181 @@ export function GrowthRateControls({
   onTargetRateChange,
   chaserName,
   targetName,
+  compact = false,
 }: GrowthRateControlsProps) {
   const netAdvantage = chaserRate - targetRate;
   const lastDynamicTargetRate = useRef(0.015);
 
   useEffect(() => {
-    if (targetRate > 0) lastDynamicTargetRate.current = targetRate;
+    if (targetRate !== 0) lastDynamicTargetRate.current = targetRate;
   }, [targetRate]);
 
-  return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-6 shadow-sm">
-      <div className="text-center">
-        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wide">
-          Growth Rate Assumptions
-        </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-          Set how each country’s selected metric evolves year over year.
-        </p>
-      </div>
+  // Compact sidebar layout for desktop
+  if (compact) {
+    return (
+      <div className="card p-4 space-y-4">
+        <div className="text-center">
+          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+            Growth Rates
+          </h3>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Chaser growth rate */}
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 p-4 space-y-3">
+        {/* Chaser */}
+        <div className="rounded-lg border border-chaser bg-chaser-light p-3 space-y-2.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-red-700 dark:text-red-300">{chaserName}</label>
-            <span className="text-lg font-bold text-red-600">{formatPercent(chaserRate)}</span>
+            <span className="text-xs font-medium text-chaser truncate max-w-[120px]">{chaserName}</span>
+            <span className="text-sm font-display font-bold text-chaser tabular-nums">
+              {formatPercent(chaserRate)}
+            </span>
           </div>
           <input
             type="range"
-            min={0.001}
-            max={0.12}
-            step={0.001}
+            min={RATE_RANGE.min}
+            max={RATE_RANGE.maxChaser}
+            step={RATE_RANGE.step}
             value={chaserRate}
             onChange={(e) => onChaserRateChange(parseFloat(e.target.value))}
-            className="w-full h-2 bg-red-200 dark:bg-red-900/40 rounded-lg appearance-none cursor-pointer accent-red-500"
+            className="w-full slider-chaser"
           />
+          <div className="flex flex-wrap gap-1">
+            {PRESETS.map((preset) => (
+              <button
+                key={`chaser-${preset.label}`}
+                type="button"
+                onClick={() => onChaserRateChange(preset.value)}
+                className={[
+                  "px-2 py-1 text-[10px] rounded font-medium transition-default",
+                  Math.abs(chaserRate - preset.value) < 0.002
+                    ? "bg-chaser text-white"
+                    : "bg-surface-raised text-chaser hover:bg-surface",
+                ].join(" ")}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Target */}
+        <div className="rounded-lg border border-target bg-target-light p-3 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-target truncate max-w-[120px]">{targetName}</span>
+            <span className="text-sm font-display font-bold text-target tabular-nums">
+              {targetRate === 0 ? "Static" : formatPercent(targetRate)}
+            </span>
+          </div>
+
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => onTargetRateChange(lastDynamicTargetRate.current || 0.015)}
+              className={[
+                "flex-1 px-2 py-1.5 text-[10px] rounded border font-medium transition-default",
+                targetRate === 0
+                  ? "border-surface bg-surface-raised text-ink-muted"
+                  : "border-target bg-target text-white",
+              ].join(" ")}
+            >
+              Growing
+            </button>
+            <button
+              type="button"
+              onClick={() => onTargetRateChange(0)}
+              className={[
+                "flex-1 px-2 py-1.5 text-[10px] rounded border font-medium transition-default",
+                targetRate === 0
+                  ? "border-target bg-target text-white"
+                  : "border-surface bg-surface-raised text-ink-muted",
+              ].join(" ")}
+            >
+              Static
+            </button>
+          </div>
+
+          <input
+            type="range"
+            min={RATE_RANGE.min}
+            max={RATE_RANGE.maxTarget}
+            step={RATE_RANGE.step}
+            value={targetRate}
+            onChange={(e) => onTargetRateChange(parseFloat(e.target.value))}
+            className="w-full slider-target"
+          />
+
+          <div className="flex flex-wrap gap-1">
+            {PRESETS.slice(0, 4).map((preset) => (
+              <button
+                key={`target-${preset.label}`}
+                type="button"
+                onClick={() => onTargetRateChange(preset.value)}
+                className={[
+                  "px-2 py-1 text-[10px] rounded font-medium transition-default",
+                  Math.abs(targetRate - preset.value) < 0.002 && targetRate !== 0
+                    ? "bg-target text-white"
+                    : "bg-surface-raised text-target hover:bg-surface",
+                ].join(" ")}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Net advantage */}
+        <div className="pt-3 border-t border-surface-subtle">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-ink-muted">Net advantage</span>
+            <span
+              className={[
+                "font-display font-semibold tabular-nums",
+                netAdvantage > 0
+                  ? "text-convergence"
+                  : netAdvantage < 0
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-ink-faint",
+              ].join(" ")}
+            >
+              {netAdvantage > 0 ? "+" : ""}
+              {formatPercent(netAdvantage)}
+            </span>
+          </div>
+          {netAdvantage <= 0 && (
+            <p className="text-[10px] text-ink-faint mt-1">No convergence at these rates</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Full layout for mobile/tablet
+  return (
+    <div className="card p-4 sm:p-5 space-y-5">
+      <div className="text-center">
+        <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+          Growth Rate Assumptions
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Chaser growth rate */}
+        <div className="rounded-xl border border-chaser bg-chaser-light p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-sm font-medium text-chaser truncate">{chaserName}</label>
+            <span className="text-lg font-display font-bold text-chaser tabular-nums">
+              {formatPercent(chaserRate)}
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min={RATE_RANGE.min}
+            max={RATE_RANGE.maxChaser}
+            step={RATE_RANGE.step}
+            value={chaserRate}
+            onChange={(e) => onChaserRateChange(parseFloat(e.target.value))}
+            className="w-full slider-chaser"
+          />
+
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.map((preset) => (
               <button
@@ -67,10 +215,10 @@ export function GrowthRateControls({
                 type="button"
                 onClick={() => onChaserRateChange(preset.value)}
                 className={[
-                  "px-2.5 py-1 text-xs rounded-full transition-colors",
+                  "px-2.5 py-1.5 text-xs rounded-lg font-medium transition-default",
                   Math.abs(chaserRate - preset.value) < 0.002
-                    ? "bg-red-500 text-white"
-                    : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/60",
+                    ? "bg-chaser text-white shadow-sm"
+                    : "bg-surface-raised text-chaser hover:bg-surface border border-transparent hover:border-chaser",
                 ].join(" ")}
               >
                 {preset.label}
@@ -80,12 +228,10 @@ export function GrowthRateControls({
         </div>
 
         {/* Target growth rate */}
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-green-700 dark:text-green-300">
-              {targetName}
-            </label>
-            <span className="text-lg font-bold text-green-600">
+        <div className="rounded-xl border border-target bg-target-light p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-sm font-medium text-target truncate">{targetName}</label>
+            <span className="text-lg font-display font-bold text-target tabular-nums">
               {targetRate === 0 ? "Static" : formatPercent(targetRate)}
             </span>
           </div>
@@ -93,12 +239,12 @@ export function GrowthRateControls({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onTargetRateChange(Math.max(0.001, lastDynamicTargetRate.current))}
+              onClick={() => onTargetRateChange(lastDynamicTargetRate.current || 0.015)}
               className={[
-                "flex-1 px-3 py-1.5 text-xs rounded-lg border transition-colors",
+                "flex-1 px-3 py-1.5 text-xs rounded-lg border font-medium transition-default",
                 targetRate === 0
-                  ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
-                  : "border-green-300 bg-green-100 text-green-800 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-200",
+                  ? "border-surface bg-surface-raised text-ink-muted hover:bg-surface hover:text-ink"
+                  : "border-target bg-target text-white",
               ].join(" ")}
             >
               Growing
@@ -107,10 +253,10 @@ export function GrowthRateControls({
               type="button"
               onClick={() => onTargetRateChange(0)}
               className={[
-                "flex-1 px-3 py-1.5 text-xs rounded-lg border transition-colors",
+                "flex-1 px-3 py-1.5 text-xs rounded-lg border font-medium transition-default",
                 targetRate === 0
-                  ? "border-green-300 bg-green-100 text-green-800 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-200"
-                  : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800/60",
+                  ? "border-target bg-target text-white"
+                  : "border-surface bg-surface-raised text-ink-muted hover:bg-surface hover:text-ink",
               ].join(" ")}
             >
               Static
@@ -119,13 +265,12 @@ export function GrowthRateControls({
 
           <input
             type="range"
-            min={0}
-            max={0.08}
-            step={0.001}
+            min={RATE_RANGE.min}
+            max={RATE_RANGE.maxTarget}
+            step={RATE_RANGE.step}
             value={targetRate}
-            disabled={targetRate === 0}
             onChange={(e) => onTargetRateChange(parseFloat(e.target.value))}
-            className="w-full h-2 bg-green-200 dark:bg-green-900/40 rounded-lg appearance-none cursor-pointer accent-green-500 disabled:opacity-40"
+            className="w-full slider-target"
           />
 
           <div className="flex flex-wrap gap-1.5">
@@ -134,45 +279,39 @@ export function GrowthRateControls({
                 key={`target-${preset.label}`}
                 type="button"
                 onClick={() => onTargetRateChange(preset.value)}
-                disabled={targetRate === 0}
                 className={[
-                  "px-2.5 py-1 text-xs rounded-full transition-colors",
-                  targetRate === 0 ? "opacity-50 cursor-not-allowed" : "",
+                  "px-2.5 py-1.5 text-xs rounded-lg font-medium transition-default",
                   Math.abs(targetRate - preset.value) < 0.002 && targetRate !== 0
-                    ? "bg-green-500 text-white"
-                    : "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-950/40 dark:text-green-200 dark:hover:bg-green-950/60",
+                    ? "bg-target text-white shadow-sm"
+                    : "bg-surface-raised text-target hover:bg-surface border border-transparent hover:border-target",
                 ].join(" ")}
               >
                 {preset.label}
               </button>
             ))}
           </div>
-
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {targetRate === 0
-              ? "Static keeps the target constant (no growth)."
-              : "Growing applies a constant annual growth rate to the target too."}
-          </p>
         </div>
       </div>
 
       {/* Net advantage indicator */}
-      <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="pt-4 border-t border-surface-subtle">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-600 dark:text-zinc-300">Net growth advantage:</span>
+          <span className="text-ink-muted">Net growth advantage:</span>
           <span
             className={[
-              "font-semibold",
+              "font-display font-semibold tabular-nums",
               netAdvantage > 0
-                ? "text-blue-600"
+                ? "text-convergence"
                 : netAdvantage < 0
-                  ? "text-orange-600"
-                  : "text-zinc-500 dark:text-zinc-400",
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-ink-faint",
             ].join(" ")}
           >
             {netAdvantage > 0 ? "+" : ""}
             {formatPercent(netAdvantage)}
-            {netAdvantage <= 0 && " · no convergence"}
+            {netAdvantage <= 0 && (
+              <span className="text-xs font-normal ml-2">· no convergence</span>
+            )}
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { formatMetricValue } from "../lib/convergence";
+import { formatMetricValue, type Milestone } from "../lib/convergence";
 import { CHART_GEOMETRY, ConvergenceChart } from "./ConvergenceChart";
 import { useResizeObserver } from "../hooks/useResizeObserver";
 
@@ -12,6 +12,7 @@ export function ConvergenceChartInteractive({
   chaserName,
   targetName,
   convergenceYear,
+  milestones,
   unit,
   theme,
   chaserHasNote,
@@ -22,6 +23,7 @@ export function ConvergenceChartInteractive({
   chaserName: string;
   targetName: string;
   convergenceYear: number | null;
+  milestones?: Milestone[];
   unit?: string | null;
   theme?: "light" | "dark";
   chaserHasNote?: boolean;
@@ -160,6 +162,7 @@ export function ConvergenceChartInteractive({
         chaserName={chaserName}
         targetName={targetName}
         convergenceYear={convergenceYear}
+        milestones={milestones}
         unit={unit}
         theme={theme}
         pixelWidth={containerWidth}
