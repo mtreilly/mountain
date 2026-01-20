@@ -446,46 +446,6 @@ export default function App() {
 							/>
 						</div>
 
-						{/* Country context cards - always visible when adjustments apply */}
-						{(chaserAdjustment || targetAdjustment) &&
-							!dataLoading &&
-							hasData && (
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in-up stagger-1 no-print">
-									{chaserAdjustment && chaserValueRaw != null && (
-										<CountryContextCard
-											adjustment={chaserAdjustment}
-											countryName={chaserCountry.name}
-											originalValue={chaserValueRaw}
-											adjustedValue={applyAdjustment(
-												chaserValueRaw,
-												chaserAdjustment,
-												true,
-											)}
-											useAdjusted={useChaserAdjusted}
-											onToggleAdjusted={setUseChaserAdjusted}
-											unit={metricUnit}
-											color="chaser"
-										/>
-									)}
-									{targetAdjustment && targetValueRaw != null && (
-										<CountryContextCard
-											adjustment={targetAdjustment}
-											countryName={targetCountry.name}
-											originalValue={targetValueRaw}
-											adjustedValue={applyAdjustment(
-												targetValueRaw,
-												targetAdjustment,
-												true,
-											)}
-											useAdjusted={useTargetAdjusted}
-											onToggleAdjusted={setUseTargetAdjusted}
-											unit={metricUnit}
-											color="target"
-										/>
-									)}
-								</div>
-							)}
-
 						{/* Loading state */}
 						{dataLoading && (
 							<div className="text-center py-8 animate-fade-in">
@@ -621,9 +581,9 @@ export default function App() {
 							</div>
 						)}
 
-						{/* Growth controls - shown below chart on mobile/tablet */}
+						{/* Growth controls and context cards - shown below chart on mobile/tablet */}
 						{hasData && (
-							<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print">
+							<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
 								<GrowthRateControls
 									chaserRate={chaserGrowthRate}
 									targetRate={targetGrowthRate}
@@ -632,14 +592,51 @@ export default function App() {
 									chaserName={chaserCountry.name}
 									targetName={targetCountry.name}
 								/>
+								{/* Country context cards on mobile */}
+								{(chaserAdjustment || targetAdjustment) && (
+									<div className="space-y-3">
+										{chaserAdjustment && chaserValueRaw != null && (
+											<CountryContextCard
+												adjustment={chaserAdjustment}
+												countryName={chaserCountry.name}
+												originalValue={chaserValueRaw}
+												adjustedValue={applyAdjustment(
+													chaserValueRaw,
+													chaserAdjustment,
+													true,
+												)}
+												useAdjusted={useChaserAdjusted}
+												onToggleAdjusted={setUseChaserAdjusted}
+												unit={metricUnit}
+												color="chaser"
+											/>
+										)}
+										{targetAdjustment && targetValueRaw != null && (
+											<CountryContextCard
+												adjustment={targetAdjustment}
+												countryName={targetCountry.name}
+												originalValue={targetValueRaw}
+												adjustedValue={applyAdjustment(
+													targetValueRaw,
+													targetAdjustment,
+													true,
+												)}
+												useAdjusted={useTargetAdjusted}
+												onToggleAdjusted={setUseTargetAdjusted}
+												unit={metricUnit}
+												color="target"
+											/>
+										)}
+									</div>
+								)}
 							</div>
 						)}
 					</div>
 
-					{/* Right column - Growth controls sidebar (desktop only) */}
+					{/* Right column - Growth controls and context cards sidebar (desktop only) */}
 					<aside className="sidebar-desktop">
 						{hasData && (
-							<div className="sticky top-6 animate-fade-in-up stagger-2 no-print">
+							<div className="sticky top-6 space-y-4 animate-fade-in-up stagger-2 no-print">
 								<GrowthRateControls
 									chaserRate={chaserGrowthRate}
 									targetRate={targetGrowthRate}
@@ -649,6 +646,43 @@ export default function App() {
 									targetName={targetCountry.name}
 									compact
 								/>
+								{/* Country context cards on desktop */}
+								{(chaserAdjustment || targetAdjustment) && (
+									<div className="space-y-3">
+										{chaserAdjustment && chaserValueRaw != null && (
+											<CountryContextCard
+												adjustment={chaserAdjustment}
+												countryName={chaserCountry.name}
+												originalValue={chaserValueRaw}
+												adjustedValue={applyAdjustment(
+													chaserValueRaw,
+													chaserAdjustment,
+													true,
+												)}
+												useAdjusted={useChaserAdjusted}
+												onToggleAdjusted={setUseChaserAdjusted}
+												unit={metricUnit}
+												color="chaser"
+											/>
+										)}
+										{targetAdjustment && targetValueRaw != null && (
+											<CountryContextCard
+												adjustment={targetAdjustment}
+												countryName={targetCountry.name}
+												originalValue={targetValueRaw}
+												adjustedValue={applyAdjustment(
+													targetValueRaw,
+													targetAdjustment,
+													true,
+												)}
+												useAdjusted={useTargetAdjusted}
+												onToggleAdjusted={setUseTargetAdjusted}
+												unit={metricUnit}
+												color="target"
+											/>
+										)}
+									</div>
+								)}
 							</div>
 						)}
 					</aside>
