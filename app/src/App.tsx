@@ -585,156 +585,172 @@ export default function App() {
 
 							{/* Selectors - Countries mode */}
 							{comparisonMode === "countries" && (
-								<>
-									<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr,1fr] gap-3 sm:gap-2 items-end">
-										<CountrySelector
-											label="Chaser"
-											value={chaserIso}
-											onChange={setChaserIso}
-											countries={countries}
-											excludeIso={targetIso}
-											color="chaser"
-										/>
-										<button
-											type="button"
-											onClick={swapCountries}
-											className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
-											title="Swap chaser and target"
-											aria-label="Swap chaser and target countries"
-										>
-											<svg
-												className="w-4 h-4"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												aria-hidden="true"
+								<div className="card p-3 sm:p-4">
+									<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
+										{/* Chaser + Swap + Target group */}
+										<div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-2 sm:gap-3 items-end">
+											<CountrySelector
+												label="Chaser"
+												value={chaserIso}
+												onChange={setChaserIso}
+												countries={countries}
+												excludeIso={targetIso}
+												color="chaser"
+											/>
+											<button
+												type="button"
+												onClick={swapCountries}
+												className="hidden sm:flex items-center justify-center w-9 h-9 self-end mb-0.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+												title="Swap chaser and target"
+												aria-label="Swap chaser and target countries"
 											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-												/>
-											</svg>
-										</button>
-										<CountrySelector
-											label="Target"
-											value={targetIso}
-											onChange={setTargetIso}
-											countries={countries}
-											excludeIso={chaserIso}
-											color="target"
-										/>
-										<MetricSelector
-											value={indicatorCode}
-											onChange={setIndicatorCode}
-											indicators={indicators}
-											disabled={indicatorsLoading}
-										/>
-									</div>
-									{/* Mobile swap button */}
-									<div className="flex sm:hidden justify-center -my-1">
-										<button
-											type="button"
-											onClick={swapCountries}
-											className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
-											aria-label="Swap chaser and target countries"
-										>
-											<svg
-												className="w-3.5 h-3.5"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												aria-hidden="true"
+												<svg
+													className="w-4 h-4"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+													/>
+												</svg>
+											</button>
+											<CountrySelector
+												label="Target"
+												value={targetIso}
+												onChange={setTargetIso}
+												countries={countries}
+												excludeIso={chaserIso}
+												color="target"
+											/>
+										</div>
+										{/* Mobile swap button */}
+										<div className="flex sm:hidden justify-center -mt-1">
+											<button
+												type="button"
+												onClick={swapCountries}
+												className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default"
+												aria-label="Swap chaser and target countries"
 											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-												/>
-											</svg>
-											Swap
-										</button>
+												<svg
+													className="w-3.5 h-3.5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+													/>
+												</svg>
+												Swap
+											</button>
+										</div>
+										{/* Metric selector */}
+										<div className="lg:w-64 lg:shrink-0">
+											<MetricSelector
+												value={indicatorCode}
+												onChange={setIndicatorCode}
+												indicators={indicators}
+												disabled={indicatorsLoading}
+											/>
+										</div>
 									</div>
-								</>
+								</div>
 							)}
 
 							{/* Selectors - Regions mode */}
 							{comparisonMode === "regions" && (
-								<>
-									<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-2 items-end">
-										<RegionSelector
-											label="Chaser Region"
-											value={chaserRegionCode}
-											onChange={setChaserRegionCode}
-											excludeCode={targetRegionCode}
-											color="chaser"
-										/>
-										<button
-											type="button"
-											onClick={() => {
-												const temp = chaserRegionCode;
-												setChaserRegionCode(targetRegionCode);
-												setTargetRegionCode(temp);
-											}}
-											className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
-											title="Swap chaser and target"
-											aria-label="Swap chaser and target regions"
-										>
-											<svg
-												className="w-4 h-4"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												aria-hidden="true"
+								<div className="card p-3 sm:p-4">
+									<div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
+										{/* Chaser + Swap + Target group */}
+										<div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-2 sm:gap-3 items-end">
+											<RegionSelector
+												label="Chaser Region"
+												value={chaserRegionCode}
+												onChange={setChaserRegionCode}
+												excludeCode={targetRegionCode}
+												color="chaser"
+											/>
+											<button
+												type="button"
+												onClick={() => {
+													const temp = chaserRegionCode;
+													setChaserRegionCode(targetRegionCode);
+													setTargetRegionCode(temp);
+												}}
+												className="hidden sm:flex items-center justify-center w-9 h-9 self-end mb-0.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default"
+												title="Swap chaser and target"
+												aria-label="Swap chaser and target regions"
 											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-												/>
-											</svg>
-										</button>
-										<RegionSelector
-											label="Target Region"
-											value={targetRegionCode}
-											onChange={setTargetRegionCode}
-											excludeCode={chaserRegionCode}
-											color="target"
-										/>
-									</div>
-									{/* Mobile swap button */}
-									<div className="flex sm:hidden justify-center -my-1">
-										<button
-											type="button"
-											onClick={() => {
-												const temp = chaserRegionCode;
-												setChaserRegionCode(targetRegionCode);
-												setTargetRegionCode(temp);
-											}}
-											className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
-											aria-label="Swap chaser and target regions"
-										>
-											<svg
-												className="w-3.5 h-3.5"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												aria-hidden="true"
+												<svg
+													className="w-4 h-4"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+													/>
+												</svg>
+											</button>
+											<RegionSelector
+												label="Target Region"
+												value={targetRegionCode}
+												onChange={setTargetRegionCode}
+												excludeCode={chaserRegionCode}
+												color="target"
+											/>
+										</div>
+										{/* Mobile swap button */}
+										<div className="flex sm:hidden justify-center -mt-1">
+											<button
+												type="button"
+												onClick={() => {
+													const temp = chaserRegionCode;
+													setChaserRegionCode(targetRegionCode);
+													setTargetRegionCode(temp);
+												}}
+												className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default"
+												aria-label="Swap chaser and target regions"
 											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-												/>
-											</svg>
-											Swap
-										</button>
+												<svg
+													className="w-3.5 h-3.5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+													/>
+												</svg>
+												Swap
+											</button>
+										</div>
+										{/* Data source indicator for regions */}
+										<div className="lg:w-48 lg:shrink-0 flex items-end">
+											<div className="w-full px-3 py-2.5 rounded-lg bg-surface-sunken border border-surface text-center">
+												<span className="text-xs text-ink-muted">GDP per capita</span>
+												<span className="block text-[10px] text-ink-faint">USD PPP · OECD Data</span>
+											</div>
+										</div>
 									</div>
-								</>
+								</div>
 							)}
 						</div>
 
@@ -816,9 +832,9 @@ export default function App() {
 							</div>
 						)}
 
-						{/* Chart */}
-						{hasData && (
-							<div className="card p-3 sm:p-4 animate-fade-in-up stagger-3">
+							{/* Chart */}
+							{hasData && (
+								<div className="card p-3 sm:p-4 animate-fade-in-up stagger-3">
 								<div className="flex items-center justify-between mb-2">
 									<h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
 										Projection
@@ -895,31 +911,12 @@ export default function App() {
 										}
 									/>
 								)}
-							</div>
-						)}
+								</div>
+							)}
 
-						{/* Growth controls and context cards - shown below chart on mobile/tablet */}
-						{hasData && (
-							<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
-								<GrowthRateControls
-									chaserRate={chaserGrowthRate}
-									targetRate={targetGrowthRate}
-									onChaserRateChange={setChaserGrowthRate}
-									onTargetRateChange={setTargetGrowthRate}
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-								/>
-								<GrowthCalculator
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									chaserValue={displayChaserValue ?? 0}
-									targetValue={displayTargetValue ?? 0}
-									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									years={catchUpYears}
-									onYearsChange={setCatchUpYears}
-								/>
-								{showImplications && comparisonMode === "countries" && (
+							{/* Implications / context (main column) */}
+							{showImplications && comparisonMode === "countries" && (
+								<div className="animate-fade-in-up stagger-4">
 									<ImplicationsPanel
 										chaserIso={chaserIso}
 										chaserName={displayChaserName}
@@ -932,8 +929,10 @@ export default function App() {
 										onTemplateChange={setImpTemplate}
 										enabled={showImplications}
 									/>
-								)}
-								{comparisonMode === "regions" && (
+								</div>
+							)}
+							{comparisonMode === "regions" && (
+								<div className="animate-fade-in-up stagger-4">
 									<RegionalImplicationsPanel
 										chaserCode={chaserRegionCode}
 										chaserName={displayChaserName}
@@ -943,11 +942,34 @@ export default function App() {
 										horizonYears={impHorizonYears}
 										onHorizonYearsChange={setImpHorizonYears}
 									/>
-								)}
-								{/* Country context cards on mobile */}
-									{comparisonMode === "countries" &&
-										chaserCountry &&
-										targetCountry &&
+								</div>
+							)}
+
+							{/* Growth controls and context cards - shown below chart on mobile/tablet */}
+							{hasData && (
+								<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
+								<GrowthRateControls
+									chaserRate={chaserGrowthRate}
+									targetRate={targetGrowthRate}
+									onChaserRateChange={setChaserGrowthRate}
+									onTargetRateChange={setTargetGrowthRate}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
+								/>
+									<GrowthCalculator
+										chaserName={displayChaserName}
+										targetName={displayTargetName}
+										chaserValue={displayChaserValue ?? 0}
+										targetValue={displayTargetValue ?? 0}
+										chaserGrowthRate={chaserGrowthRate}
+										targetGrowthRate={targetGrowthRate}
+										years={catchUpYears}
+										onYearsChange={setCatchUpYears}
+									/>
+									{/* Country context cards on mobile */}
+										{comparisonMode === "countries" &&
+											chaserCountry &&
+											targetCountry &&
 										(chaserAdjustment || targetAdjustment) && (
 										<div className="space-y-3">
 											{chaserAdjustment && chaserValueRaw != null && (
@@ -1001,45 +1023,20 @@ export default function App() {
 									targetName={displayTargetName}
 									compact
 								/>
-								<GrowthCalculator
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									chaserValue={displayChaserValue ?? 0}
-									targetValue={displayTargetValue ?? 0}
-									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									years={catchUpYears}
-									onYearsChange={setCatchUpYears}
-								/>
-								{showImplications && comparisonMode === "countries" && (
-									<ImplicationsPanel
-										chaserIso={chaserIso}
+									<GrowthCalculator
 										chaserName={displayChaserName}
-										gdpCurrent={chaserValue}
+										targetName={displayTargetName}
+										chaserValue={displayChaserValue ?? 0}
+										targetValue={displayTargetValue ?? 0}
 										chaserGrowthRate={chaserGrowthRate}
-										baseYear={baseYear}
-										horizonYears={impHorizonYears}
-										onHorizonYearsChange={setImpHorizonYears}
-										template={impTemplate}
-										onTemplateChange={setImpTemplate}
-										enabled={showImplications}
+										targetGrowthRate={targetGrowthRate}
+										years={catchUpYears}
+										onYearsChange={setCatchUpYears}
 									/>
-								)}
-								{comparisonMode === "regions" && (
-									<RegionalImplicationsPanel
-										chaserCode={chaserRegionCode}
-										chaserName={displayChaserName}
-										gdpCurrent={displayChaserValue}
-										chaserGrowthRate={chaserGrowthRate}
-										baseYear={baseYear}
-										horizonYears={impHorizonYears}
-										onHorizonYearsChange={setImpHorizonYears}
-									/>
-								)}
-								{/* Country context cards on desktop */}
-									{comparisonMode === "countries" &&
-										chaserCountry &&
-										targetCountry &&
+									{/* Country context cards on desktop */}
+										{comparisonMode === "countries" &&
+											chaserCountry &&
+											targetCountry &&
 										(chaserAdjustment || targetAdjustment) && (
 										<div className="space-y-3">
 											{chaserAdjustment && chaserValueRaw != null && (
