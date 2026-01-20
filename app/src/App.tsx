@@ -1,245 +1,686 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Toaster, toast } from "sonner";
+import { ConvergenceChartInteractive } from "./components/ConvergenceChartInteractive";
+import { CountryContextCard } from "./components/CountryContextCard";
 import { CountrySelector } from "./components/CountrySelector";
 import { GrowthRateControls } from "./components/GrowthRateControls";
-import { ConvergenceChart } from "./components/ConvergenceChart";
-import { ResultSummary } from "./components/ResultSummary";
 import { MetricSelector } from "./components/MetricSelector";
+import { ProjectionTable } from "./components/ProjectionTable";
+import { ResultSummary } from "./components/ResultSummary";
+import { ShareMenu } from "./components/ShareMenu";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { useConvergence } from "./hooks/useConvergence";
 import { useCountries } from "./hooks/useCountries";
 import { useCountryData } from "./hooks/useCountryData";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { useTheme } from "./hooks/useTheme";
 import { useIndicators } from "./hooks/useIndicators";
+import { useTheme } from "./hooks/useTheme";
+import { copyTextToClipboard } from "./lib/clipboard";
+import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
+import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
+import { downloadText } from "./lib/download";
+import {
+	DEFAULT_SHARE_STATE,
+	parseShareStateFromSearch,
+	type ShareState,
+	toSearchString,
+} from "./lib/shareState";
 
 export default function App() {
-  const [chaserIso, setChaserIso] = useState("NGA");
-  const [targetIso, setTargetIso] = useState("IRL");
-  const [indicatorCode, setIndicatorCode] = useState("GDP_PCAP_PPP");
-  const { theme, toggleTheme } = useTheme();
+	const initialShareState = useMemo(() => {
+		if (typeof window === "undefined") return DEFAULT_SHARE_STATE;
+		return parseShareStateFromSearch(
+			window.location.search,
+			DEFAULT_SHARE_STATE,
+		);
+	}, []);
 
-  // Fetch countries from API
-  const { countries, loading: countriesLoading, error: countriesError } = useCountries();
-  const { indicators, loading: indicatorsLoading } = useIndicators();
+	const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
+	const [targetIso, setTargetIso] = useState(initialShareState.target);
+	const [indicatorCode, setIndicatorCode] = useState(
+		initialShareState.indicator,
+	);
+	const [chaserGrowthRate, setChaserGrowthRate] = useState(
+		initialShareState.cg,
+	);
+	const [targetGrowthRate, setTargetGrowthRate] = useState(
+		initialShareState.tmode === "static" ? 0 : initialShareState.tg,
+	);
+	const [baseYear, setBaseYear] = useState(initialShareState.baseYear);
+	const [view, setView] = useState<ShareState["view"]>(
+		initialShareState.view || "chart",
+	);
+	const [useChaserAdjusted, setUseChaserAdjusted] = useState(
+		initialShareState.adjC ?? true,
+	);
+	const [useTargetAdjusted, setUseTargetAdjusted] = useState(
+		initialShareState.adjT ?? true,
+	);
+	const { theme, toggleTheme } = useTheme();
 
-  // Fetch GDP data for selected countries
-  const {
-    getLatestValue,
-    indicator: indicatorInfo,
-    loading: dataLoading,
-    error: dataError,
-  } = useCountryData({
-    countries: [chaserIso, targetIso],
-    indicator: indicatorCode,
-  });
+	const {
+		countries,
+		loading: countriesLoading,
+		error: countriesError,
+	} = useCountries();
+	const { indicators, loading: indicatorsLoading } = useIndicators();
 
-  const chaserCountry = countries.find((c) => c.iso_alpha3 === chaserIso);
-  const targetCountry = countries.find((c) => c.iso_alpha3 === targetIso);
+	const {
+		data,
+		getLatestValue,
+		indicator: indicatorInfo,
+		loading: dataLoading,
+		error: dataError,
+	} = useCountryData({
+		countries: [chaserIso, targetIso],
+		indicator: indicatorCode,
+	});
 
-  const selectedIndicator =
-    indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
-  const metricName = selectedIndicator?.name || indicatorCode;
-  const metricUnit = selectedIndicator?.unit || null;
+	const chaserCountry = countries.find((c) => c.iso_alpha3 === chaserIso);
+	const targetCountry = countries.find((c) => c.iso_alpha3 === targetIso);
 
-  const chaserValueRaw = getLatestValue(chaserIso);
-  const targetValueRaw = getLatestValue(targetIso);
+	const selectedIndicator =
+		indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
+	const metricName = selectedIndicator?.name || indicatorCode;
+	const metricUnit = selectedIndicator?.unit || null;
 
-  const chaserValue = chaserValueRaw ?? 1;
-  const targetValue = targetValueRaw ?? 2;
+	const chaserValueRaw = getLatestValue(chaserIso);
+	const targetValueRaw = getLatestValue(targetIso);
 
-  const {
-    chaserGrowthRate,
-    setChaserGrowthRate,
-    targetGrowthRate,
-    setTargetGrowthRate,
-    yearsToConvergence,
-    convergenceYear,
-    projection,
-    gap,
-  } = useConvergence({
-    chaserValue,
-    targetValue,
-    initialChaserGrowthRate: 0.035,
-    initialTargetGrowthRate: 0.015,
-    baseYear: 2023,
-  });
+	const chaserAdjustment = getAdjustment(chaserIso, indicatorCode);
+	const targetAdjustment = getAdjustment(targetIso, indicatorCode);
 
-  if (countriesLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-zinc-600 dark:text-zinc-300">Loading countries...</p>
-        </div>
-      </div>
-    );
-  }
+	const chaserValue =
+		chaserValueRaw != null
+			? applyAdjustment(chaserValueRaw, chaserAdjustment, useChaserAdjusted)
+			: 1;
+	const targetValue =
+		targetValueRaw != null
+			? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
+			: 2;
 
-  if (countriesError) {
-    return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="text-center max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
-            Connection Error
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-300">Failed to load data: {countriesError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+	const { yearsToConvergence, convergenceYear, projection, gap } =
+		useConvergence({
+			chaserValue,
+			targetValue,
+			chaserGrowthRate,
+			targetGrowthRate,
+			baseYear,
+		});
 
-  return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="max-w-5xl mx-auto px-4 py-10 md:py-12">
-        {/* Header */}
-        <header className="mb-10">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                The Mountain to Climb
-              </h1>
-              <p className="mt-2 text-sm md:text-base text-zinc-600 dark:text-zinc-300 max-w-2xl">
-                How long would it take for one country to match another? Explore convergence
-                timelines with simple assumptions.
-              </p>
-            </div>
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          </div>
-        </header>
+	const shareState: ShareState = useMemo(() => {
+		return {
+			chaser: chaserIso,
+			target: targetIso,
+			indicator: indicatorCode,
+			cg: chaserGrowthRate,
+			tg: targetGrowthRate,
+			tmode: targetGrowthRate === 0 ? "static" : "growing",
+			baseYear,
+			view,
+			adjC: useChaserAdjusted,
+			adjT: useTargetAdjusted,
+		};
+	}, [
+		baseYear,
+		chaserGrowthRate,
+		chaserIso,
+		indicatorCode,
+		targetGrowthRate,
+		targetIso,
+		view,
+		useChaserAdjusted,
+		useTargetAdjusted,
+	]);
 
-        {/* Country selectors */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <CountrySelector
-            label="Chaser country"
-            value={chaserIso}
-            onChange={setChaserIso}
-            countries={countries}
-            excludeIso={targetIso}
-            color="chaser"
-          />
-          <CountrySelector
-            label="Target country"
-            value={targetIso}
-            onChange={setTargetIso}
-            countries={countries}
-            excludeIso={chaserIso}
-            color="target"
-          />
-          <MetricSelector
-            value={indicatorCode}
-            onChange={setIndicatorCode}
-            indicators={indicators}
-            disabled={indicatorsLoading}
-          />
-        </div>
+	const hasData =
+		chaserCountry &&
+		targetCountry &&
+		!dataLoading &&
+		!dataError &&
+		chaserValueRaw != null &&
+		targetValueRaw != null;
 
-        {/* Loading indicator for data */}
-        {dataLoading && (
-          <div className="text-center py-8">
-            <div className="animate-pulse text-zinc-500 dark:text-zinc-400">Loading data...</div>
-          </div>
-        )}
+	const chartSvgRef = useRef<SVGSVGElement>(null);
+	const [chartAvailable, setChartAvailable] = useState(false);
+	useEffect(() => {
+		setChartAvailable(chartSvgRef.current != null);
+	}, [view, hasData]);
+	const lastSyncedSearchRef = useRef<string | null>(null);
+	useEffect(() => {
+		const nextSearch = toSearchString(shareState);
+		const currentSearch =
+			typeof window === "undefined" ? "" : window.location.search;
+		if (nextSearch === currentSearch) return;
 
-        {/* Data error */}
-        {dataError && !dataLoading && (
-          <div className="mb-8 rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-            Could not load data for <span className="font-medium">{metricName}</span>: {dataError}
-          </div>
-        )}
+		const handle = window.setTimeout(() => {
+			if (lastSyncedSearchRef.current === nextSearch) return;
+			const url = new URL(window.location.href);
+			url.search = nextSearch;
+			window.history.replaceState(null, "", url);
+			lastSyncedSearchRef.current = nextSearch;
+		}, 200);
 
-        {/* Missing data indicator */}
-        {chaserCountry && targetCountry && !dataLoading && !dataError && (chaserValueRaw == null || targetValueRaw == null) && (
-          <div className="mb-8 rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-            No recent data available for <span className="font-medium">{metricName}</span> for one or
-            both selected countries.
-          </div>
-        )}
+		return () => window.clearTimeout(handle);
+	}, [shareState]);
 
-        {/* Main content */}
-        {chaserCountry && targetCountry && !dataLoading && !dataError && chaserValueRaw != null && targetValueRaw != null && (
-          <div className="space-y-8">
-            {/* Result summary */}
-            <ResultSummary
-              chaserName={chaserCountry.name}
-              targetName={targetCountry.name}
-              metricName={metricName}
-              metricUnit={metricUnit}
-              chaserValue={chaserValue}
-              targetValue={targetValue}
-              chaserGrowthRate={chaserGrowthRate}
-              targetGrowthRate={targetGrowthRate}
-              yearsToConvergence={yearsToConvergence}
-              convergenceYear={convergenceYear}
-              gap={gap}
-            />
+	const shareUrl = useMemo(() => {
+		if (typeof window === "undefined") return "";
+		return `${window.location.origin}/share${toSearchString(shareState)}`;
+	}, [shareState]);
 
-            {/* Chart */}
-            <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-200 uppercase tracking-wide mb-1 text-center">
-                Projected {metricName}
-              </h3>
-              {metricUnit && (
-                <p className="text-center text-xs text-gray-500 dark:text-zinc-400 mb-4">
-                  Unit: {metricUnit}
-                </p>
-              )}
-              <div className="flex justify-center">
-                <ConvergenceChart
-                  projection={projection}
-                  chaserName={chaserCountry.name}
-                  targetName={targetCountry.name}
-                  convergenceYear={convergenceYear}
-                  unit={metricUnit}
-                />
-              </div>
-            </div>
+	const ogImageUrl = useMemo(() => {
+		if (typeof window === "undefined") return "";
+		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
+	}, [shareState]);
 
-            {/* Growth rate controls */}
-            <GrowthRateControls
-              chaserRate={chaserGrowthRate}
-              targetRate={targetGrowthRate}
-              onChaserRateChange={setChaserGrowthRate}
-              onTargetRateChange={setTargetGrowthRate}
-              chaserName={chaserCountry.name}
-              targetName={targetCountry.name}
-            />
-          </div>
-        )}
+	const appUrl = useMemo(() => {
+		if (typeof window === "undefined") return "";
+		return `${window.location.origin}${window.location.pathname}${toSearchString(shareState)}`;
+	}, [shareState]);
 
-        {/* Footer */}
-        <footer className="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          <p>
-            Data from{" "}
-            <a
-              href="https://data.worldbank.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              World Bank Open Data
-            </a>
-            {" · "}
-            Inspired by{" "}
-            <a
-              href="https://oliverwkim.com/The-Mountain-To-Climb/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Oliver Kim
-            </a>
-          </p>
-          <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
-            {countries.length} countries · {metricName}
-            {metricUnit ? ` (${metricUnit})` : ""}
-          </p>
-        </footer>
-      </div>
-    </div>
-  );
+	const exportBasename = useMemo(() => {
+		const safe = (s: string) =>
+			s
+				.replace(/[^a-z0-9_-]+/gi, "-")
+				.replace(/-+/g, "-")
+				.replace(/^-|-$/g, "");
+		return safe(
+			`mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
+		);
+	}, [baseYear, chaserIso, indicatorCode, targetIso]);
+
+	const countriesByIso3 = useMemo(() => {
+		const map: Record<string, { name: string }> = {};
+		for (const c of countries) map[c.iso_alpha3] = { name: c.name };
+		return map;
+	}, [countries]);
+
+	const exportIndicator = useMemo(() => {
+		return indicators.find((i) => i.code === indicatorCode) || null;
+	}, [indicatorCode, indicators]);
+
+	const onDownloadObservedCsv = useMemo(() => {
+		if (!hasData) return undefined;
+		return () => {
+			const csv = toObservedCsv({
+				state: shareState,
+				indicator: exportIndicator,
+				countriesByIso3,
+				data,
+			});
+			downloadText(
+				`${exportBasename}-observed.csv`,
+				csv,
+				"text/csv;charset=utf-8",
+			);
+		};
+	}, [
+		countriesByIso3,
+		data,
+		exportBasename,
+		exportIndicator,
+		hasData,
+		shareState,
+	]);
+
+	const onDownloadProjectionCsv = useMemo(() => {
+		if (!hasData) return undefined;
+		return () => {
+			const csv = toProjectionCsv({
+				state: shareState,
+				indicator: exportIndicator,
+				projection,
+			});
+			downloadText(
+				`${exportBasename}-projection.csv`,
+				csv,
+				"text/csv;charset=utf-8",
+			);
+		};
+	}, [exportBasename, exportIndicator, hasData, projection, shareState]);
+
+	const onDownloadReportJson = useMemo(() => {
+		if (!hasData) return undefined;
+		return () => {
+			const json = toReportJson({
+				state: shareState,
+				indicator: exportIndicator,
+				countriesByIso3,
+				observed: data,
+				projection,
+				derived: { yearsToConvergence, convergenceYear, gap },
+			});
+			downloadText(
+				`${exportBasename}-report.json`,
+				json,
+				"application/json;charset=utf-8",
+			);
+		};
+	}, [
+		convergenceYear,
+		countriesByIso3,
+		data,
+		exportBasename,
+		exportIndicator,
+		gap,
+		hasData,
+		projection,
+		shareState,
+		yearsToConvergence,
+	]);
+
+	const resetToDefaults = useCallback(() => {
+		setChaserIso(DEFAULT_SHARE_STATE.chaser);
+		setTargetIso(DEFAULT_SHARE_STATE.target);
+		setIndicatorCode(DEFAULT_SHARE_STATE.indicator);
+		setChaserGrowthRate(DEFAULT_SHARE_STATE.cg);
+		setTargetGrowthRate(
+			DEFAULT_SHARE_STATE.tmode === "static" ? 0 : DEFAULT_SHARE_STATE.tg,
+		);
+		setBaseYear(DEFAULT_SHARE_STATE.baseYear);
+		setView(DEFAULT_SHARE_STATE.view || "chart");
+		setUseChaserAdjusted(true);
+		setUseTargetAdjusted(true);
+	}, []);
+
+	if (countriesLoading) {
+		return (
+			<div className="min-h-screen bg-surface grain flex items-center justify-center">
+				<div className="text-center">
+					<div className="relative w-12 h-12 mx-auto">
+						<div className="absolute inset-0 rounded-full border-2 border-surface-sunken" />
+						<div className="absolute inset-0 rounded-full border-2 border-t-[var(--color-accent)] animate-spin" />
+					</div>
+					<p className="mt-4 text-ink-muted text-sm">Loading...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (countriesError) {
+		return (
+			<div className="min-h-screen bg-surface grain flex items-center justify-center p-4">
+				<div className="text-center max-w-sm p-6 card animate-fade-in-up">
+					<div className="w-10 h-10 mx-auto mb-3 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
+						<svg
+							className="w-5 h-5 text-red-600 dark:text-red-400"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					</div>
+					<h2 className="text-lg font-display font-semibold text-ink mb-1">
+						Connection Error
+					</h2>
+					<p className="text-ink-muted text-sm mb-4">{countriesError}</p>
+					<button
+						onClick={() => window.location.reload()}
+						className="px-4 py-2 bg-[var(--color-accent)] text-white text-sm rounded-lg font-medium hover:bg-[var(--color-accent-light)] transition-default"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="min-h-screen bg-surface grain">
+			<Toaster theme={theme} position="top-right" closeButton richColors />
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+				{/* Header - Compact */}
+				<header className="mb-6 lg:mb-8 animate-fade-in-up">
+					<div className="flex items-center justify-between gap-4">
+						<div>
+							<h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-semibold tracking-tight text-ink">
+								The Mountain to Climb
+							</h1>
+							<p className="mt-1 text-sm sm:text-base text-ink-muted">
+								Explore economic convergence timelines between countries.
+							</p>
+						</div>
+						<div className="flex items-center gap-2 no-print">
+							<button
+								type="button"
+								disabled={!shareUrl}
+								onClick={async () => {
+									try {
+										await copyTextToClipboard(shareUrl);
+										toast.success("Copied share link");
+									} catch {
+										toast.error("Copy failed");
+									}
+								}}
+								className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 disabled:opacity-50"
+							>
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M15 8a3 3 0 10-6 0v8a3 3 0 006 0V8z"
+									/>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M11 12h2"
+									/>
+								</svg>
+								Copy link
+							</button>
+							<ShareMenu
+								appUrl={appUrl}
+								ogImageUrl={ogImageUrl}
+								chartAvailable={chartAvailable}
+								disabled={countriesLoading}
+								baseYear={baseYear}
+								onBaseYearChange={(year) => {
+									if (!Number.isFinite(year)) return;
+									setBaseYear(Math.max(1950, Math.min(2100, year)));
+								}}
+								onReset={() => {
+									resetToDefaults();
+									toast.success("Reset to defaults");
+								}}
+								chartSvgRef={chartSvgRef}
+								exportBasename={exportBasename}
+								onDownloadObservedCsv={onDownloadObservedCsv}
+								onDownloadProjectionCsv={onDownloadProjectionCsv}
+								onDownloadReportJson={onDownloadReportJson}
+							/>
+							<ThemeToggle theme={theme} onToggle={toggleTheme} />
+						</div>
+					</div>
+					<div className="print-only mt-3 text-sm text-ink-muted">
+						<span className="font-medium text-ink">Chaser:</span>{" "}
+						{chaserCountry?.name || chaserIso}
+						{" · "}
+						<span className="font-medium text-ink">Target:</span>{" "}
+						{targetCountry?.name || targetIso}
+						{" · "}
+						<span className="font-medium text-ink">Metric:</span> {metricName}
+					</div>
+				</header>
+
+				{/* Main two-column layout for large screens */}
+				<div className="layout-two-col">
+					{/* Left column - Main content */}
+					<div className="space-y-4 sm:space-y-5">
+						{/* Selectors row - more compact */}
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-fade-in-up stagger-1 no-print">
+							<CountrySelector
+								label="Chaser"
+								value={chaserIso}
+								onChange={setChaserIso}
+								countries={countries}
+								excludeIso={targetIso}
+								color="chaser"
+							/>
+							<CountrySelector
+								label="Target"
+								value={targetIso}
+								onChange={setTargetIso}
+								countries={countries}
+								excludeIso={chaserIso}
+								color="target"
+							/>
+							<MetricSelector
+								value={indicatorCode}
+								onChange={setIndicatorCode}
+								indicators={indicators}
+								disabled={indicatorsLoading}
+							/>
+						</div>
+
+						{/* Country context cards - always visible when adjustments apply */}
+						{(chaserAdjustment || targetAdjustment) &&
+							!dataLoading &&
+							hasData && (
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in-up stagger-1 no-print">
+									{chaserAdjustment && chaserValueRaw != null && (
+										<CountryContextCard
+											adjustment={chaserAdjustment}
+											countryName={chaserCountry.name}
+											originalValue={chaserValueRaw}
+											adjustedValue={applyAdjustment(
+												chaserValueRaw,
+												chaserAdjustment,
+												true,
+											)}
+											useAdjusted={useChaserAdjusted}
+											onToggleAdjusted={setUseChaserAdjusted}
+											unit={metricUnit}
+											color="chaser"
+										/>
+									)}
+									{targetAdjustment && targetValueRaw != null && (
+										<CountryContextCard
+											adjustment={targetAdjustment}
+											countryName={targetCountry.name}
+											originalValue={targetValueRaw}
+											adjustedValue={applyAdjustment(
+												targetValueRaw,
+												targetAdjustment,
+												true,
+											)}
+											useAdjusted={useTargetAdjusted}
+											onToggleAdjusted={setUseTargetAdjusted}
+											unit={metricUnit}
+											color="target"
+										/>
+									)}
+								</div>
+							)}
+
+						{/* Loading state */}
+						{dataLoading && (
+							<div className="text-center py-8 animate-fade-in">
+								<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-raised border border-surface text-sm">
+									<div className="w-3 h-3 rounded-full border-2 border-t-[var(--color-accent)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+									<span className="text-ink-muted">Loading...</span>
+								</div>
+							</div>
+						)}
+
+						{/* Errors */}
+						{dataError && !dataLoading && (
+							<div className="card p-3 animate-fade-in-up">
+								<div className="flex items-center gap-2 text-sm">
+									<svg
+										className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+										/>
+									</svg>
+									<span className="text-ink-muted">
+										Could not load {metricName}
+									</span>
+								</div>
+							</div>
+						)}
+
+						{/* Missing data */}
+						{chaserCountry &&
+							targetCountry &&
+							!dataLoading &&
+							!dataError &&
+							(chaserValueRaw == null || targetValueRaw == null) && (
+								<div className="card p-3 animate-fade-in-up">
+									<p className="text-ink-muted text-sm">
+										No data for{" "}
+										<span className="font-medium text-ink">{metricName}</span>.
+									</p>
+								</div>
+							)}
+
+						{/* Result summary - compact */}
+						{hasData && (
+							<div className="animate-fade-in-up stagger-2">
+								<ResultSummary
+									chaserName={chaserCountry.name}
+									targetName={targetCountry.name}
+									metricName={metricName}
+									metricUnit={metricUnit}
+									chaserValue={chaserValue}
+									targetValue={targetValue}
+									chaserGrowthRate={chaserGrowthRate}
+									targetGrowthRate={targetGrowthRate}
+									yearsToConvergence={yearsToConvergence}
+									convergenceYear={convergenceYear}
+									gap={gap}
+									chaserIsAdjusted={
+										chaserAdjustment != null && useChaserAdjusted
+									}
+									targetIsAdjusted={
+										targetAdjustment != null && useTargetAdjusted
+									}
+								/>
+							</div>
+						)}
+
+						{/* Chart */}
+						{hasData && (
+							<div className="card p-3 sm:p-4 animate-fade-in-up stagger-3">
+								<div className="flex items-center justify-between mb-2">
+									<h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+										Projection
+									</h3>
+									<div className="flex items-center gap-2">
+										<div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
+											<button
+												type="button"
+												onClick={() => setView("chart")}
+												className={[
+													"px-2.5 py-1 text-xs font-medium transition-default",
+													view === "chart"
+														? "bg-surface-raised text-ink"
+														: "text-ink-muted hover:bg-surface-raised/60",
+												].join(" ")}
+											>
+												Chart
+											</button>
+											<button
+												type="button"
+												onClick={() => setView("table")}
+												className={[
+													"px-2.5 py-1 text-xs font-medium transition-default",
+													view === "table"
+														? "bg-surface-raised text-ink"
+														: "text-ink-muted hover:bg-surface-raised/60",
+												].join(" ")}
+											>
+												Table
+											</button>
+										</div>
+										{metricUnit && (
+											<span className="text-xs text-ink-faint">
+												{metricUnit}
+											</span>
+										)}
+									</div>
+								</div>
+								{view === "table" ? (
+									<ProjectionTable
+										projection={projection}
+										chaserName={chaserCountry.name}
+										targetName={targetCountry.name}
+										unit={metricUnit}
+									/>
+								) : (
+									<ConvergenceChartInteractive
+										svgRef={chartSvgRef}
+										projection={projection}
+										chaserName={chaserCountry.name}
+										targetName={targetCountry.name}
+										convergenceYear={convergenceYear}
+										unit={metricUnit}
+										theme={theme}
+									/>
+								)}
+							</div>
+						)}
+
+						{/* Growth controls - shown below chart on mobile/tablet */}
+						{hasData && (
+							<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print">
+								<GrowthRateControls
+									chaserRate={chaserGrowthRate}
+									targetRate={targetGrowthRate}
+									onChaserRateChange={setChaserGrowthRate}
+									onTargetRateChange={setTargetGrowthRate}
+									chaserName={chaserCountry.name}
+									targetName={targetCountry.name}
+								/>
+							</div>
+						)}
+					</div>
+
+					{/* Right column - Growth controls sidebar (desktop only) */}
+					<aside className="sidebar-desktop">
+						{hasData && (
+							<div className="sticky top-6 animate-fade-in-up stagger-2 no-print">
+								<GrowthRateControls
+									chaserRate={chaserGrowthRate}
+									targetRate={targetGrowthRate}
+									onChaserRateChange={setChaserGrowthRate}
+									onTargetRateChange={setTargetGrowthRate}
+									chaserName={chaserCountry.name}
+									targetName={targetCountry.name}
+									compact
+								/>
+							</div>
+						)}
+					</aside>
+				</div>
+
+				{/* Footer - minimal */}
+				<footer className="mt-10 lg:mt-12 pt-6 border-t border-surface text-center">
+					<p className="text-xs text-ink-faint">
+						Data:{" "}
+						<a
+							href="https://data.worldbank.org/"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-[var(--color-accent)] hover:underline"
+						>
+							World Bank
+						</a>
+						{" · "}
+						Inspired by{" "}
+						<a
+							href="https://oliverwkim.com/The-Mountain-To-Climb/"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-[var(--color-accent)] hover:underline"
+						>
+							Oliver Kim
+						</a>
+						{" · "}
+						{countries.length} countries
+					</p>
+				</footer>
+			</div>
+		</div>
+	);
 }
