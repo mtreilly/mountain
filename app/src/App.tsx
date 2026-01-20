@@ -9,6 +9,7 @@ import { GrowthCalculator } from "./components/GrowthCalculator";
 import { ImplicationsPanel } from "./components/ImplicationsPanel";
 import { MetricSelector } from "./components/MetricSelector";
 import { ProjectionTable } from "./components/ProjectionTable";
+import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { RegionSelector } from "./components/RegionSelector";
 import { ResultSummary } from "./components/ResultSummary";
 import { ShareMenu } from "./components/ShareMenu";
@@ -40,11 +41,13 @@ export default function App() {
 		);
 	}, []);
 
-	const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">("countries");
+	const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">(
+		initialShareState.mode ?? "countries"
+	);
 	const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
 	const [targetIso, setTargetIso] = useState(initialShareState.target);
-	const [chaserRegionCode, setChaserRegionCode] = useState("UKC"); // North East England
-	const [targetRegionCode, setTargetRegionCode] = useState("UKI"); // London
+	const [chaserRegionCode, setChaserRegionCode] = useState(initialShareState.cr ?? "UKC");
+	const [targetRegionCode, setTargetRegionCode] = useState(initialShareState.tr ?? "UKI");
 	const [indicatorCode, setIndicatorCode] = useState(
 		initialShareState.indicator,
 	);
@@ -187,18 +190,24 @@ export default function App() {
 			ms: showMilestones,
 			tpl: impTemplate,
 			ih: impHorizonYears,
+			mode: comparisonMode,
+			cr: chaserRegionCode,
+			tr: targetRegionCode,
 		};
 	}, [
 		baseYear,
 		catchUpYears,
 		chaserGrowthRate,
 		chaserIso,
+		chaserRegionCode,
+		comparisonMode,
 		indicatorCode,
 		impHorizonYears,
 		impTemplate,
 		showMilestones,
 		targetGrowthRate,
 		targetIso,
+		targetRegionCode,
 		view,
 		useChaserAdjusted,
 		useTargetAdjusted,
@@ -269,6 +278,7 @@ export default function App() {
 	}, [baseYear, chaserIso, indicatorCode, targetIso]);
 
 	const headlineData: HeadlineData | undefined = useMemo(() => {
+		if (comparisonMode !== "countries") return undefined;
 		if (!chaserCountry || !targetCountry) return undefined;
 		return {
 			chaserName: chaserCountry.name,
@@ -278,12 +288,13 @@ export default function App() {
 			metricName,
 			chaserGrowthRate,
 			targetGrowthRate,
-			yearsToConvergence,
-			convergenceYear,
-			gap,
+			yearsToConvergence: countryConvergence.yearsToConvergence,
+			convergenceYear: countryConvergence.convergenceYear,
+			gap: countryConvergence.gap,
 			appUrl,
 		};
 	}, [
+		comparisonMode,
 		chaserCountry,
 		targetCountry,
 		chaserIso,
@@ -291,9 +302,9 @@ export default function App() {
 		metricName,
 		chaserGrowthRate,
 		targetGrowthRate,
-		yearsToConvergence,
-		convergenceYear,
-		gap,
+		countryConvergence.convergenceYear,
+		countryConvergence.gap,
+		countryConvergence.yearsToConvergence,
 		appUrl,
 	]);
 
@@ -352,12 +363,12 @@ export default function App() {
 		return () => {
 			const json = toReportJson({
 				state: shareState,
-				indicator: exportIndicator,
-				countriesByIso3,
-				observed: data,
-				projection,
-				derived: { yearsToConvergence, convergenceYear, gap },
-			});
+					indicator: exportIndicator,
+					countriesByIso3,
+					observed: data,
+					projection,
+					derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+				});
 			downloadText(
 				`${exportBasename}-report.json`,
 				json,
@@ -389,6 +400,9 @@ export default function App() {
 		setView(DEFAULT_SHARE_STATE.view || "chart");
 		setUseChaserAdjusted(true);
 		setUseTargetAdjusted(true);
+		setComparisonMode(DEFAULT_SHARE_STATE.mode ?? "countries");
+		setChaserRegionCode(DEFAULT_SHARE_STATE.cr ?? "UKC");
+		setTargetRegionCode(DEFAULT_SHARE_STATE.tr ?? "UKI");
 	}, []);
 
 	const swapCountries = useCallback(() => {
@@ -783,14 +797,14 @@ export default function App() {
 									chaserValue={displayChaserValue ?? 0}
 									targetValue={displayTargetValue ?? 0}
 									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									yearsToConvergence={yearsToConvergence}
-									convergenceYear={convergenceYear}
-									gap={gap}
-									chaserIsAdjusted={
-										comparisonMode === "countries" &&
-										chaserAdjustment != null &&
-										useChaserAdjusted
+										targetGrowthRate={targetGrowthRate}
+										yearsToConvergence={yearsToConvergence}
+										convergenceYear={convergenceYear}
+										gap={gap ?? 0}
+										chaserIsAdjusted={
+											comparisonMode === "countries" &&
+											chaserAdjustment != null &&
+											useChaserAdjusted
 									}
 									targetIsAdjusted={
 										comparisonMode === "countries" &&
@@ -919,13 +933,27 @@ export default function App() {
 										enabled={showImplications}
 									/>
 								)}
+								{comparisonMode === "regions" && (
+									<RegionalImplicationsPanel
+										chaserCode={chaserRegionCode}
+										chaserName={displayChaserName}
+										gdpCurrent={displayChaserValue}
+										chaserGrowthRate={chaserGrowthRate}
+										baseYear={baseYear}
+										horizonYears={impHorizonYears}
+										onHorizonYearsChange={setImpHorizonYears}
+									/>
+								)}
 								{/* Country context cards on mobile */}
-								{(chaserAdjustment || targetAdjustment) && (
-									<div className="space-y-3">
-										{chaserAdjustment && chaserValueRaw != null && (
-											<CountryContextCard
-												adjustment={chaserAdjustment}
-												countryName={chaserCountry.name}
+									{comparisonMode === "countries" &&
+										chaserCountry &&
+										targetCountry &&
+										(chaserAdjustment || targetAdjustment) && (
+										<div className="space-y-3">
+											{chaserAdjustment && chaserValueRaw != null && (
+												<CountryContextCard
+													adjustment={chaserAdjustment}
+													countryName={chaserCountry.name}
 												originalValue={chaserValueRaw}
 												adjustedValue={applyAdjustment(
 													chaserValueRaw,
@@ -953,9 +981,9 @@ export default function App() {
 												unit={metricUnit}
 												color="target"
 											/>
-										)}
-									</div>
-								)}
+											)}
+										</div>
+									)}
 							</div>
 						)}
 					</div>
@@ -997,13 +1025,27 @@ export default function App() {
 										enabled={showImplications}
 									/>
 								)}
+								{comparisonMode === "regions" && (
+									<RegionalImplicationsPanel
+										chaserCode={chaserRegionCode}
+										chaserName={displayChaserName}
+										gdpCurrent={displayChaserValue}
+										chaserGrowthRate={chaserGrowthRate}
+										baseYear={baseYear}
+										horizonYears={impHorizonYears}
+										onHorizonYearsChange={setImpHorizonYears}
+									/>
+								)}
 								{/* Country context cards on desktop */}
-								{(chaserAdjustment || targetAdjustment) && (
-									<div className="space-y-3">
-										{chaserAdjustment && chaserValueRaw != null && (
-											<CountryContextCard
-												adjustment={chaserAdjustment}
-												countryName={chaserCountry.name}
+									{comparisonMode === "countries" &&
+										chaserCountry &&
+										targetCountry &&
+										(chaserAdjustment || targetAdjustment) && (
+										<div className="space-y-3">
+											{chaserAdjustment && chaserValueRaw != null && (
+												<CountryContextCard
+													adjustment={chaserAdjustment}
+													countryName={chaserCountry.name}
 												originalValue={chaserValueRaw}
 												adjustedValue={applyAdjustment(
 													chaserValueRaw,
@@ -1031,9 +1073,9 @@ export default function App() {
 												unit={metricUnit}
 												color="target"
 											/>
-										)}
-									</div>
-								)}
+											)}
+										</div>
+									)}
 							</div>
 						)}
 					</aside>

@@ -2,7 +2,7 @@
  * OECD Regional GDP Data Integration
  *
  * Data source: OECD Regional Database (DSD_REG_ECO@DF_GDP)
- * API endpoint: https://sdmx.oecd.org/public/rest/data/OECD.CFE.EDS,DSD_REG_ECO@DF_GDP
+ * API endpoint: https://sdmx.oecd.org/public/rest/data/OECD.CFE.EDS,DSD_REG_ECO@DF_GDP,2.4
  *
  * Dimension structure:
  * - FREQ: Frequency (A = Annual)
@@ -14,8 +14,13 @@
  * - PRICES: Q (constant prices), V (current prices)
  * - UNIT_MEASURE: USD_PPP_PS (USD PPP per capita), USD_PPP (USD PPP)
  *
- * Note: The OECD SDMX API is currently experiencing issues with this dataflow.
+ * API Status (as of Jan 2026):
+ * - The OECD SDMX API returns "Dataflow doesn't contain a mapping set" error
+ * - The legacy stats.oecd.org API has been deprecated (404)
+ * - Data Explorer UI works but API access has issues
+ *
  * This module provides static data curated from OECD publications as a fallback.
+ * Data source: OECD Regions and Cities at a Glance 2024
  */
 
 export type TerritorialLevel = "TL2" | "TL3";

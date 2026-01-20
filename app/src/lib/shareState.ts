@@ -1,6 +1,7 @@
 export type TargetMode = "growing" | "static";
 export type ViewMode = "chart" | "table";
 export type TemplateMode = "china" | "us" | "eu";
+export type ComparisonMode = "countries" | "regions";
 
 export interface ShareState {
 	chaser: string;
@@ -17,6 +18,10 @@ export interface ShareState {
 	ms?: boolean; // Show milestone markers (default: true)
 	tpl?: TemplateMode; // Template path for implications (default: china)
 	ih?: number; // Implications horizon years (default: 25)
+	// Regional mode
+	mode?: ComparisonMode; // "countries" (default) or "regions"
+	cr?: string; // Chaser region code (e.g., "UKC")
+	tr?: string; // Target region code (e.g., "UKI")
 }
 
 export const DEFAULT_SHARE_STATE: ShareState = {
@@ -34,6 +39,9 @@ export const DEFAULT_SHARE_STATE: ShareState = {
 	ms: true,
 	tpl: "china",
 	ih: 25,
+	mode: "countries",
+	cr: "UKC", // North East England
+	tr: "UKI", // London
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -75,6 +83,20 @@ function parseTemplate(value: string | null): TemplateMode | null {
 	return null;
 }
 
+function parseComparisonMode(value: string | null): ComparisonMode | null {
+	if (!value) return null;
+	const v = value.trim().toLowerCase();
+	if (v === "countries" || v === "regions") return v;
+	return null;
+}
+
+function parseRegionCode(value: string | null): string | null {
+	if (!value) return null;
+	const code = value.trim().toUpperCase();
+	// Region codes: UK*, DE*, FR*, US-XX format
+	return /^[A-Z]{2,3}(-[A-Z]{2})?[0-9]?$/.test(code) ? code : null;
+}
+
 export function parseShareStateFromSearch(
 	search: string,
 	defaults: ShareState = DEFAULT_SHARE_STATE,
@@ -111,6 +133,11 @@ export function parseShareStateFromSearch(
 	const ms = msRaw === "0" ? false : (defaults.ms ?? true);
 	const tpl = parseTemplate(params.get("tpl")) ?? (defaults.tpl ?? "china");
 
+	// Regional mode
+	const mode = parseComparisonMode(params.get("mode")) ?? (defaults.mode ?? "countries");
+	const cr = parseRegionCode(params.get("cr")) ?? (defaults.cr ?? "UKC");
+	const tr = parseRegionCode(params.get("tr")) ?? (defaults.tr ?? "UKI");
+
 	if (tmode === "static") {
 		return {
 			...defaults,
@@ -128,6 +155,9 @@ export function parseShareStateFromSearch(
 			ms,
 			tpl,
 			ih,
+			mode,
+			cr,
+			tr,
 		};
 	}
 
@@ -149,6 +179,9 @@ export function parseShareStateFromSearch(
 		ms,
 		tpl,
 		ih,
+		mode,
+		cr,
+		tr,
 	};
 }
 
@@ -172,6 +205,12 @@ export function toSearchParams(state: ShareState): URLSearchParams {
 	if (state.ms === false) params.set("ms", "0");
 	if ((state.tpl ?? "china") !== "china") params.set("tpl", state.tpl ?? "china");
 	if ((state.ih ?? 25) !== 25) params.set("ih", String(clamp(state.ih ?? 25, 1, 150)));
+	// Regional mode - only include when in regions mode
+	if (state.mode === "regions") {
+		params.set("mode", "regions");
+		if (state.cr) params.set("cr", state.cr);
+		if (state.tr) params.set("tr", state.tr);
+	}
 	return params;
 }
 
