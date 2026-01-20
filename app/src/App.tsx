@@ -6,8 +6,10 @@ import { CountrySelector } from "./components/CountrySelector";
 import { ExportModal } from "./components/ExportModal";
 import { GrowthRateControls } from "./components/GrowthRateControls";
 import { GrowthCalculator } from "./components/GrowthCalculator";
+import { ImplicationsPanel } from "./components/ImplicationsPanel";
 import { MetricSelector } from "./components/MetricSelector";
 import { ProjectionTable } from "./components/ProjectionTable";
+import { RegionSelector } from "./components/RegionSelector";
 import { ResultSummary } from "./components/ResultSummary";
 import { ShareMenu } from "./components/ShareMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -15,6 +17,7 @@ import { useConvergence } from "./hooks/useConvergence";
 import { useCountries } from "./hooks/useCountries";
 import { useCountryData } from "./hooks/useCountryData";
 import { useIndicators } from "./hooks/useIndicators";
+import { useRegionalConvergence } from "./hooks/useOECDRegions";
 import { useTheme } from "./hooks/useTheme";
 import { copyTextToClipboard } from "./lib/clipboard";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
@@ -37,8 +40,11 @@ export default function App() {
 		);
 	}, []);
 
+	const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">("countries");
 	const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
 	const [targetIso, setTargetIso] = useState(initialShareState.target);
+	const [chaserRegionCode, setChaserRegionCode] = useState("UKC"); // North East England
+	const [targetRegionCode, setTargetRegionCode] = useState("UKI"); // London
 	const [indicatorCode, setIndicatorCode] = useState(
 		initialShareState.indicator,
 	);
@@ -63,6 +69,12 @@ export default function App() {
 	);
 	const [showMilestones, setShowMilestones] = useState(
 		initialShareState.ms ?? true,
+	);
+	const [impTemplate, setImpTemplate] = useState<
+		"china" | "us" | "eu"
+	>((initialShareState.tpl as "china" | "us" | "eu" | undefined) ?? "china");
+	const [impHorizonYears, setImpHorizonYears] = useState(
+		initialShareState.ih ?? 25,
 	);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
@@ -108,14 +120,56 @@ export default function App() {
 			? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
 			: 2;
 
+	const countryConvergence = useConvergence({
+		chaserValue,
+		targetValue,
+		chaserGrowthRate,
+		targetGrowthRate,
+		baseYear,
+	});
+
+	// Regional convergence (OECD data)
+	const regionalConvergence = useRegionalConvergence({
+		chaserCode: chaserRegionCode,
+		targetCode: targetRegionCode,
+		chaserGrowthRate,
+		targetGrowthRate,
+		baseYear,
+	});
+
+	// Use the appropriate convergence data based on mode
 	const { yearsToConvergence, convergenceYear, projection, gap, milestones } =
-		useConvergence({
-			chaserValue,
-			targetValue,
-			chaserGrowthRate,
-			targetGrowthRate,
-			baseYear,
-		});
+		comparisonMode === "regions"
+			? {
+					yearsToConvergence: regionalConvergence.yearsToConvergence,
+					convergenceYear: regionalConvergence.convergenceYear,
+					projection: regionalConvergence.projection,
+					gap: regionalConvergence.gap,
+					milestones: regionalConvergence.milestones,
+				}
+			: countryConvergence;
+
+	// Computed display values based on mode
+	const displayChaserName =
+		comparisonMode === "regions"
+			? regionalConvergence.chaserRegion?.name || chaserRegionCode
+			: chaserCountry?.name || chaserIso;
+	const displayTargetName =
+		comparisonMode === "regions"
+			? regionalConvergence.targetRegion?.name || targetRegionCode
+			: targetCountry?.name || targetIso;
+	const displayChaserValue =
+		comparisonMode === "regions"
+			? regionalConvergence.chaserValue
+			: chaserValue;
+	const displayTargetValue =
+		comparisonMode === "regions"
+			? regionalConvergence.targetValue
+			: targetValue;
+	const displayMetricName =
+		comparisonMode === "regions" ? "GDP per capita (USD PPP)" : metricName;
+	const displayMetricUnit =
+		comparisonMode === "regions" ? "USD PPP" : metricUnit;
 
 	const shareState: ShareState = useMemo(() => {
 		return {
@@ -131,6 +185,8 @@ export default function App() {
 			adjT: useTargetAdjusted,
 			goal: catchUpYears,
 			ms: showMilestones,
+			tpl: impTemplate,
+			ih: impHorizonYears,
 		};
 	}, [
 		baseYear,
@@ -138,6 +194,8 @@ export default function App() {
 		chaserGrowthRate,
 		chaserIso,
 		indicatorCode,
+		impHorizonYears,
+		impTemplate,
 		showMilestones,
 		targetGrowthRate,
 		targetIso,
@@ -146,13 +204,20 @@ export default function App() {
 		useTargetAdjusted,
 	]);
 
-	const hasData =
+	const hasCountryData =
 		chaserCountry &&
 		targetCountry &&
 		!dataLoading &&
 		!dataError &&
 		chaserValueRaw != null &&
 		targetValueRaw != null;
+
+	const hasRegionalData = regionalConvergence.hasData;
+
+	const hasData =
+		comparisonMode === "regions" ? hasRegionalData : hasCountryData;
+
+	const showImplications = hasData && indicatorCode === "GDP_PCAP_PPP";
 
 	const chartSvgRef = useRef<SVGSVGElement>(null);
 	const [chartAvailable, setChartAvailable] = useState(false);
@@ -402,7 +467,8 @@ export default function App() {
 								The Mountain to Climb
 							</h1>
 							<p className="mt-1 text-sm sm:text-base text-ink-muted">
-								Explore economic convergence timelines between countries.
+								Explore economic convergence timelines between{" "}
+								{comparisonMode === "regions" ? "regions" : "countries"}.
 							</p>
 						</div>
 						<div className="flex items-center gap-2 no-print">
@@ -466,79 +532,196 @@ export default function App() {
 				<div className="layout-two-col">
 					{/* Left column - Main content */}
 					<div className="space-y-4 sm:space-y-5">
-						{/* Selectors row - more compact */}
-						<div className="animate-fade-in-up stagger-1 no-print">
-							<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr,1fr] gap-3 sm:gap-2 items-end">
-								<CountrySelector
-									label="Chaser"
-									value={chaserIso}
-									onChange={setChaserIso}
-									countries={countries}
-									excludeIso={targetIso}
-									color="chaser"
-								/>
-								<button
-									type="button"
-									onClick={swapCountries}
-									className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
-									title="Swap chaser and target"
-									aria-label="Swap chaser and target countries"
-								>
-									<svg
-										className="w-4 h-4"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										aria-hidden="true"
+						{/* Mode toggle and Selectors */}
+						<div className="animate-fade-in-up stagger-1 no-print space-y-3">
+							{/* Mode toggle */}
+							<div className="flex items-center justify-between">
+								<div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
+									<button
+										type="button"
+										onClick={() => setComparisonMode("countries")}
+										className={[
+											"px-3 py-1.5 text-xs font-medium transition-default",
+											comparisonMode === "countries"
+												? "bg-surface-raised text-ink"
+												: "text-ink-muted hover:bg-surface-raised/60",
+										].join(" ")}
 									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-										/>
-									</svg>
-								</button>
-								<CountrySelector
-									label="Target"
-									value={targetIso}
-									onChange={setTargetIso}
-									countries={countries}
-									excludeIso={chaserIso}
-									color="target"
-								/>
-								<MetricSelector
-									value={indicatorCode}
-									onChange={setIndicatorCode}
-									indicators={indicators}
-									disabled={indicatorsLoading}
-								/>
-							</div>
-							{/* Mobile swap button */}
-							<div className="flex sm:hidden justify-center -my-1">
-								<button
-									type="button"
-									onClick={swapCountries}
-									className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
-									aria-label="Swap chaser and target countries"
-								>
-									<svg
-										className="w-3.5 h-3.5"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										aria-hidden="true"
+										Countries
+									</button>
+									<button
+										type="button"
+										onClick={() => setComparisonMode("regions")}
+										className={[
+											"px-3 py-1.5 text-xs font-medium transition-default",
+											comparisonMode === "regions"
+												? "bg-surface-raised text-ink"
+												: "text-ink-muted hover:bg-surface-raised/60",
+										].join(" ")}
 									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-										/>
-									</svg>
-									Swap
-								</button>
+										Regions
+									</button>
+								</div>
+								{comparisonMode === "regions" && (
+									<span className="text-xs text-ink-faint">
+										GDP per capita (USD PPP) · OECD Data
+									</span>
+								)}
 							</div>
+
+							{/* Selectors - Countries mode */}
+							{comparisonMode === "countries" && (
+								<>
+									<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr,1fr] gap-3 sm:gap-2 items-end">
+										<CountrySelector
+											label="Chaser"
+											value={chaserIso}
+											onChange={setChaserIso}
+											countries={countries}
+											excludeIso={targetIso}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={swapCountries}
+											className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target countries"
+										>
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+												/>
+											</svg>
+										</button>
+										<CountrySelector
+											label="Target"
+											value={targetIso}
+											onChange={setTargetIso}
+											countries={countries}
+											excludeIso={chaserIso}
+											color="target"
+										/>
+										<MetricSelector
+											value={indicatorCode}
+											onChange={setIndicatorCode}
+											indicators={indicators}
+											disabled={indicatorsLoading}
+										/>
+									</div>
+									{/* Mobile swap button */}
+									<div className="flex sm:hidden justify-center -my-1">
+										<button
+											type="button"
+											onClick={swapCountries}
+											className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
+											aria-label="Swap chaser and target countries"
+										>
+											<svg
+												className="w-3.5 h-3.5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+												/>
+											</svg>
+											Swap
+										</button>
+									</div>
+								</>
+							)}
+
+							{/* Selectors - Regions mode */}
+							{comparisonMode === "regions" && (
+								<>
+									<div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-2 items-end">
+										<RegionSelector
+											label="Chaser Region"
+											value={chaserRegionCode}
+											onChange={setChaserRegionCode}
+											excludeCode={targetRegionCode}
+											color="chaser"
+										/>
+										<button
+											type="button"
+											onClick={() => {
+												const temp = chaserRegionCode;
+												setChaserRegionCode(targetRegionCode);
+												setTargetRegionCode(temp);
+											}}
+											className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default"
+											title="Swap chaser and target"
+											aria-label="Swap chaser and target regions"
+										>
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+												/>
+											</svg>
+										</button>
+										<RegionSelector
+											label="Target Region"
+											value={targetRegionCode}
+											onChange={setTargetRegionCode}
+											excludeCode={chaserRegionCode}
+											color="target"
+										/>
+									</div>
+									{/* Mobile swap button */}
+									<div className="flex sm:hidden justify-center -my-1">
+										<button
+											type="button"
+											onClick={() => {
+												const temp = chaserRegionCode;
+												setChaserRegionCode(targetRegionCode);
+												setTargetRegionCode(temp);
+											}}
+											className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink-muted hover:text-ink transition-default"
+											aria-label="Swap chaser and target regions"
+										>
+											<svg
+												className="w-3.5 h-3.5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+												/>
+											</svg>
+											Swap
+										</button>
+									</div>
+								</>
+							)}
 						</div>
 
 						{/* Loading state */}
@@ -593,22 +776,26 @@ export default function App() {
 						{hasData && (
 							<div className="animate-fade-in-up stagger-2">
 								<ResultSummary
-									chaserName={chaserCountry.name}
-									targetName={targetCountry.name}
-									metricName={metricName}
-									metricUnit={metricUnit}
-									chaserValue={chaserValue}
-									targetValue={targetValue}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
+									metricName={displayMetricName}
+									metricUnit={displayMetricUnit}
+									chaserValue={displayChaserValue ?? 0}
+									targetValue={displayTargetValue ?? 0}
 									chaserGrowthRate={chaserGrowthRate}
 									targetGrowthRate={targetGrowthRate}
 									yearsToConvergence={yearsToConvergence}
 									convergenceYear={convergenceYear}
 									gap={gap}
 									chaserIsAdjusted={
-										chaserAdjustment != null && useChaserAdjusted
+										comparisonMode === "countries" &&
+										chaserAdjustment != null &&
+										useChaserAdjusted
 									}
 									targetIsAdjusted={
-										targetAdjustment != null && useTargetAdjusted
+										comparisonMode === "countries" &&
+										targetAdjustment != null &&
+										useTargetAdjusted
 									}
 									milestones={showMilestones ? milestones : []}
 								/>
@@ -668,22 +855,30 @@ export default function App() {
 								{view === "table" ? (
 									<ProjectionTable
 										projection={projection}
-										chaserName={chaserCountry.name}
-										targetName={targetCountry.name}
-										unit={metricUnit}
+										chaserName={displayChaserName}
+										targetName={displayTargetName}
+										unit={displayMetricUnit}
 									/>
 								) : (
 									<ConvergenceChartInteractive
 										svgRef={chartSvgRef}
 										projection={projection}
-										chaserName={chaserCountry.name}
-										targetName={targetCountry.name}
+										chaserName={displayChaserName}
+										targetName={displayTargetName}
 										convergenceYear={convergenceYear}
 										milestones={showMilestones ? milestones : undefined}
-										unit={metricUnit}
+										unit={displayMetricUnit}
 										theme={theme}
-										chaserHasNote={chaserAdjustment != null && useChaserAdjusted}
-										targetHasNote={targetAdjustment != null && useTargetAdjusted}
+										chaserHasNote={
+											comparisonMode === "countries" &&
+											chaserAdjustment != null &&
+											useChaserAdjusted
+										}
+										targetHasNote={
+											comparisonMode === "countries" &&
+											targetAdjustment != null &&
+											useTargetAdjusted
+										}
 									/>
 								)}
 							</div>
@@ -697,19 +892,33 @@ export default function App() {
 									targetRate={targetGrowthRate}
 									onChaserRateChange={setChaserGrowthRate}
 									onTargetRateChange={setTargetGrowthRate}
-									chaserName={chaserCountry.name}
-									targetName={targetCountry.name}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
 								/>
 								<GrowthCalculator
-									chaserName={chaserCountry.name}
-									targetName={targetCountry.name}
-									chaserValue={chaserValue}
-									targetValue={targetValue}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
+									chaserValue={displayChaserValue ?? 0}
+									targetValue={displayTargetValue ?? 0}
 									chaserGrowthRate={chaserGrowthRate}
 									targetGrowthRate={targetGrowthRate}
 									years={catchUpYears}
 									onYearsChange={setCatchUpYears}
 								/>
+								{showImplications && comparisonMode === "countries" && (
+									<ImplicationsPanel
+										chaserIso={chaserIso}
+										chaserName={displayChaserName}
+										gdpCurrent={chaserValue}
+										chaserGrowthRate={chaserGrowthRate}
+										baseYear={baseYear}
+										horizonYears={impHorizonYears}
+										onHorizonYearsChange={setImpHorizonYears}
+										template={impTemplate}
+										onTemplateChange={setImpTemplate}
+										enabled={showImplications}
+									/>
+								)}
 								{/* Country context cards on mobile */}
 								{(chaserAdjustment || targetAdjustment) && (
 									<div className="space-y-3">
@@ -760,20 +969,34 @@ export default function App() {
 									targetRate={targetGrowthRate}
 									onChaserRateChange={setChaserGrowthRate}
 									onTargetRateChange={setTargetGrowthRate}
-									chaserName={chaserCountry.name}
-									targetName={targetCountry.name}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
 									compact
 								/>
 								<GrowthCalculator
-									chaserName={chaserCountry.name}
-									targetName={targetCountry.name}
-									chaserValue={chaserValue}
-									targetValue={targetValue}
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
+									chaserValue={displayChaserValue ?? 0}
+									targetValue={displayTargetValue ?? 0}
 									chaserGrowthRate={chaserGrowthRate}
 									targetGrowthRate={targetGrowthRate}
 									years={catchUpYears}
 									onYearsChange={setCatchUpYears}
 								/>
+								{showImplications && comparisonMode === "countries" && (
+									<ImplicationsPanel
+										chaserIso={chaserIso}
+										chaserName={displayChaserName}
+										gdpCurrent={chaserValue}
+										chaserGrowthRate={chaserGrowthRate}
+										baseYear={baseYear}
+										horizonYears={impHorizonYears}
+										onHorizonYearsChange={setImpHorizonYears}
+										template={impTemplate}
+										onTemplateChange={setImpTemplate}
+										enabled={showImplications}
+									/>
+								)}
 								{/* Country context cards on desktop */}
 								{(chaserAdjustment || targetAdjustment) && (
 									<div className="space-y-3">
