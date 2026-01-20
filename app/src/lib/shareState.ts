@@ -1,5 +1,6 @@
 export type TargetMode = "growing" | "static";
 export type ViewMode = "chart" | "table";
+export type TemplateMode = "china" | "us" | "eu";
 
 export interface ShareState {
 	chaser: string;
@@ -14,6 +15,8 @@ export interface ShareState {
 	adjT?: boolean; // Target adjustment enabled (default: true)
 	goal?: number; // "Catch up in N years" calculator (default: 25)
 	ms?: boolean; // Show milestone markers (default: true)
+	tpl?: TemplateMode; // Template path for implications (default: china)
+	ih?: number; // Implications horizon years (default: 25)
 }
 
 export const DEFAULT_SHARE_STATE: ShareState = {
@@ -29,6 +32,8 @@ export const DEFAULT_SHARE_STATE: ShareState = {
 	adjT: true,
 	goal: 25,
 	ms: true,
+	tpl: "china",
+	ih: 25,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -63,6 +68,13 @@ function parseIntSafe(value: string | null): number | null {
 	return Number.isFinite(n) ? n : null;
 }
 
+function parseTemplate(value: string | null): TemplateMode | null {
+	if (!value) return null;
+	const v = value.trim().toLowerCase();
+	if (v === "china" || v === "us" || v === "eu") return v;
+	return null;
+}
+
 export function parseShareStateFromSearch(
 	search: string,
 	defaults: ShareState = DEFAULT_SHARE_STATE,
@@ -83,10 +95,12 @@ export function parseShareStateFromSearch(
 	const tgRaw = parseRate(params.get("tg"));
 	const baseYearRaw = parseIntSafe(params.get("baseYear"));
 	const goalRaw = parseIntSafe(params.get("goal"));
+	const ihRaw = parseIntSafe(params.get("ih"));
 
 		const cg = round(clamp(cgRaw ?? defaults.cg, -0.1, 0.15), 0.001);
 		const baseYear = clamp(baseYearRaw ?? defaults.baseYear, 1950, 2100);
 		const goal = clamp(goalRaw ?? defaults.goal ?? 25, 1, 150);
+		const ih = clamp(ihRaw ?? defaults.ih ?? 25, 1, 150);
 
 	// Parse adjustment toggles ("0" = false, anything else or missing = true)
 	const adjCRaw = params.get("adjC");
@@ -95,6 +109,7 @@ export function parseShareStateFromSearch(
 	const adjT = adjTRaw === "0" ? false : (defaults.adjT ?? true);
 	const msRaw = params.get("ms");
 	const ms = msRaw === "0" ? false : (defaults.ms ?? true);
+	const tpl = parseTemplate(params.get("tpl")) ?? (defaults.tpl ?? "china");
 
 	if (tmode === "static") {
 		return {
@@ -111,6 +126,8 @@ export function parseShareStateFromSearch(
 			adjT,
 			goal,
 			ms,
+			tpl,
+			ih,
 		};
 	}
 
@@ -130,6 +147,8 @@ export function parseShareStateFromSearch(
 		adjT,
 		goal,
 		ms,
+		tpl,
+		ih,
 	};
 }
 
@@ -151,6 +170,8 @@ export function toSearchParams(state: ShareState): URLSearchParams {
 	if (state.adjT === false) params.set("adjT", "0");
 	if ((state.goal ?? 25) !== 25) params.set("goal", String(clamp(state.goal ?? 25, 1, 150)));
 	if (state.ms === false) params.set("ms", "0");
+	if ((state.tpl ?? "china") !== "china") params.set("tpl", state.tpl ?? "china");
+	if ((state.ih ?? 25) !== 25) params.set("ih", String(clamp(state.ih ?? 25, 1, 150)));
 	return params;
 }
 
