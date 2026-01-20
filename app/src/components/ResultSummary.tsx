@@ -1,117 +1,134 @@
-import { formatMetricValue, formatYears, formatPercent } from "../lib/convergence";
+import {
+	formatMetricValue,
+	formatPercent,
+	formatYears,
+} from "../lib/convergence";
 
 interface ResultSummaryProps {
-  chaserName: string;
-  targetName: string;
-  metricName: string;
-  metricUnit?: string | null;
-  chaserValue: number;
-  targetValue: number;
-  chaserGrowthRate: number;
-  targetGrowthRate: number;
-  yearsToConvergence: number;
-  convergenceYear: number | null;
-  gap: number;
+	chaserName: string;
+	targetName: string;
+	metricName: string;
+	metricUnit?: string | null;
+	chaserValue: number;
+	targetValue: number;
+	chaserGrowthRate: number;
+	targetGrowthRate: number;
+	yearsToConvergence: number;
+	convergenceYear: number | null;
+	gap: number;
+	chaserIsAdjusted?: boolean;
+	targetIsAdjusted?: boolean;
 }
 
 export function ResultSummary({
-  chaserName,
-  targetName,
-  metricName,
-  metricUnit,
-  chaserValue,
-  targetValue,
-  chaserGrowthRate,
-  targetGrowthRate,
-  yearsToConvergence,
-  convergenceYear,
-  gap,
+	chaserName,
+	targetName,
+	metricName,
+	metricUnit,
+	chaserValue,
+	targetValue,
+	chaserGrowthRate,
+	targetGrowthRate,
+	yearsToConvergence,
+	convergenceYear,
+	gap,
+	chaserIsAdjusted,
+	targetIsAdjusted,
 }: ResultSummaryProps) {
-  const willConverge = isFinite(yearsToConvergence) && yearsToConvergence > 0;
+	const willConverge =
+		Number.isFinite(yearsToConvergence) && yearsToConvergence > 0;
 
-  return (
-    <div className="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm space-y-4">
-      {/* Main headline */}
-      <p className="text-xl leading-relaxed text-zinc-800 dark:text-zinc-100">
-        {willConverge ? (
-          <>
-            <span className="font-bold text-red-600">{chaserName}</span> could
-            match{" "}
-            <span className="font-bold text-green-600">{targetName}</span>'s{" "}
-            <span className="font-semibold text-zinc-900 dark:text-zinc-50">{metricName}</span>{" "}
-            in{" "}
-            <span className="text-3xl font-black text-zinc-900 dark:text-zinc-50">
-              {formatYears(yearsToConvergence)}
-            </span>
-            {convergenceYear && (
-              <span className="text-zinc-500 dark:text-zinc-400"> (by {convergenceYear})</span>
-            )}
-          </>
-        ) : chaserGrowthRate <= targetGrowthRate ? (
-          <>
-            <span className="font-bold text-red-600">{chaserName}</span> will{" "}
-            <span className="font-bold text-orange-600">never catch up</span> to{" "}
-            <span className="font-bold text-green-600">{targetName}</span> at
-            these growth rates
-          </>
-        ) : (
-          <>
-            <span className="font-bold text-red-600">{chaserName}</span> is
-            already ahead of{" "}
-            <span className="font-bold text-green-600">{targetName}</span>
-          </>
-        )}
-      </p>
+	return (
+		<div className="card p-4 sm:p-5">
+			{/* Main headline - more compact */}
+			<p className="text-base sm:text-lg leading-relaxed text-ink">
+				{willConverge ? (
+					<>
+						<span className="font-bold text-chaser">{chaserName}</span> could
+						match <span className="font-bold text-target">{targetName}</span> in{" "}
+						<span className="text-xl sm:text-2xl font-display font-black">
+							{formatYears(yearsToConvergence)}
+						</span>
+						{convergenceYear && (
+							<span className="text-ink-muted text-sm">
+								{" "}
+								({convergenceYear})
+							</span>
+						)}
+					</>
+				) : chaserGrowthRate <= targetGrowthRate ? (
+					<>
+						<span className="font-bold text-chaser">{chaserName}</span>{" "}
+						<span className="font-bold text-amber-600 dark:text-amber-400">
+							won't catch up
+						</span>{" "}
+						to <span className="font-bold text-target">{targetName}</span>
+					</>
+				) : (
+					<>
+						<span className="font-bold text-chaser">{chaserName}</span> is
+						already ahead of{" "}
+						<span className="font-bold text-target">{targetName}</span>
+					</>
+				)}
+			</p>
 
-      {/* Growth rate comparison */}
-      <p className="text-sm text-zinc-600 dark:text-zinc-300">
-        Assuming {metricName} grows at{" "}
-        <span className="font-semibold text-red-600">
-          {formatPercent(chaserGrowthRate)}
-        </span>{" "}
-        per year
-        {targetGrowthRate > 0 ? (
-          <>
-            {" "}
-            while {targetName} grows at{" "}
-            <span className="font-semibold text-green-600">
-              {formatPercent(targetGrowthRate)}
-            </span>{" "}
-            per year
-          </>
-        ) : (
-          <> while {targetName} remains static</>
-        )}
-        .
-      </p>
+			{/* Growth rate comparison - inline and compact */}
+			<p className="text-xs sm:text-sm text-ink-muted mt-2">
+				At{" "}
+				<span className="font-medium text-chaser">
+					{formatPercent(chaserGrowthRate)}
+				</span>
+				/yr
+				{targetGrowthRate > 0 ? (
+					<>
+						{" "}
+						vs{" "}
+						<span className="font-medium text-target">
+							{formatPercent(targetGrowthRate)}
+						</span>
+						/yr
+					</>
+				) : (
+					<> (target static)</>
+				)}
+				{" · "}
+				{metricName}
+			</p>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{gap.toFixed(1)}×</div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-            Current gap
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-red-600">{formatMetricValue(chaserValue, metricUnit)}</div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-            {chaserName}
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-600">{formatMetricValue(targetValue, metricUnit)}</div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-            {targetName}
-          </div>
-        </div>
-      </div>
-
-      {metricUnit && (
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 text-center">
-          Unit: {metricUnit}
-        </div>
-      )}
-    </div>
-  );
+			{/* Stats row - compact horizontal layout */}
+			<div className="flex items-center gap-4 sm:gap-6 mt-4 pt-4 border-t border-surface-subtle">
+				<div className="text-center">
+					<div className="text-lg sm:text-xl font-display font-bold text-ink">
+						{gap.toFixed(1)}×
+					</div>
+					<div className="text-[10px] text-ink-faint uppercase tracking-wider">
+						Gap
+					</div>
+				</div>
+				<div className="text-center flex-1">
+					<div className="text-lg sm:text-xl font-display font-bold text-chaser">
+						{formatMetricValue(chaserValue, metricUnit)}
+						{chaserIsAdjusted && (
+							<span className="text-xs text-ink-faint ml-0.5">*</span>
+						)}
+					</div>
+					<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
+						{chaserName}
+					</div>
+				</div>
+				<div className="text-center flex-1">
+					<div className="text-lg sm:text-xl font-display font-bold text-target">
+						{formatMetricValue(targetValue, metricUnit)}
+						{targetIsAdjusted && (
+							<span className="text-xs text-ink-faint ml-0.5">*</span>
+						)}
+					</div>
+					<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
+						{targetName}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
