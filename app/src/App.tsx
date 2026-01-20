@@ -576,6 +576,8 @@ export default function App() {
 										convergenceYear={convergenceYear}
 										unit={metricUnit}
 										theme={theme}
+										chaserHasNote={chaserAdjustment != null && useChaserAdjusted}
+										targetHasNote={targetAdjustment != null && useTargetAdjusted}
 									/>
 								)}
 							</div>
