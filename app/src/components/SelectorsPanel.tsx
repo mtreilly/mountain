@@ -42,7 +42,7 @@ export function SelectorsPanel({
 }) {
   return (
     <div className="animate-fade-in-up stagger-1 no-print space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between lg:hidden">
         <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
           <button
             type="button"
@@ -81,19 +81,47 @@ export function SelectorsPanel({
       {comparisonMode === "countries" && (
         <div className="card p-3 sm:p-4">
           {/* Desktop: single row with all 4 items */}
-          <div className="hidden lg:flex lg:items-center lg:gap-4">
-            <CountrySelector
-              label="Chaser"
-              value={chaserIso}
-              onChange={onChaserIsoChange}
-              countries={countries}
-              excludeIso={targetIso}
-              color="chaser"
-            />
+	          <div className="hidden lg:flex lg:items-center lg:gap-3">
+	            <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden shrink-0">
+	              <button
+	                type="button"
+	                onClick={() => onComparisonModeChange("countries")}
+	                aria-pressed
+	                className={[
+	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
+	                  "bg-surface-raised text-ink shadow-sm",
+	                ].join(" ")}
+	              >
+	                Countries
+	              </button>
+	              <button
+	                type="button"
+	                onClick={() => onComparisonModeChange("regions")}
+	                aria-pressed={false}
+	                className={[
+	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
+	                  "text-ink-muted hover:bg-surface-raised/60",
+	                ].join(" ")}
+	              >
+	                Regions
+	              </button>
+	            </div>
+
+            <div className="min-w-[240px] flex-1">
+              <CountrySelector
+                dense
+                label="Chaser"
+                value={chaserIso}
+                onChange={onChaserIsoChange}
+                countries={countries}
+                excludeIso={targetIso}
+                color="chaser"
+              />
+            </div>
             <button
               type="button"
               onClick={onSwapCountries}
-              className="flex items-center justify-center w-9 h-[42px] rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
               title="Swap chaser and target"
               aria-label="Swap chaser and target countries"
             >
@@ -101,20 +129,26 @@ export function SelectorsPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </button>
-            <CountrySelector
-              label="Target"
-              value={targetIso}
-              onChange={onTargetIsoChange}
-              countries={countries}
-              excludeIso={chaserIso}
-              color="target"
-            />
-            <MetricSelector
-              value={indicatorCode}
-              onChange={onIndicatorCodeChange}
-              indicators={indicators}
-              disabled={indicatorsLoading}
-            />
+            <div className="min-w-[240px] flex-1">
+              <CountrySelector
+                dense
+                label="Target"
+                value={targetIso}
+                onChange={onTargetIsoChange}
+                countries={countries}
+                excludeIso={chaserIso}
+                color="target"
+              />
+            </div>
+            <div className="w-[360px] shrink-0">
+              <MetricSelector
+                dense
+                value={indicatorCode}
+                onChange={onIndicatorCodeChange}
+                indicators={indicators}
+                disabled={indicatorsLoading}
+              />
+            </div>
           </div>
 
           {/* Tablet: 2x2 grid */}
@@ -200,7 +234,69 @@ export function SelectorsPanel({
 
       {comparisonMode === "regions" && (
         <div className="card p-3 sm:p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-2 items-end">
+	          <div className="hidden lg:flex lg:items-center lg:gap-3">
+	            <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden shrink-0">
+	              <button
+	                type="button"
+	                onClick={() => onComparisonModeChange("countries")}
+	                aria-pressed={false}
+	                className={[
+	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
+	                  "text-ink-muted hover:bg-surface-raised/60",
+	                ].join(" ")}
+	              >
+	                Countries
+	              </button>
+	              <button
+	                type="button"
+	                onClick={() => onComparisonModeChange("regions")}
+	                aria-pressed
+	                className={[
+	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
+	                  "bg-surface-raised text-ink shadow-sm",
+	                ].join(" ")}
+	              >
+	                Regions
+	              </button>
+	            </div>
+
+            <div className="min-w-[260px] flex-1">
+              <RegionSelector
+                dense
+                label="Chaser"
+                value={chaserRegionCode}
+                onChange={onChaserRegionCodeChange}
+                excludeCode={targetRegionCode}
+                color="chaser"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onSwapRegions}
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
+              title="Swap chaser and target"
+              aria-label="Swap chaser and target regions"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+            </button>
+            <div className="min-w-[260px] flex-1">
+              <RegionSelector
+                dense
+                label="Target"
+                value={targetRegionCode}
+                onChange={onTargetRegionCodeChange}
+                excludeCode={chaserRegionCode}
+                color="target"
+              />
+            </div>
+            <div className="shrink-0 text-xs text-ink-faint whitespace-nowrap px-2 pb-1.5">
+              GDP per capita (USD PPP) · OECD Data
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-2 items-end lg:hidden">
             <RegionSelector
               label="Chaser Region"
               value={chaserRegionCode}
@@ -239,4 +335,3 @@ export function SelectorsPanel({
     </div>
   );
 }
-

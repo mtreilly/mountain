@@ -1,4 +1,5 @@
 import { parseShareStateFromSearch, toSearchParams } from "../src/lib/shareState";
+import { getRegionByCode, getLatestRegionData } from "../src/lib/oecdRegions";
 
 interface Env {
   DB: D1Database;
@@ -20,63 +21,93 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const canonicalPath = `/share?${params.toString()}`;
   const appPath = `/?${params.toString()}`;
 
-  const { DB } = context.env;
+  const isRegionalMode = state.mode === "regions";
 
-  const indicator = await DB.prepare(
-    `SELECT code, name, unit, source
-     FROM indicators
-     WHERE code = ?`
-  )
-    .bind(state.indicator)
-    .first<{
-      code: string;
-      name: string;
-      unit: string | null;
-      source: string | null;
-    }>();
+  let chaserName: string;
+  let targetName: string;
+  let chaserValue: number | null;
+  let targetValue: number | null;
+  let metricName: string;
+  let source: string;
 
-  const countries = await DB.prepare(
-    `SELECT iso_alpha3, name
-     FROM countries
-     WHERE iso_alpha3 IN (?, ?)`
-  )
-    .bind(state.chaser, state.target)
-    .all<{ iso_alpha3: string; name: string }>();
+  if (isRegionalMode) {
+    // Regional mode - use static OECD data
+    const chaserCode = state.cr ?? "UKC";
+    const targetCode = state.tr ?? "UKI";
 
-  const countryName = (iso3: string) =>
-    (countries.results || []).find((c) => c.iso_alpha3 === iso3)?.name || iso3;
+    const chaserRegion = getRegionByCode(chaserCode);
+    const targetRegion = getRegionByCode(targetCode);
+    const chaserData = getLatestRegionData(chaserCode);
+    const targetData = getLatestRegionData(targetCode);
 
-  const chaserName = countryName(state.chaser);
-  const targetName = countryName(state.target);
-  const metricName = indicator?.name || state.indicator;
+    chaserName = chaserRegion?.name ?? chaserCode;
+    targetName = targetRegion?.name ?? targetCode;
+    chaserValue = chaserData?.gdpPerCapita ?? null;
+    targetValue = targetData?.gdpPerCapita ?? null;
+    metricName = "GDP per capita (USD PPP)";
+    source = "OECD";
+  } else {
+    // Country mode - query database
+    const { DB } = context.env;
+
+    const indicator = await DB.prepare(
+      `SELECT code, name, unit, source
+       FROM indicators
+       WHERE code = ?`
+    )
+      .bind(state.indicator)
+      .first<{
+        code: string;
+        name: string;
+        unit: string | null;
+        source: string | null;
+      }>();
+
+    const countries = await DB.prepare(
+      `SELECT iso_alpha3, name
+       FROM countries
+       WHERE iso_alpha3 IN (?, ?)`
+    )
+      .bind(state.chaser, state.target)
+      .all<{ iso_alpha3: string; name: string }>();
+
+    const countryName = (iso3: string) =>
+      (countries.results || []).find((c) => c.iso_alpha3 === iso3)?.name || iso3;
+
+    chaserName = countryName(state.chaser);
+    targetName = countryName(state.target);
+
+    const latest = await DB.prepare(
+      `SELECT c.iso_alpha3 AS iso, d.year AS year, d.value AS value
+       FROM data_points d
+       JOIN countries c ON d.country_id = c.id
+       JOIN indicators i ON d.indicator_id = i.id
+       WHERE i.code = ?
+         AND c.iso_alpha3 IN (?, ?)
+         AND d.year = (
+           SELECT MAX(year)
+           FROM data_points
+           WHERE country_id = d.country_id
+             AND indicator_id = d.indicator_id
+         )`
+    )
+      .bind(state.indicator, state.chaser, state.target)
+      .all<{ iso: string; year: number; value: number }>();
+
+    const byIso: Record<string, { year: number; value: number }> = {};
+    for (const row of latest.results || []) byIso[row.iso] = { year: row.year, value: row.value };
+
+    chaserValue = byIso[state.chaser]?.value ?? null;
+    targetValue = byIso[state.target]?.value ?? null;
+    metricName = indicator?.name || state.indicator;
+    source = indicator?.source || "World Bank";
+  }
 
   const title = `${chaserName} → ${targetName} · ${metricName}`;
 
-  const latest = await DB.prepare(
-    `SELECT c.iso_alpha3 AS iso, d.year AS year, d.value AS value
-     FROM data_points d
-     JOIN countries c ON d.country_id = c.id
-     JOIN indicators i ON d.indicator_id = i.id
-     WHERE i.code = ?
-       AND c.iso_alpha3 IN (?, ?)
-       AND d.year = (
-         SELECT MAX(year)
-         FROM data_points
-         WHERE country_id = d.country_id
-           AND indicator_id = d.indicator_id
-       )`
-  )
-    .bind(state.indicator, state.chaser, state.target)
-    .all<{ iso: string; year: number; value: number }>();
-
-  const byIso: Record<string, { year: number; value: number }> = {};
-  for (const row of latest.results || []) byIso[row.iso] = { year: row.year, value: row.value };
-
-  const chaserValue = byIso[state.chaser]?.value ?? null;
-  const targetValue = byIso[state.target]?.value ?? null;
-
   const outcome = (() => {
-    if (chaserValue == null || targetValue == null) return "Data unavailable for one or both countries.";
+    const entityType = isRegionalMode ? "regions" : "countries";
+    if (chaserValue == null || targetValue == null) return `Data unavailable for one or both ${entityType}.`;
     if (chaserValue >= targetValue) return "Already ahead at the latest observed values.";
     const tg = state.tmode === "static" ? 0 : state.tg;
     if (state.cg <= tg) return "No convergence at these growth rates.";
@@ -90,7 +121,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const description = `${outcome} Chaser ${Math.round(state.cg * 1000) / 10}% · Target ${
     state.tmode === "static" ? "Static" : `${Math.round(state.tg * 1000) / 10}%`
-  } · Base year ${state.baseYear}.`;
+  } · Base year ${state.baseYear}. Data: ${source}.`;
 
   const origin = url.origin;
   const ogImageUrl = `${origin}/api/og.png?${params.toString()}`;

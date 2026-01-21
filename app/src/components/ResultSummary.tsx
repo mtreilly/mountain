@@ -51,18 +51,18 @@ export function ResultSummary({
 			: null;
 
 	return (
-		<div className="card p-4 sm:p-5">
+		<div className="card p-3 sm:p-4">
 			{/* Main headline - more compact */}
-			<p className="text-base sm:text-lg leading-relaxed text-ink">
+			<p className="text-sm sm:text-base leading-snug text-ink">
 				{willConverge ? (
 					<>
 						<span className="font-bold text-chaser">{chaserName}</span> could
 						match <span className="font-bold text-target">{targetName}</span> in{" "}
-						<span className="text-xl sm:text-2xl font-display font-black">
+						<span className="text-lg sm:text-xl font-display font-black">
 							{formatYears(yearsToConvergence)}
 						</span>
 						{convergenceYear && (
-							<span className="text-ink-muted text-sm">
+							<span className="text-ink-muted text-xs">
 								{" "}
 								({convergenceYear})
 							</span>
@@ -86,64 +86,70 @@ export function ResultSummary({
 			</p>
 
 			{/* Growth rate comparison - inline and compact */}
-			<p className="text-xs sm:text-sm text-ink-muted mt-2">
-				At{" "}
-				<span className="font-medium text-chaser">
-					{formatPercent(chaserGrowthRate)}
+			<div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-ink-muted">
+				<span>
+					At{" "}
+					<span className="font-medium text-chaser">
+						{formatPercent(chaserGrowthRate)}
+					</span>
+					/yr
+					{targetGrowthRate > 0 ? (
+						<>
+							{" "}
+							vs{" "}
+							<span className="font-medium text-target">
+								{formatPercent(targetGrowthRate)}
+							</span>
+							/yr
+						</>
+					) : (
+						<> (target static)</>
+					)}
 				</span>
-				/yr
-				{targetGrowthRate > 0 ? (
+				<span className="text-ink-faint">·</span>
+				<span className="truncate">{metricName}</span>
+				{milestoneText && willConverge && (
 					<>
-						{" "}
-						vs{" "}
-						<span className="font-medium text-target">
-							{formatPercent(targetGrowthRate)}
+						<span className="text-ink-faint">·</span>
+						<span className="text-ink-faint">
+							Milestones: {milestoneText}
 						</span>
-						/yr
 					</>
-				) : (
-					<> (target static)</>
 				)}
-				{" · "}
-				{metricName}
-			</p>
-
-			{milestoneText && willConverge && (
-				<p className="text-[11px] text-ink-faint mt-2">
-					Milestones: {milestoneText}
-				</p>
-			)}
+			</div>
 
 			{/* Stats row - compact horizontal layout */}
-			<div className="flex items-center gap-4 sm:gap-6 mt-4 pt-4 border-t border-surface-subtle">
-				<div className="text-center">
-					<div className="text-lg sm:text-xl font-display font-bold text-ink">
-						{gap.toFixed(1)}×
+			<div className="mt-3 pt-3 border-t border-surface-subtle">
+				<div className="grid grid-cols-3 gap-3 sm:gap-4">
+					<div className="min-w-0">
+						<div className="text-base sm:text-lg font-display font-bold text-ink tabular-nums">
+							{gap.toFixed(1)}×
+						</div>
+						<div className="text-[10px] text-ink-faint uppercase tracking-wider">
+							Gap
+						</div>
 					</div>
-					<div className="text-[10px] text-ink-faint uppercase tracking-wider">
-						Gap
+					<div className="min-w-0">
+						<div className="text-base sm:text-lg font-display font-bold text-chaser tabular-nums">
+							{formatMetricValue(chaserValue, metricUnit)}
+							{chaserIsAdjusted && (
+								<span className="text-[10px] text-ink-faint ml-0.5">*</span>
+							)}
+						</div>
+						<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
+							{chaserName}
+						</div>
 					</div>
-				</div>
-				<div className="text-center flex-1">
-					<div className="text-lg sm:text-xl font-display font-bold text-chaser">
-						{formatMetricValue(chaserValue, metricUnit)}
-						{chaserIsAdjusted && (
-							<span className="text-xs text-ink-faint ml-0.5">*</span>
-						)}
-					</div>
-					<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
-						{chaserName}
-					</div>
-				</div>
-				<div className="text-center flex-1">
-					<div className="text-lg sm:text-xl font-display font-bold text-target">
-						{formatMetricValue(targetValue, metricUnit)}
-						{targetIsAdjusted && (
-							<span className="text-xs text-ink-faint ml-0.5">*</span>
-						)}
-					</div>
-					<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
-						{targetName}
+					<div className="min-w-0">
+						<div className="text-base sm:text-lg font-display font-bold text-target tabular-nums">
+							{formatMetricValue(targetValue, metricUnit)}
+							{targetIsAdjusted && (
+								<span className="text-[10px] text-ink-faint ml-0.5">*</span>
+							)}
+						</div>
+						<div className="text-[10px] text-ink-faint uppercase tracking-wider truncate">
+							{targetName}
+						</div>
 					</div>
 				</div>
 			</div>

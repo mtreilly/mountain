@@ -180,6 +180,8 @@ export function ExportModal({
   onDownloadObservedCsv,
   onDownloadProjectionCsv,
   onDownloadReportJson,
+  onOpenShareCardModal,
+  shareCardAvailable,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -193,6 +195,8 @@ export function ExportModal({
   onDownloadObservedCsv?: () => void | Promise<void>;
   onDownloadProjectionCsv?: () => void | Promise<void>;
   onDownloadReportJson?: () => void | Promise<void>;
+  onOpenShareCardModal?: () => void;
+  shareCardAvailable?: boolean;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
   const canExportChart = chartAvailable && chartSvgRef !== undefined;
@@ -395,6 +399,22 @@ export function ExportModal({
               >
                 Social size (1200×630)
               </button>
+              {onOpenShareCardModal && (
+                <button
+                  type="button"
+                  disabled={!shareCardAvailable}
+                  onClick={() => {
+                    handleClose();
+                    onOpenShareCardModal();
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs font-medium hover:bg-[var(--color-accent)]/20 transition-default disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  </svg>
+                  Create Share Card
+                </button>
+              )}
             </div>
           </section>
 
