@@ -11,6 +11,7 @@ import { EmbedView } from "./components/EmbedView";
 import { ExportModal } from "./components/ExportModal";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
 import { ShareCardModal } from "./components/ShareCardModal";
+import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
 import { ImplicationsPanel } from "./components/ImplicationsPanel";
 import { ProjectionCard } from "./components/ProjectionCard";
@@ -92,6 +93,7 @@ export default function App() {
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
 	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
+	const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -368,6 +370,55 @@ export default function App() {
 		theme,
 	]);
 
+	// Historical data for thread generator
+	const historicalData = useMemo(() => {
+		if (comparisonMode !== "countries" || !data) return null;
+
+		const chaserSeries = data[chaserIso] || [];
+		const targetSeries = data[targetIso] || [];
+
+		const getEarliest = (series: Array<{ year: number; value: number }>) => {
+			if (!series.length) return null;
+			const sorted = [...series].sort((a, b) => a.year - b.year);
+			return { year: sorted[0].year, value: sorted[0].value };
+		};
+
+		const getLatest = (series: Array<{ year: number; value: number }>) => {
+			if (!series.length) return null;
+			const sorted = [...series].sort((a, b) => b.year - a.year);
+			return { year: sorted[0].year, value: sorted[0].value };
+		};
+
+		return {
+			chaserStart: getEarliest(chaserSeries),
+			chaserCurrent: getLatest(chaserSeries),
+			targetStart: getEarliest(targetSeries),
+			targetCurrent: getLatest(targetSeries),
+		};
+	}, [comparisonMode, data, chaserIso, targetIso]);
+
+	// Simplified implications data for thread generator (only when GDP per capita is selected)
+	const implicationsData = useMemo(() => {
+		if (comparisonMode !== "countries") return null;
+		if (indicatorCode !== "GDP_PCAP_PPP") return null;
+		if (!chaserValue || !yearsToConvergence) return null;
+
+		// Simple projections based on growth
+		const gdpFuture = chaserValue * Math.pow(1 + chaserGrowthRate, impHorizonYears);
+
+		// Very rough estimates (these would need real population data for accuracy)
+		// For now, just provide GDP values and let other fields be null
+		return {
+			electricityDeltaTWh: null,
+			nuclearPlants: null,
+			urbanDeltaPersons: null,
+			homesNeeded: null,
+			co2DeltaMt: null,
+			gdpCurrent: chaserValue,
+			gdpFuture,
+		};
+	}, [comparisonMode, indicatorCode, chaserValue, yearsToConvergence, chaserGrowthRate, impHorizonYears]);
+
 	const countriesByIso3 = useMemo(() => {
 		const map: Record<string, { name: string }> = {};
 		for (const c of countries) map[c.iso_alpha3] = { name: c.name };
@@ -571,6 +622,7 @@ export default function App() {
 					onOpenExportModal={() => setIsExportModalOpen(true)}
 					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
 					onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
+					onOpenThreadGenerator={() => setIsThreadGeneratorOpen(true)}
 					shareCardAvailable={shareCardParams !== null}
 					theme={theme}
 					onToggleTheme={toggleTheme}
@@ -795,6 +847,18 @@ export default function App() {
 				indicator={selectedIndicator}
 				chaserName={displayChaserName}
 				targetName={displayTargetName}
+			/>
+
+			{/* Thread Generator Modal */}
+			<ThreadGeneratorModal
+				isOpen={isThreadGeneratorOpen}
+				onClose={() => setIsThreadGeneratorOpen(false)}
+				shareCardParams={shareCardParams}
+				historicalData={historicalData}
+				implicationsData={implicationsData}
+				baseYear={baseYear}
+				horizonYears={impHorizonYears}
+				appUrl={appUrl}
 			/>
 		</div>
 	);
