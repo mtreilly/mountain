@@ -1,4 +1,3 @@
-import type { RefObject } from "react";
 import { toast } from "sonner";
 import type { HeadlineData } from "../lib/headlineGenerator";
 import { copyTextToClipboard } from "../lib/clipboard";
@@ -8,8 +7,6 @@ import { ThemeToggle } from "./ThemeToggle";
 export function AppHeader({
   comparisonMode,
   shareUrl,
-  chartAvailable,
-  chartSvgRef,
   headlineData,
   onOpenExportModal,
   onOpenShareCardModal,
@@ -23,8 +20,6 @@ export function AppHeader({
 }: {
   comparisonMode: "countries" | "regions";
   shareUrl: string;
-  chartAvailable: boolean;
-  chartSvgRef: RefObject<SVGSVGElement | null>;
   headlineData?: HeadlineData;
   onOpenExportModal: () => void;
   onOpenShareCardModal?: () => void;
@@ -84,13 +79,9 @@ export function AppHeader({
             Share Card
           </button>
           <ShareMenu
-            chartAvailable={chartAvailable}
             disabled={disableShareActions}
-            chartSvgRef={chartSvgRef}
             headlineData={headlineData}
             onOpenExportModal={onOpenExportModal}
-            onOpenShareCardModal={onOpenShareCardModal}
-            shareCardAvailable={shareCardAvailable}
           />
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
