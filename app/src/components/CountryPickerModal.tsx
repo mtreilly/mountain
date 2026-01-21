@@ -359,7 +359,7 @@ export function CountryPickerModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-surface transition-default"
+              className="p-2 rounded-lg hover:bg-surface transition-default focus-ring"
               aria-label="Close"
             >
               <svg className="w-5 h-5 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -395,8 +395,10 @@ export function CountryPickerModal({
                 key={g.key}
                 type="button"
                 onClick={() => setGroupKey(g.key)}
+                aria-pressed={groupKey === g.key}
                 className={[
                   "px-3 py-1.5 rounded-full text-xs border transition-default",
+                  "focus-ring",
                   groupKey === g.key ? colorConfig.chipActive : `bg-surface ${colorConfig.chip}`,
                 ].join(" ")}
               >
@@ -409,7 +411,7 @@ export function CountryPickerModal({
             <select
               value={regionFilter}
               onChange={(e) => setRegionFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus-ring"
               aria-label="Filter by region"
             >
               <option value="all">All regions</option>
@@ -424,7 +426,7 @@ export function CountryPickerModal({
             <select
               value={incomeFilter}
               onChange={(e) => setIncomeFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus-ring"
               aria-label="Filter by income group"
             >
               <option value="all">All incomes</option>
@@ -455,6 +457,7 @@ export function CountryPickerModal({
                         "w-full text-left px-3 py-2 rounded-xl border transition-default",
                         "bg-surface hover:bg-surface-raised",
                         "flex items-center justify-between gap-2",
+                        "focus-ring focus-visible:bg-surface-raised",
                         selected ? colorConfig.selected : "border-surface",
                       ].join(" ")}
                     >

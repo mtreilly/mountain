@@ -314,10 +314,10 @@
   .focus-ring {
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
     --tw-ring-color: var(--color-accent);
-    --tw-ring-offset-color: var(--color-surface);
+    --tw-ring-offset-color: var(--color-surface-raised);
   }
   .dark .focus-ring {
-    --tw-ring-offset-color: var(--color-surface-dark);
+    --tw-ring-offset-color: var(--color-surface-raised-dark);
   }
 
   /* Smooth transitions */

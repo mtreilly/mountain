@@ -13,7 +13,7 @@ var __export = (target, all) => {
 var onRequestGet;
 var init_indicator = __esm({
   "api/data/[indicator].ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     onRequestGet = /* @__PURE__ */ __name(async (context) => {
       const { DB } = context.env;
       const indicatorCode = context.params.indicator;
@@ -77,7 +77,7 @@ function uniqueClean(list) {
 var onRequestGet2;
 var init_batch_data = __esm({
   "api/batch-data.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     __name(uniqueClean, "uniqueClean");
     onRequestGet2 = /* @__PURE__ */ __name(async (context) => {
       const { DB } = context.env;
@@ -132,7 +132,7 @@ var init_batch_data = __esm({
 var onRequestGet3;
 var init_convergence = __esm({
   "api/convergence.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     onRequestGet3 = /* @__PURE__ */ __name(async (context) => {
       const { DB } = context.env;
       const url = new URL(context.request.url);
@@ -242,7 +242,7 @@ var init_convergence = __esm({
 var onRequestGet4;
 var init_countries = __esm({
   "api/countries.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     onRequestGet4 = /* @__PURE__ */ __name(async (context) => {
       const { DB } = context.env;
       const result = await DB.prepare(
@@ -259,7 +259,7 @@ var init_countries = __esm({
 var onRequestGet5;
 var init_indicators = __esm({
   "api/indicators.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     onRequestGet5 = /* @__PURE__ */ __name(async (context) => {
       const { DB } = context.env;
       const result = await DB.prepare(
@@ -417,7 +417,7 @@ function toSearchParams(state) {
 var DEFAULT_SHARE_STATE;
 var init_shareState = __esm({
   "../src/lib/shareState.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     DEFAULT_SHARE_STATE = {
       chaser: "NGA",
       target: "IRL",
@@ -492,7 +492,7 @@ function formatMetricValue(value, unit, options) {
 }
 var init_convergence2 = __esm({
   "../src/lib/convergence.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     __name(formatNumber, "formatNumber");
     __name(formatPercent, "formatPercent");
     __name(formatYears, "formatYears");
@@ -730,7 +730,7 @@ function isCustomFontsOptions(value) {
 var wasm, heap, heap_next, WASM_VECTOR_LEN, cachedUint8Memory0, cachedTextEncoder, encodeString, cachedInt32Memory0, cachedTextDecoder, BBoxFinalization, BBox, RenderedImageFinalization, RenderedImage, ResvgFinalization, Resvg, dist_default, initialized, initWasm, Resvg2;
 var init_resvg_wasm = __esm({
   "../node_modules/.pnpm/@resvg+resvg-wasm@2.6.2/node_modules/@resvg/resvg-wasm/index.mjs"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     heap = new Array(128).fill(void 0);
     heap.push(void 0, null, true, false);
     heap_next = heap.length;
@@ -1148,7 +1148,7 @@ function makeSparkPath(points) {
 var onRequestGet6;
 var init_og_png = __esm({
   "api/og.png.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     init_shareState();
     init_convergence2();
     __name(escapeXml, "escapeXml");
@@ -1386,7 +1386,7 @@ function escapeHtml(s) {
 var onRequestGet7;
 var init_share = __esm({
   "share.ts"() {
-    init_functionsRoutes_0_2283504560347427();
+    init_functionsRoutes_0_838292661566798();
     init_shareState();
     __name(escapeHtml, "escapeHtml");
     onRequestGet7 = /* @__PURE__ */ __name(async (context) => {
@@ -1486,10 +1486,10 @@ var init_share = __esm({
   }
 });
 
-// ../.wrangler/tmp/pages-mWg3xn/functionsRoutes-0.2283504560347427.mjs
+// ../.wrangler/tmp/pages-5UqAiU/functionsRoutes-0.838292661566798.mjs
 var routes;
-var init_functionsRoutes_0_2283504560347427 = __esm({
-  "../.wrangler/tmp/pages-mWg3xn/functionsRoutes-0.2283504560347427.mjs"() {
+var init_functionsRoutes_0_838292661566798 = __esm({
+  "../.wrangler/tmp/pages-5UqAiU/functionsRoutes-0.838292661566798.mjs"() {
     init_indicator();
     init_batch_data();
     init_convergence();
@@ -1551,17 +1551,17 @@ var init_functionsRoutes_0_2283504560347427 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-mcGnGP/middleware-loader.entry.ts
-init_functionsRoutes_0_2283504560347427();
+// ../.wrangler/tmp/bundle-fs9hzr/middleware-loader.entry.ts
+init_functionsRoutes_0_838292661566798();
 
-// ../.wrangler/tmp/bundle-mcGnGP/middleware-insertion-facade.js
-init_functionsRoutes_0_2283504560347427();
+// ../.wrangler/tmp/bundle-fs9hzr/middleware-insertion-facade.js
+init_functionsRoutes_0_838292661566798();
 
 // ../node_modules/.pnpm/wrangler@4.59.2/node_modules/wrangler/templates/pages-template-worker.ts
-init_functionsRoutes_0_2283504560347427();
+init_functionsRoutes_0_838292661566798();
 
 // ../node_modules/.pnpm/path-to-regexp@6.3.0/node_modules/path-to-regexp/dist.es2015/index.js
-init_functionsRoutes_0_2283504560347427();
+init_functionsRoutes_0_838292661566798();
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -2008,7 +2008,7 @@ var cloneResponse = /* @__PURE__ */ __name((response) => (
 ), "cloneResponse");
 
 // ../node_modules/.pnpm/wrangler@4.59.2/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
-init_functionsRoutes_0_2283504560347427();
+init_functionsRoutes_0_838292661566798();
 var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
   try {
     return await middlewareCtx.next(request, env);
@@ -2027,7 +2027,7 @@ var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 var middleware_ensure_req_body_drained_default = drainBody;
 
 // ../node_modules/.pnpm/wrangler@4.59.2/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
-init_functionsRoutes_0_2283504560347427();
+init_functionsRoutes_0_838292661566798();
 function reduceError(e) {
   return {
     name: e?.name,
@@ -2050,7 +2050,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-mcGnGP/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-fs9hzr/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -2058,7 +2058,7 @@ var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
 var middleware_insertion_facade_default = pages_template_worker_default;
 
 // ../node_modules/.pnpm/wrangler@4.59.2/node_modules/wrangler/templates/middleware/common.ts
-init_functionsRoutes_0_2283504560347427();
+init_functionsRoutes_0_838292661566798();
 var __facade_middleware__ = [];
 function __facade_register__(...args) {
   __facade_middleware__.push(...args.flat());
@@ -2083,7 +2083,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-mcGnGP/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-fs9hzr/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
@@ -2183,4 +2183,4 @@ export {
   __INTERNAL_WRANGLER_MIDDLEWARE__,
   middleware_loader_entry_default as default
 };
-//# sourceMappingURL=functionsWorker-0.24717701497582123.mjs.map
+//# sourceMappingURL=functionsWorker-0.949853729144237.mjs.map

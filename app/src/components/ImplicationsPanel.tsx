@@ -194,10 +194,11 @@ export function ImplicationsPanel({
               key={t.id}
               type="button"
               onClick={() => onTemplateChange(t.id)}
+              aria-pressed={template === t.id}
               className={[
-                "px-2.5 py-1 text-xs font-medium transition-default",
+                "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
                 template === t.id
-                  ? "bg-surface-raised text-ink"
+                  ? "bg-surface-raised text-ink shadow-sm"
                   : "text-ink-muted hover:bg-surface-raised/60",
               ].join(" ")}
             >
@@ -233,10 +234,11 @@ export function ImplicationsPanel({
           <button
             type="button"
             onClick={() => setPopAssumption("trend")}
+            aria-pressed={popAssumption === "trend"}
             className={[
-              "px-2.5 py-1 text-xs font-medium transition-default",
+              "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
               popAssumption === "trend"
-                ? "bg-surface-raised text-ink"
+                ? "bg-surface-raised text-ink shadow-sm"
                 : "text-ink-muted hover:bg-surface-raised/60",
             ].join(" ")}
           >
@@ -245,10 +247,11 @@ export function ImplicationsPanel({
           <button
             type="button"
             onClick={() => setPopAssumption("static")}
+            aria-pressed={popAssumption === "static"}
             className={[
-              "px-2.5 py-1 text-xs font-medium transition-default",
+              "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
               popAssumption === "static"
-                ? "bg-surface-raised text-ink"
+                ? "bg-surface-raised text-ink shadow-sm"
                 : "text-ink-muted hover:bg-surface-raised/60",
             ].join(" ")}
           >
