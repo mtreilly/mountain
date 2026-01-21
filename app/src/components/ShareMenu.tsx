@@ -7,10 +7,12 @@ export function ShareMenu({
   disabled,
   headlineData,
   onOpenExportModal,
+  onOpenCitationPanel,
 }: {
   disabled?: boolean;
   headlineData?: HeadlineData;
   onOpenExportModal?: () => void;
+  onOpenCitationPanel?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [popover, setPopover] = useState<{ top: number; left: number; width: number } | null>(
@@ -136,10 +138,30 @@ export function ShareMenu({
                   }}
                   className="w-full px-3 py-2 rounded-lg text-sm font-medium text-[var(--color-accent)] hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
                 >
-                  Download Data
+                  Data / Embed
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Cite this option */}
+            {onOpenCitationPanel && (
+              <div className={onOpenExportModal || headlineData ? "border-t border-surface pt-3" : ""}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    onOpenCitationPanel();
+                  }}
+                  className="w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Cite This
+                  <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
                 </button>
               </div>
             )}

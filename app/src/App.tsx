@@ -4,6 +4,7 @@ import { AppErrorScreen } from "./components/AppErrorScreen";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
+import { CitationPanel } from "./components/CitationPanel";
 import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
 import { EmbedView } from "./components/EmbedView";
@@ -90,6 +91,7 @@ export default function App() {
 	);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
+	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -256,6 +258,18 @@ export default function App() {
 
 		return () => window.clearTimeout(handle);
 	}, [shareState]);
+
+	// Keyboard shortcut: Cmd/Ctrl+Shift+C opens citation panel
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+				e.preventDefault();
+				setIsCitationPanelOpen(true);
+			}
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, []);
 
 	const shareUrl = useMemo(() => {
 		if (typeof window === "undefined") return "";
@@ -547,7 +561,7 @@ export default function App() {
 
 	return (
 		<div className="min-h-screen bg-surface grain">
-			<Toaster theme={theme} position="top-right" closeButton richColors />
+			<Toaster theme={theme} position="bottom-right" closeButton richColors />
 				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
 				{/* Header - Compact */}
 				<AppHeader
@@ -556,6 +570,7 @@ export default function App() {
 					headlineData={headlineData}
 					onOpenExportModal={() => setIsExportModalOpen(true)}
 					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
+					onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
 					shareCardAvailable={shareCardParams !== null}
 					theme={theme}
 					onToggleTheme={toggleTheme}
@@ -762,6 +777,7 @@ export default function App() {
 				onDownloadReportJson={onDownloadReportJson}
 				shareState={shareState}
 				ogImageUrl={ogImageUrl}
+				onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
 			/>
 
 			{/* Share Card Modal */}
@@ -769,6 +785,16 @@ export default function App() {
 				isOpen={isShareCardModalOpen}
 				onClose={() => setIsShareCardModalOpen(false)}
 				shareCardParams={shareCardParams}
+			/>
+
+			{/* Citation Panel */}
+			<CitationPanel
+				isOpen={isCitationPanelOpen}
+				onClose={() => setIsCitationPanelOpen(false)}
+				shareState={shareState}
+				indicator={selectedIndicator}
+				chaserName={displayChaserName}
+				targetName={displayTargetName}
 			/>
 		</div>
 	);
