@@ -45,7 +45,7 @@ export function GrowthRateControls({
   // Compact sidebar layout for desktop
   if (compact) {
     return (
-      <div className="card p-4 space-y-4">
+      <div className="card p-3 space-y-3">
         <div className="text-center">
           <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
             Growth Rates
@@ -181,7 +181,7 @@ export function GrowthRateControls({
 
   // Full layout for mobile/tablet
   return (
-    <div className="card p-4 sm:p-5 space-y-5">
+    <div className="card p-4 sm:p-4 space-y-4">
       <div className="text-center">
         <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
           Growth Rate Assumptions

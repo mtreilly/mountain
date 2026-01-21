@@ -120,7 +120,7 @@ export function ResultSummary({
 
 			{/* Stats row - compact horizontal layout */}
 			<div className="mt-3 pt-3 border-t border-surface-subtle">
-				<div className="grid grid-cols-3 gap-3 sm:gap-4">
+				<div className="grid grid-cols-3 gap-2 sm:gap-3">
 					<div className="min-w-0">
 						<div className="text-base sm:text-lg font-display font-bold text-ink tabular-nums">
 							{gap.toFixed(1)}×

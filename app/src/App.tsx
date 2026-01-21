@@ -613,7 +613,7 @@ export default function App() {
 	return (
 		<div className="min-h-screen bg-surface grain">
 			<Toaster theme={theme} position="bottom-right" closeButton richColors />
-				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
 				{/* Header - Compact */}
 				<AppHeader
 					comparisonMode={comparisonMode}
@@ -635,7 +635,7 @@ export default function App() {
 				{/* Main two-column layout for large screens */}
 				<div className="layout-two-col">
 					{/* Left column - Main content */}
-						<div className="space-y-3 sm:space-y-4">
+						<div className="space-y-2.5 sm:space-y-3">
 						{/* Mode toggle and Selectors */}
 							<SelectorsPanel
 								comparisonMode={comparisonMode}

@@ -36,7 +36,7 @@ export function AppHeader({
   disableShareActions?: boolean;
 }) {
   return (
-    <header className="mb-6 lg:mb-8 animate-fade-in-up">
+    <header className="mb-4 lg:mb-6 animate-fade-in-up">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-semibold tracking-tight text-ink">

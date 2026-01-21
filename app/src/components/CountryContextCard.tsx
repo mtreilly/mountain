@@ -56,7 +56,7 @@ export function CountryContextCard({
 			</div>
 
 			{/* Explanation */}
-			<p className="text-xs text-ink-muted leading-relaxed mb-3">
+			<p className="text-xs text-ink-muted leading-relaxed mb-2">
 				{adjustment.explanation}
 				{adjustment.source && (
 					<span className="text-ink-faint"> — {adjustment.source}</span>
@@ -64,7 +64,7 @@ export function CountryContextCard({
 			</p>
 
 			{/* Value comparison */}
-			<div className="flex items-center gap-3 text-xs mb-3 py-2 px-2.5 rounded-lg bg-surface/50 dark:bg-surface-dark/50">
+			<div className="flex items-center gap-2.5 text-xs mb-2 py-1.5 px-2 rounded-lg bg-surface/50 dark:bg-surface-dark/50">
 				<div className="flex-1">
 					<div className="text-ink-faint mb-0.5">Original</div>
 					<div
