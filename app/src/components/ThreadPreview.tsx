@@ -16,20 +16,15 @@ export function ThreadPreview({ cards, onCaptionChange }: ThreadPreviewProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Horizontal scroll container for card previews */}
-      <div className="overflow-x-auto pb-4 -mx-4 px-4">
-        <div className="flex gap-6" style={{ minWidth: "max-content" }}>
-          {cards.map((card) => (
-            <ThreadCard
-              key={card.index}
-              card={card}
-              scale={0.35}
-              onCaptionChange={onCaptionChange}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="space-y-4">
+      {/* Thread cards - vertical stack with two-column layout per card */}
+      {cards.map((card) => (
+        <ThreadCard
+          key={card.index}
+          card={card}
+          onCaptionChange={onCaptionChange}
+        />
+      ))}
 
       {/* Thread summary */}
       <div className="rounded-lg bg-surface p-4 border border-surface">
