@@ -15,6 +15,8 @@ export function GrowthSidebarContent({
   catchUpYears,
   onCatchUpYearsChange,
   contextCards,
+  showControls = true,
+  showCalculator = true,
 }: {
   compact?: boolean;
   chaserName: string;
@@ -28,30 +30,35 @@ export function GrowthSidebarContent({
   catchUpYears: number;
   onCatchUpYearsChange: (years: number) => void;
   contextCards?: ReactNode;
+  showControls?: boolean;
+  showCalculator?: boolean;
 }) {
   return (
     <>
-      <GrowthRateControls
-        chaserRate={chaserGrowthRate}
-        targetRate={targetGrowthRate}
-        onChaserRateChange={onChaserGrowthRateChange}
-        onTargetRateChange={onTargetGrowthRateChange}
-        chaserName={chaserName}
-        targetName={targetName}
-        compact={compact}
-      />
-      <GrowthCalculator
-        chaserName={chaserName}
-        targetName={targetName}
-        chaserValue={chaserValue}
-        targetValue={targetValue}
-        chaserGrowthRate={chaserGrowthRate}
-        targetGrowthRate={targetGrowthRate}
-        years={catchUpYears}
-        onYearsChange={onCatchUpYearsChange}
-      />
+      {showControls && (
+        <GrowthRateControls
+          chaserRate={chaserGrowthRate}
+          targetRate={targetGrowthRate}
+          onChaserRateChange={onChaserGrowthRateChange}
+          onTargetRateChange={onTargetGrowthRateChange}
+          chaserName={chaserName}
+          targetName={targetName}
+          compact={compact}
+        />
+      )}
+      {showCalculator && (
+        <GrowthCalculator
+          chaserName={chaserName}
+          targetName={targetName}
+          chaserValue={chaserValue}
+          targetValue={targetValue}
+          chaserGrowthRate={chaserGrowthRate}
+          targetGrowthRate={targetGrowthRate}
+          years={catchUpYears}
+          onYearsChange={onCatchUpYearsChange}
+        />
+      )}
       {contextCards}
     </>
   );
 }
-

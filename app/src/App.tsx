@@ -8,6 +8,8 @@ import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
 import { ExportModal } from "./components/ExportModal";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
+import { ShareCardModal } from "./components/ShareCardModal";
+import { GrowthRateBar } from "./components/GrowthRateBar";
 import { ImplicationsPanel } from "./components/ImplicationsPanel";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
@@ -23,6 +25,7 @@ import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
 import type { HeadlineData } from "./lib/headlineGenerator";
+import type { ShareCardParams } from "./lib/shareCardSvg";
 import {
 	DEFAULT_SHARE_STATE,
 	parseShareStateFromSearch,
@@ -78,6 +81,7 @@ export default function App() {
 		initialShareState.ih ?? 25,
 	);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -306,6 +310,46 @@ export default function App() {
 		appUrl,
 	]);
 
+	const shareCardParams: ShareCardParams | null = useMemo(() => {
+		if (!hasData) return null;
+		return {
+			chaserName: displayChaserName,
+			targetName: displayTargetName,
+			chaserCode: comparisonMode === "regions" ? chaserRegionCode : chaserIso,
+			targetCode: comparisonMode === "regions" ? targetRegionCode : targetIso,
+			metricLabel: displayMetricName,
+			metricUnit: displayMetricUnit,
+			projection,
+			convergenceYear,
+			yearsToConvergence,
+			currentGap: gap ?? 1,
+			chaserGrowth: chaserGrowthRate,
+			targetGrowth: targetGrowthRate,
+			targetMode: targetGrowthRate === 0 ? "static" : "growing",
+			theme,
+			siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
+			dataSource: comparisonMode === "regions" ? "OECD" : "World Bank",
+		};
+	}, [
+		hasData,
+		displayChaserName,
+		displayTargetName,
+		comparisonMode,
+		chaserRegionCode,
+		chaserIso,
+		targetRegionCode,
+		targetIso,
+		displayMetricName,
+		displayMetricUnit,
+		projection,
+		convergenceYear,
+		yearsToConvergence,
+		gap,
+		chaserGrowthRate,
+		targetGrowthRate,
+		theme,
+	]);
+
 	const countriesByIso3 = useMemo(() => {
 		const map: Record<string, { name: string }> = {};
 		for (const c of countries) map[c.iso_alpha3] = { name: c.name };
@@ -482,7 +526,7 @@ export default function App() {
 	return (
 		<div className="min-h-screen bg-surface grain">
 			<Toaster theme={theme} position="top-right" closeButton richColors />
-			<div className="max-w-8xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
 				{/* Header - Compact */}
 				<AppHeader
 					comparisonMode={comparisonMode}
@@ -491,6 +535,8 @@ export default function App() {
 					chartSvgRef={chartSvgRef}
 					headlineData={headlineData}
 					onOpenExportModal={() => setIsExportModalOpen(true)}
+					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
+					shareCardAvailable={shareCardParams !== null}
 					theme={theme}
 					onToggleTheme={toggleTheme}
 					printChaser={displayChaserName}
@@ -502,12 +548,12 @@ export default function App() {
 				{/* Main two-column layout for large screens */}
 				<div className="layout-two-col">
 					{/* Left column - Main content */}
-					<div className="space-y-4 sm:space-y-5">
+						<div className="space-y-3 sm:space-y-4">
 						{/* Mode toggle and Selectors */}
-						<SelectorsPanel
-							comparisonMode={comparisonMode}
-							onComparisonModeChange={setComparisonMode}
-							countries={countries}
+							<SelectorsPanel
+								comparisonMode={comparisonMode}
+								onComparisonModeChange={setComparisonMode}
+								countries={countries}
 							indicators={indicators}
 							indicatorsLoading={indicatorsLoading}
 							chaserIso={chaserIso}
@@ -520,13 +566,23 @@ export default function App() {
 							chaserRegionCode={chaserRegionCode}
 							targetRegionCode={targetRegionCode}
 							onChaserRegionCodeChange={setChaserRegionCode}
-							onTargetRegionCodeChange={setTargetRegionCode}
-							onSwapRegions={swapRegions}
-						/>
-						<DataStates
-							loading={dataLoading}
-							error={dataError}
-							metricName={metricName}
+								onTargetRegionCodeChange={setTargetRegionCode}
+								onSwapRegions={swapRegions}
+							/>
+							<div className="hidden lg:block no-print">
+								<GrowthRateBar
+									chaserName={displayChaserName}
+									targetName={displayTargetName}
+									chaserRate={chaserGrowthRate}
+									targetRate={targetGrowthRate}
+									onChaserRateChange={setChaserGrowthRate}
+									onTargetRateChange={setTargetGrowthRate}
+								/>
+							</div>
+							<DataStates
+								loading={dataLoading}
+								error={dataError}
+								metricName={metricName}
 							showMissingData={
 								comparisonMode === "countries" &&
 								chaserCountry != null &&
@@ -661,6 +717,7 @@ export default function App() {
 									catchUpYears={catchUpYears}
 									onCatchUpYearsChange={setCatchUpYears}
 									contextCards={contextCards}
+									showControls={false}
 								/>
 							</div>
 						)}
@@ -687,6 +744,15 @@ export default function App() {
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
+				onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
+				shareCardAvailable={shareCardParams !== null}
+			/>
+
+			{/* Share Card Modal */}
+			<ShareCardModal
+				isOpen={isShareCardModalOpen}
+				onClose={() => setIsShareCardModalOpen(false)}
+				shareCardParams={shareCardParams}
 			/>
 		</div>
 	);

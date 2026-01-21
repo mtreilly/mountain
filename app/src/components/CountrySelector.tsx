@@ -9,6 +9,7 @@ interface CountrySelectorProps {
   countries: Country[];
   excludeIso?: string;
   color?: "chaser" | "target";
+  dense?: boolean;
 }
 
 export function CountrySelector({
@@ -18,6 +19,7 @@ export function CountrySelector({
   countries,
   excludeIso,
   color = "chaser",
+  dense = false,
 }: CountrySelectorProps) {
   const [open, setOpen] = useState(false);
   const selectedCountry = useMemo(
@@ -37,12 +39,18 @@ export function CountrySelector({
   };
 
   const colors = colorConfig[color];
+  const labelPill =
+    color === "chaser"
+      ? "bg-chaser-light text-chaser"
+      : "bg-target-light text-target";
 
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">
-        {label}
-      </label>
+    <div className={dense ? "" : "space-y-1"}>
+      {!dense && (
+        <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">
+          {label}
+        </label>
+      )}
 
       <button
         type="button"
@@ -55,16 +63,25 @@ export function CountrySelector({
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label={`${label}: ${selectedCountry?.name ?? "Select a country"}`}
         className={[
-          "w-full px-3 py-2.5 text-left rounded-lg border transition-default",
+          "w-full px-3 text-left rounded-lg border transition-default",
           "bg-surface-raised flex items-center justify-between gap-2",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
           "shadow-sm hover:shadow",
           colors.border,
+          dense ? "py-2" : "py-2.5",
         ].join(" ")}
       >
         {selectedCountry ? (
           <div className="flex items-center gap-2 min-w-0 flex-1">
+            {dense && (
+              <span
+                className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider ${labelPill}`}
+              >
+                {label}
+              </span>
+            )}
             <span className="text-sm font-semibold text-ink truncate">
               {selectedCountry.name}
             </span>
@@ -109,4 +126,3 @@ export function CountrySelector({
     </div>
   );
 }
-
