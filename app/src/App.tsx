@@ -6,6 +6,7 @@ import { AppHeader } from "./components/AppHeader";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
 import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
+import { EmbedView } from "./components/EmbedView";
 import { ExportModal } from "./components/ExportModal";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
 import { ShareCardModal } from "./components/ShareCardModal";
@@ -28,6 +29,7 @@ import type { HeadlineData } from "./lib/headlineGenerator";
 import type { ShareCardParams } from "./lib/shareCardSvg";
 import {
 	DEFAULT_SHARE_STATE,
+	parseEmbedParams,
 	parseShareStateFromSearch,
 	type ShareState,
 	toSearchString,
@@ -40,6 +42,12 @@ export default function App() {
 			window.location.search,
 			DEFAULT_SHARE_STATE,
 		);
+	}, []);
+
+	// Parse embed parameters (separate from share state)
+	const embedParams = useMemo(() => {
+		if (typeof window === "undefined") return { embed: false, interactive: true, embedTheme: "auto" as const, height: 400 };
+		return parseEmbedParams(window.location.search);
 	}, []);
 
 	const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">(
@@ -257,6 +265,11 @@ export default function App() {
 	const appUrl = useMemo(() => {
 		if (typeof window === "undefined") return "";
 		return `${window.location.origin}${window.location.pathname}${toSearchString(shareState)}`;
+	}, [shareState]);
+
+	const ogImageUrl = useMemo(() => {
+		if (typeof window === "undefined") return "";
+		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
 	}, [shareState]);
 
 	const exportBasename = useMemo(() => {
@@ -514,6 +527,24 @@ export default function App() {
 		);
 	}
 
+	// Embed mode: render minimal chart-only view
+	if (embedParams.embed && hasData) {
+		return (
+			<EmbedView
+				shareState={shareState}
+				embedParams={embedParams}
+				chaserName={displayChaserName}
+				targetName={displayTargetName}
+				projection={projection}
+				convergenceYear={convergenceYear}
+				yearsToConvergence={yearsToConvergence}
+				milestones={milestones}
+				unit={displayMetricUnit}
+				resolvedTheme={theme}
+			/>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-surface grain">
 			<Toaster theme={theme} position="top-right" closeButton richColors />
@@ -729,6 +760,8 @@ export default function App() {
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
+				shareState={shareState}
+				ogImageUrl={ogImageUrl}
 			/>
 
 			{/* Share Card Modal */}

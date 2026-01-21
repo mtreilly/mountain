@@ -2,6 +2,7 @@ export type TargetMode = "growing" | "static";
 export type ViewMode = "chart" | "table";
 export type TemplateMode = "china" | "us" | "eu";
 export type ComparisonMode = "countries" | "regions";
+export type EmbedTheme = "light" | "dark" | "auto";
 
 export interface ShareState {
 	chaser: string;
@@ -22,6 +23,64 @@ export interface ShareState {
 	mode?: ComparisonMode; // "countries" (default) or "regions"
 	cr?: string; // Chaser region code (e.g., "UKC")
 	tr?: string; // Target region code (e.g., "UKI")
+}
+
+// Embed-specific parameters (parsed separately, not persisted to main app URL)
+export interface EmbedParams {
+	embed: boolean;
+	interactive: boolean;
+	embedTheme: EmbedTheme;
+	height: number; // Height in pixels (320-800)
+}
+
+export const DEFAULT_EMBED_PARAMS: EmbedParams = {
+	embed: false,
+	interactive: true,
+	embedTheme: "auto",
+	height: 400,
+};
+
+export function parseEmbedParams(search: string): EmbedParams {
+	const params = new URLSearchParams(
+		search.startsWith("?") ? search : `?${search}`,
+	);
+
+	const embed = params.get("embed") === "true";
+	const interactive = params.get("interactive") !== "false"; // default true
+	const themeRaw = params.get("embedTheme")?.toLowerCase();
+	const embedTheme: EmbedTheme =
+		themeRaw === "light" || themeRaw === "dark" ? themeRaw : "auto";
+	const heightRaw = Number.parseInt(params.get("h") || "", 10);
+	const height = Number.isFinite(heightRaw)
+		? Math.max(320, Math.min(800, heightRaw))
+		: 400;
+
+	return { embed, interactive, embedTheme, height };
+}
+
+export function toEmbedSearchParams(
+	state: ShareState,
+	embedParams: Partial<EmbedParams> = {},
+): URLSearchParams {
+	const params = toSearchParams(state);
+	params.set("embed", "true");
+	if (embedParams.interactive === false) params.set("interactive", "false");
+	if (embedParams.embedTheme && embedParams.embedTheme !== "auto") {
+		params.set("embedTheme", embedParams.embedTheme);
+	}
+	if (embedParams.height && embedParams.height !== 400) {
+		params.set("h", String(embedParams.height));
+	}
+	return params;
+}
+
+export function toEmbedSearchString(
+	state: ShareState,
+	embedParams: Partial<EmbedParams> = {},
+): string {
+	const params = toEmbedSearchParams(state, embedParams);
+	const s = params.toString();
+	return s ? `?${s}` : "";
 }
 
 export const DEFAULT_SHARE_STATE: ShareState = {
