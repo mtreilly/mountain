@@ -186,7 +186,8 @@ export function MetricSelector({
                   onMouseEnter={() => setActiveIndex(idx)}
                   onClick={() => handleSelect(indicator.code)}
                   className={[
-                    "w-full px-4 py-3 text-left transition-default",
+                    "w-full px-4 py-3 text-left transition-default focus-ring",
+                    "focus-visible:bg-surface-sunken",
                     active ? "bg-surface-sunken" : "",
                     selected ? "bg-amber-50 dark:bg-amber-950/30" : "",
                   ].join(" ")}
