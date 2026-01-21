@@ -132,7 +132,7 @@ export async function copyChartPngToClipboard(
 
 // Share Card Export Functions
 
-async function svgStringToPngBlob(
+export async function svgStringToPngBlob(
   svgString: string,
   dimensions: { width: number; height: number },
   pixelRatio = 2

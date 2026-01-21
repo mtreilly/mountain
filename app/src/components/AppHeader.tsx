@@ -10,6 +10,8 @@ export function AppHeader({
   headlineData,
   onOpenExportModal,
   onOpenShareCardModal,
+  onOpenCitationPanel,
+  onOpenThreadGenerator,
   shareCardAvailable,
   theme,
   onToggleTheme,
@@ -23,6 +25,8 @@ export function AppHeader({
   headlineData?: HeadlineData;
   onOpenExportModal: () => void;
   onOpenShareCardModal?: () => void;
+  onOpenCitationPanel?: () => void;
+  onOpenThreadGenerator?: () => void;
   shareCardAvailable?: boolean;
   theme: "light" | "dark";
   onToggleTheme: () => void;
@@ -78,10 +82,22 @@ export function AppHeader({
             </svg>
             Share Card
           </button>
+          <button
+            type="button"
+            disabled={!shareCardAvailable || disableShareActions}
+            onClick={onOpenThreadGenerator}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-medium hover:bg-[var(--color-accent)]/10 transition-default focus-ring disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            Thread
+          </button>
           <ShareMenu
             disabled={disableShareActions}
             headlineData={headlineData}
             onOpenExportModal={onOpenExportModal}
+            onOpenCitationPanel={onOpenCitationPanel}
           />
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
