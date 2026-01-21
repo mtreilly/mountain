@@ -59,6 +59,7 @@ export function ExportModal({
   onDownloadReportJson,
   shareState,
   ogImageUrl,
+  onOpenCitationPanel,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -70,6 +71,7 @@ export function ExportModal({
   onDownloadReportJson?: () => void | Promise<void>;
   shareState?: ShareState;
   ogImageUrl?: string;
+  onOpenCitationPanel?: () => void;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +134,7 @@ export function ExportModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-4">
           {/* Data section */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
@@ -180,6 +182,34 @@ export function ExportModal({
                   shareState={shareState}
                   ogImageUrl={ogImageUrl}
                 />
+              </div>
+            </section>
+          )}
+
+          {/* Cite section */}
+          {onOpenCitationPanel && (
+            <section>
+              <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+                Citation
+              </h3>
+              <div className="p-4 rounded-lg border border-surface bg-surface">
+                <p className="text-sm text-ink-muted mb-3">
+                  Generate properly formatted citations for academic papers, blog posts, and publications.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    onOpenCitationPanel();
+                  }}
+                  className="w-full px-4 py-2.5 rounded-lg border border-surface bg-surface-raised text-ink text-sm font-medium hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Open Citation Panel
+                  <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
+                </button>
               </div>
             </section>
           )}
