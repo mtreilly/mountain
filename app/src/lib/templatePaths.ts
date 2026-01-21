@@ -141,6 +141,8 @@ export function buildTemplateMapping(params: {
 
   pooledPairs.sort((a, b) => a.gdp - b.gdp);
   const points = dedupeByGdp(pooledPairs);
+  const gdpMin = points.length ? points[0].gdp : null;
+  const gdpMax = points.length ? points[points.length - 1].gdp : null;
 
   const predict = (gdp: number) => {
     if (metricTransform === "loglog") {
@@ -149,7 +151,7 @@ export function buildTemplateMapping(params: {
     return interpolateInLogX(points, gdp, lerp);
   };
 
-  return { points, predict };
+  return { points, predict, gdpMin, gdpMax };
 }
 
 export function estimateFromTemplate(params: {
@@ -185,4 +187,3 @@ export function estimateFromTemplate(params: {
   if (clampRange) return clamp(estimated, clampRange.min, clampRange.max);
   return estimated;
 }
-

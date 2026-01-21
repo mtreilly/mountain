@@ -35,7 +35,7 @@ export function RegionalImplicationsPanel({
   const chaserRegion = getRegionByCode(chaserCode);
   const year = baseYear + horizonYears;
   const gdpFuture = gdpCurrent
-    ? gdpCurrent * Math.pow(1 + chaserGrowthRate / 100, horizonYears)
+    ? gdpCurrent * Math.pow(1 + chaserGrowthRate, horizonYears)
     : null;
 
   // Find regions with similar GDP per capita (within ±20%)

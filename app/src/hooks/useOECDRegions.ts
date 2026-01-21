@@ -8,6 +8,8 @@ import {
   getLatestRegionData,
   getRegionDataSeries,
 } from "../lib/oecdRegions";
+import type { Milestone } from "../lib/convergence";
+import { calculateMilestones } from "../lib/convergence";
 
 interface UseOECDRegionsResult {
   /** All available TL2 regions */
@@ -112,13 +114,6 @@ interface ProjectionPoint {
   target: number;
 }
 
-interface Milestone {
-  year: number;
-  percent: number;
-  chaserValue: number;
-  targetValue: number;
-}
-
 interface UseRegionalConvergenceResult {
   /** Chaser region info */
   chaserRegion: OECDRegion | undefined;
@@ -128,10 +123,10 @@ interface UseRegionalConvergenceResult {
   chaserValue: number | null;
   /** Current GDP per capita of target */
   targetValue: number | null;
-  /** Gap as percentage */
+  /** Gap as ratio (target/chaser) */
   gap: number | null;
   /** Years until convergence */
-  yearsToConvergence: number | null;
+  yearsToConvergence: number;
   /** Year of convergence */
   convergenceYear: number | null;
   /** Projection data for charting */
@@ -165,7 +160,7 @@ export function useRegionalConvergence({
         chaserValue: null,
         targetValue: null,
         gap: null,
-        yearsToConvergence: null,
+        yearsToConvergence: Infinity,
         convergenceYear: null,
         projection: [],
         milestones: [],
@@ -175,70 +170,41 @@ export function useRegionalConvergence({
 
     const chaserValue = chaserLatest.gdpPerCapita;
     const targetValue = targetLatest.gdpPerCapita;
-    const gap = ((targetValue - chaserValue) / chaserValue) * 100;
+    const gap = targetValue / chaserValue;
 
     // Calculate convergence
-    const growthDiff = chaserGrowthRate - targetGrowthRate;
-    let yearsToConvergence: number | null = null;
+    let yearsToConvergence = Infinity;
     let convergenceYear: number | null = null;
 
-    if (growthDiff > 0 && chaserValue < targetValue) {
+    if (chaserValue >= targetValue) {
+      yearsToConvergence = 0;
+      convergenceYear = baseYear;
+    } else if (chaserGrowthRate > targetGrowthRate) {
       const ratio = targetValue / chaserValue;
-      yearsToConvergence = Math.ceil(
-        Math.log(ratio) / Math.log(1 + growthDiff / 100)
-      );
-      convergenceYear = baseYear + yearsToConvergence;
+      const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);
+      if (growthRatio > 1) {
+        yearsToConvergence = Math.log(ratio) / Math.log(growthRatio);
+        convergenceYear = Math.round(baseYear + yearsToConvergence);
+      }
     }
 
     // Generate projection
-    const maxYears = yearsToConvergence
-      ? Math.min(yearsToConvergence + 10, 100)
-      : 50;
+    const maxYears = Math.min(
+      Number.isFinite(yearsToConvergence) ? Math.ceil(yearsToConvergence) + 20 : 100,
+      150
+    );
     const projection: ProjectionPoint[] = [];
 
     for (let y = 0; y <= maxYears; y++) {
       const year = baseYear + y;
-      const chaser = chaserValue * (1 + chaserGrowthRate / 100) ** y;
-      const target = targetValue * (1 + targetGrowthRate / 100) ** y;
-      projection.push({ year, chaser, target });
+      const chaser = chaserValue * Math.pow(1 + chaserGrowthRate, y);
+      const target = targetValue * Math.pow(1 + targetGrowthRate, y);
+      projection.push({ year, chaser: Math.round(chaser), target: Math.round(target) });
 
-      // Stop if chaser has significantly passed target
-      if (chaser > target * 1.2) break;
+      if (chaser >= target) break;
     }
 
-    // Calculate milestones (25%, 50%, 75% of gap closed)
-    const milestones: Milestone[] = [];
-    const initialGap = targetValue - chaserValue;
-
-    if (initialGap > 0 && growthDiff > 0) {
-      for (const percent of [25, 50, 75]) {
-        const targetGapClosed = (percent / 100) * initialGap;
-        const targetChaserValue = chaserValue + targetGapClosed;
-
-        // Find year when chaser reaches this value
-        // chaserValue * (1 + rate)^y = targetChaserValue
-        // y = log(targetChaserValue / chaserValue) / log(1 + rate)
-        const yearsToMilestone = Math.ceil(
-          Math.log(targetChaserValue / chaserValue) /
-            Math.log(1 + chaserGrowthRate / 100)
-        );
-
-        const milestoneYear = baseYear + yearsToMilestone;
-        const chaserAtMilestone =
-          chaserValue * (1 + chaserGrowthRate / 100) ** yearsToMilestone;
-        const targetAtMilestone =
-          targetValue * (1 + targetGrowthRate / 100) ** yearsToMilestone;
-
-        if (yearsToMilestone <= maxYears) {
-          milestones.push({
-            year: milestoneYear,
-            percent,
-            chaserValue: chaserAtMilestone,
-            targetValue: targetAtMilestone,
-          });
-        }
-      }
-    }
+    const milestones = calculateMilestones(projection);
 
     return {
       chaserRegion,
