@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import type { ShareState } from "../lib/shareState";
+import { EmbedCodeGenerator } from "./EmbedCodeGenerator";
 
 interface DataExportCardProps {
   label: string;
@@ -55,6 +57,8 @@ export function ExportModal({
   onDownloadObservedCsv,
   onDownloadProjectionCsv,
   onDownloadReportJson,
+  shareState,
+  ogImageUrl,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -64,6 +68,8 @@ export function ExportModal({
   onDownloadObservedCsv?: () => void | Promise<void>;
   onDownloadProjectionCsv?: () => void | Promise<void>;
   onDownloadReportJson?: () => void | Promise<void>;
+  shareState?: ShareState;
+  ogImageUrl?: string;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -162,6 +168,21 @@ export function ExportModal({
               />
             </div>
           </section>
+
+          {/* Embed section */}
+          {shareState && (
+            <section>
+              <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+                Embed
+              </h3>
+              <div className="p-4 rounded-lg border border-surface bg-surface">
+                <EmbedCodeGenerator
+                  shareState={shareState}
+                  ogImageUrl={ogImageUrl}
+                />
+              </div>
+            </section>
+          )}
 
           {/* Settings section */}
           <section>
