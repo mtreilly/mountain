@@ -41,7 +41,7 @@ export function SelectorsPanel({
   onSwapRegions: () => void;
 }) {
   return (
-    <div className="animate-fade-in-up stagger-1 no-print space-y-3">
+    <div className="animate-fade-in-up stagger-1 no-print space-y-2">
       <div className="flex items-center justify-between lg:hidden">
         <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
           <button
