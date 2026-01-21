@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Indicator } from "../types";
 import { useBatchData } from "../hooks/useBatchData";
-import { formatMetricValue } from "../lib/convergence";
+import { formatMetricValue, formatNumber } from "../lib/convergence";
 import {
   IMPLICATION_METRICS,
   IMPLICATION_METRIC_CODES,
@@ -10,6 +10,9 @@ import {
   buildTemplateMapping,
   estimateFromTemplate,
 } from "../lib/templatePaths";
+import { calculateCagr, computeTotals, projectValue } from "../lib/implicationsMath";
+
+type PopAssumption = "trend" | "static";
 
 export function ImplicationsPanel({
   chaserIso,
@@ -35,9 +38,21 @@ export function ImplicationsPanel({
   enabled: boolean;
 }) {
   const templateDef = TEMPLATE_PATHS.find((t) => t.id === template) ?? TEMPLATE_PATHS[0];
-  const countries = useMemo(() => [chaserIso, ...templateDef.iso3], [chaserIso, templateDef.iso3]);
+  const countries = useMemo(() => {
+    const list = [chaserIso, ...templateDef.iso3];
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const iso of list) {
+      const cleaned = iso.trim().toUpperCase();
+      if (!cleaned) continue;
+      if (seen.has(cleaned)) continue;
+      seen.add(cleaned);
+      out.push(cleaned);
+    }
+    return out;
+  }, [chaserIso, templateDef.iso3]);
   const indicators = useMemo(
-    () => ["GDP_PCAP_PPP", ...IMPLICATION_METRIC_CODES],
+    () => ["GDP_PCAP_PPP", "POPULATION", ...IMPLICATION_METRIC_CODES],
     []
   );
 
@@ -52,6 +67,19 @@ export function ImplicationsPanel({
   const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, horizonYears);
 
   const gdpByIso = useMemo(() => data["GDP_PCAP_PPP"] || {}, [data]);
+  const popSeries = useMemo(() => data["POPULATION"]?.[chaserIso] || [], [chaserIso, data]);
+
+  const popCurrent = useMemo(() => getLatestValue("POPULATION", chaserIso), [chaserIso, getLatestValue]);
+  const popTrendRate = useMemo(() => {
+    const rate = calculateCagr({ series: popSeries, lookbackYears: 10 });
+    if (rate == null) return 0;
+    return Math.max(-0.03, Math.min(0.05, rate));
+  }, [popSeries]);
+  const [popAssumption, setPopAssumption] = useState<PopAssumption>("trend");
+
+  const popGrowthRate = popAssumption === "trend" ? popTrendRate : 0;
+  const popFuture =
+    popCurrent != null ? projectValue(popCurrent, popGrowthRate, horizonYears) : null;
 
   const rows = useMemo(() => {
     const out: Array<{
@@ -61,6 +89,8 @@ export function ImplicationsPanel({
       implied: number | null;
       deltaLabel: string | null;
       note: string | null;
+      currentTotal: { unit: string; value: number } | null;
+      impliedTotal: { unit: string; value: number } | null;
     }> = [];
 
     for (const metric of IMPLICATION_METRICS) {
@@ -87,6 +117,15 @@ export function ImplicationsPanel({
       });
 
       const current = chaserCurrentMetric;
+      const totals = computeTotals({
+        code: metric.code,
+        currentMetric: current,
+        impliedMetric: implied,
+        popCurrent,
+        popFuture,
+        gdpPcapCurrent: gdpCurrent,
+        gdpPcapFuture: gdpFuture,
+      });
 
       const isPercent = (indicator?.unit || "").toLowerCase().includes("percent");
       const deltaLabel =
@@ -98,10 +137,23 @@ export function ImplicationsPanel({
               ? `${implied >= current ? "+" : ""}${(((implied - current) / current) * 100).toFixed(0)}%`
               : null;
 
-      const note =
-        implied != null && current == null
-          ? "Using template level (no current local baseline)."
-          : null;
+      const noteParts: string[] = [];
+      if (implied != null && current == null) {
+        noteParts.push("Using template level (no current local baseline).");
+      }
+      if (mapping.gdpMin != null && mapping.gdpMax != null) {
+        const outOfRange =
+          gdpCurrent < mapping.gdpMin ||
+          gdpCurrent > mapping.gdpMax ||
+          gdpFuture < mapping.gdpMin ||
+          gdpFuture > mapping.gdpMax;
+        if (outOfRange) {
+          noteParts.push("Outside template GDP range; estimate is capped to endpoints.");
+        }
+        } else {
+          noteParts.push("Not enough template data for this metric.");
+        }
+      const note = noteParts.length ? noteParts.join(" ") : null;
 
       out.push({
         indicator,
@@ -110,13 +162,17 @@ export function ImplicationsPanel({
         implied,
         deltaLabel,
         note,
+        currentTotal: totals.currentTotal,
+        impliedTotal: totals.impliedTotal,
       });
     }
 
     return out;
-  }, [chaserIso, data, gdpByIso, gdpCurrent, gdpFuture, getLatestValue, indicatorByCode, templateDef.iso3]);
+  }, [chaserIso, data, gdpByIso, gdpCurrent, gdpFuture, getLatestValue, indicatorByCode, popCurrent, popFuture, templateDef.iso3]);
 
   const hasAny = rows.some((r) => r.implied != null);
+
+  const popLabel = popAssumption === "trend" ? "Population: 10y trend" : "Population: static";
 
   return (
     <div className="card p-4">
@@ -172,9 +228,54 @@ export function ImplicationsPanel({
         </div>
       </div>
 
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setPopAssumption("trend")}
+            className={[
+              "px-2.5 py-1 text-xs font-medium transition-default",
+              popAssumption === "trend"
+                ? "bg-surface-raised text-ink"
+                : "text-ink-muted hover:bg-surface-raised/60",
+            ].join(" ")}
+          >
+            Pop trend
+          </button>
+          <button
+            type="button"
+            onClick={() => setPopAssumption("static")}
+            className={[
+              "px-2.5 py-1 text-xs font-medium transition-default",
+              popAssumption === "static"
+                ? "bg-surface-raised text-ink"
+                : "text-ink-muted hover:bg-surface-raised/60",
+            ].join(" ")}
+          >
+            Pop static
+          </button>
+        </div>
+        {popAssumption === "trend" && (
+          <div className="text-[11px] text-ink-faint">
+            {popTrendRate >= 0 ? "+" : ""}
+            {(popTrendRate * 100).toFixed(2)}%/yr
+          </div>
+        )}
+      </div>
+
       <div className="mt-3 text-[11px] text-ink-faint">
         {chaserName} GDP/cap path: {formatMetricValue(gdpCurrent, "int$")} →{" "}
         {formatMetricValue(gdpFuture, "int$")}
+      </div>
+      <div className="mt-1 text-[11px] text-ink-faint">
+        Totals assume {popLabel}
+        {popCurrent != null && (
+          <>
+            {" · "}
+            Pop {formatNumber(Math.round(popCurrent))} →{" "}
+            {popFuture != null ? formatNumber(Math.round(popFuture)) : "—"}
+          </>
+        )}
       </div>
 
       {loading && (
@@ -217,6 +318,14 @@ export function ImplicationsPanel({
                 {r.deltaLabel && (
                   <div className="text-[11px] text-ink-faint">{r.deltaLabel}</div>
                 )}
+                {(r.currentTotal || r.impliedTotal) && (
+                  <div className="text-[11px] text-ink-faint mt-0.5">
+                    Total{" "}
+                    {r.currentTotal ? formatTotal(r.currentTotal) : "—"}
+                    <span className="mx-1">→</span>
+                    {r.impliedTotal ? formatTotal(r.impliedTotal) : "—"}
+                  </div>
+                )}
               </div>
             </div>
             {r.note && <div className="mt-1 text-[11px] text-ink-faint">{r.note}</div>}
@@ -229,4 +338,14 @@ export function ImplicationsPanel({
       </p>
     </div>
   );
+}
+
+function formatTotal(t: { unit: string; value: number }) {
+  if (!Number.isFinite(t.value)) return "—";
+  if (t.unit === "persons") return formatNumber(t.value);
+  if (t.unit === "toe") return `${formatNumber(t.value)} toe`;
+  if (t.unit === "TWh") return `${t.value.toFixed(t.value >= 10 ? 0 : 1)} TWh`;
+  if (t.unit === "MtCO2") return `${t.value.toFixed(t.value >= 10 ? 0 : 1)} MtCO₂`;
+  if (t.unit === "int$") return `$${formatNumber(t.value)}`;
+  return `${formatNumber(t.value)} ${t.unit}`;
 }
