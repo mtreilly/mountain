@@ -83,6 +83,11 @@ This repo already uses an offline ingestion pattern:
 
 We should follow the same approach for energy-by-source: add a `scripts/fetch-owid-energy.ts` that streams OWID energy CSV, maps selected columns to indicator codes, and prints SQL inserts.
 
+### Future-proofing (high priority)
+- Pin external datasets to a specific version (Git commit SHA or tagged release) rather than tracking `master` by default. Record this in `data_points.source_vintage`.
+- Keep the ingestion scripts strict about required columns, but tolerant of extra columns (OWID adds columns over time).
+- Prefer sources that are: (1) open and linkable, (2) stable URLs, (3) widely used in research/media, and (4) consistently country-coded (ISO3).
+
 ### Electricity by source (TWh)
 Best sources:
 - Our World in Data energy dataset (often Ember/IEA/EIA/EIA-backed): electricity generation by source by country-year.
@@ -94,6 +99,9 @@ Use cases:
 - Validation/benchmarking of implied totals.
 - Optional: show current mix and what “source split” looks like today vs. implied total.
 
+Recommended choice:
+- Use OWID energy as the default “observed source mix” dataset because it is open, broad coverage, and easy to ingest as CSV like our OWID CO₂ pipeline.
+
 ### Installed capacity by source (GW)
 Best sources:
 - IRENA Renewable Capacity Statistics (solar/wind by country-year; typically published as downloadable spreadsheets/CSVs rather than a simple unauthenticated API).
@@ -104,6 +112,9 @@ Note: OWID’s `owid-energy-data.csv` is primarily energy (TWh) and per-capita/s
 Use cases:
 - Ground “equivalents” in real country baselines (e.g., “you’d need +X× your current wind fleet”).
 
+Recommended choice:
+- Add IRENA solar/wind capacity as the first “capacity baseline” step because it unlocks a very compelling user-facing message (“+X× today’s fleet”) while keeping scope limited to renewables.
+
 ### Nuclear & coal plant/unit counts
 Best sources:
 - IAEA PRIS (reactor-level nuclear data: unit counts and capacities; confirm export/API terms).
@@ -112,6 +123,9 @@ Best sources:
 Use cases:
 - More realistic plant equivalents (e.g., use typical unit sizes per region).
 - Optional: “under construction” and retirement dynamics.
+
+Recommended choice:
+- Defer plant/unit ingestion until after the OWID+IRENA pipeline is stable; keep nuclear/coal as “1‑GW plant equivalents” for MVP. Add GEM/PRIS only if we want unit-level storytelling and are comfortable with ongoing data maintenance and license diligence.
 
 ### Housing stock / household size
 Best sources:
@@ -132,6 +146,7 @@ Use cases:
 3) **Source precedence rules**: if we have both WB electricity per-cap and OWID electricity totals, which is “truth” for each view?
 4) **Update cadence**: how often we regenerate/import `data-import-fixed.sql` and how we record `source_vintage` for reproducibility.
 5) **Assumptions registry**: a single place to define/display defaults (CFs, panel watts, turbine MW, household size), including rationale and how users can override.
+6) **Version pinning policy**: do we pin to a commit by default and bump intentionally, or always track latest and alert on schema changes?
 
 ## Visual Design Plan (compelling, minimal clutter)
 ### Tier 1: “Big-number” summary (within Implications card)
@@ -156,6 +171,10 @@ Make the numbers feel real by comparing to known baselines:
 - A toggle for “Show per-year build rate” vs “Total change”.
 - A toggle for “Capacity view (GW)” vs “Energy view (TWh/year)” for electricity.
 
+### Most interesting UX extension (recommended)
+- Add an optional “**technology mix**” control (presets + custom sliders) that lets users allocate ΔTWh across solar/wind/nuclear/coal and converts that into build rates (GW/yr, plants/yr, turbines/yr, panels/yr).
+- Add “**pace realism**” context: compare required build rate to the country’s historical max 5-year build pace (computed from observed OWID/IRENA series where available).
+
 ## Engineering Roadmap
 ### Phase 1 (done / immediate tweaks)
 - Wind equivalents included in Electricity buildout.
@@ -166,6 +185,9 @@ Make the numbers feel real by comparing to known baselines:
   - Electricity generation by source (TWh)
   - Installed capacity by source (GW) where available
 - Add “baseline multipliers”: implied delta expressed as “× current solar/wind capacity” and “× current generation”.
+
+Recommended approach:
+- Implement OWID energy ingestion first (TWh by source). Then add IRENA solar/wind capacity ingestion for “× today’s fleet” visuals.
 
 ### Phase 3 (plant/unit realism)
 - Add optional nuclear/coal unit sources (IAEA PRIS / GEM).

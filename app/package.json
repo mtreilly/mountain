@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "pnpm build && concurrently -k -n wrangler,vite -c blue,green \"pnpm pages:dev\" \"pnpm dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "tsx scripts/test.ts",
@@ -30,6 +31,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
