@@ -231,10 +231,6 @@ export default function App() {
 	const showImplications = hasData && indicatorCode === "GDP_PCAP_PPP";
 
 	const chartSvgRef = useRef<SVGSVGElement>(null);
-	const [chartAvailable, setChartAvailable] = useState(false);
-	useEffect(() => {
-		setChartAvailable(chartSvgRef.current != null);
-	}, [view, hasData]);
 	const lastSyncedSearchRef = useRef<string | null>(null);
 	useEffect(() => {
 		const nextSearch = toSearchString(shareState);
@@ -256,11 +252,6 @@ export default function App() {
 	const shareUrl = useMemo(() => {
 		if (typeof window === "undefined") return "";
 		return `${window.location.origin}/share${toSearchString(shareState)}`;
-	}, [shareState]);
-
-	const ogImageUrl = useMemo(() => {
-		if (typeof window === "undefined") return "";
-		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
 	}, [shareState]);
 
 	const appUrl = useMemo(() => {
@@ -531,8 +522,6 @@ export default function App() {
 				<AppHeader
 					comparisonMode={comparisonMode}
 					shareUrl={shareUrl}
-					chartAvailable={chartAvailable}
-					chartSvgRef={chartSvgRef}
 					headlineData={headlineData}
 					onOpenExportModal={() => setIsExportModalOpen(true)}
 					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
@@ -731,10 +720,6 @@ export default function App() {
 			<ExportModal
 				isOpen={isExportModalOpen}
 				onClose={() => setIsExportModalOpen(false)}
-				chartSvgRef={chartSvgRef}
-				chartAvailable={chartAvailable}
-				ogImageUrl={ogImageUrl}
-				exportBasename={exportBasename}
 				baseYear={baseYear}
 				onBaseYearChange={(year) => {
 					if (!Number.isFinite(year)) return;
@@ -744,8 +729,6 @@ export default function App() {
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
-				onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
-				shareCardAvailable={shareCardParams !== null}
 			/>
 
 			{/* Share Card Modal */}
