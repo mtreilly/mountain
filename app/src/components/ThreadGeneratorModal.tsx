@@ -37,128 +37,97 @@ export function ThreadGeneratorModal({
 }: ThreadGeneratorModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(
-    shareCardParams?.theme ?? "light"
+  const initialTheme: "light" | "dark" = shareCardParams?.theme ?? "light";
+  const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(initialTheme);
+
+  const buildCards = useCallback(
+    (theme: "light" | "dark") => {
+      if (!shareCardParams) return [];
+
+      const chaserValue = shareCardParams.projection[0]?.chaser ?? 1;
+      const targetValue = shareCardParams.projection[0]?.target ?? 2;
+
+      const sensitivity = calculateSensitivityScenarios({
+        chaserValue,
+        targetValue,
+        chaserGrowthRate: shareCardParams.chaserGrowth,
+        targetGrowthRate: shareCardParams.targetGrowth,
+        baseYear,
+      });
+
+      const captionContext = {
+        chaserName: shareCardParams.chaserName,
+        targetName: shareCardParams.targetName,
+        yearsToConvergence: shareCardParams.yearsToConvergence,
+        convergenceYear: shareCardParams.convergenceYear,
+        chaserGrowthRate: shareCardParams.chaserGrowth,
+        targetGrowthRate: shareCardParams.targetGrowth,
+        optimisticYears: sensitivity.optimistic.yearsToConvergence,
+        pessimisticYears: sensitivity.pessimistic.yearsToConvergence,
+        historicalData,
+        implicationsData,
+        appUrl,
+      };
+
+      const captions = generateCaptions(captionContext);
+
+      const mainCardSvg = generateShareCardSvg({
+        ...shareCardParams,
+        theme,
+        dimensions: SHARE_CARD_SIZES.twitter,
+      });
+
+      const sensitivityCardSvg = generateSensitivityCardSvg({
+        chaserName: shareCardParams.chaserName,
+        targetName: shareCardParams.targetName,
+        chaserValue,
+        targetValue,
+        metricUnit: shareCardParams.metricUnit,
+        sensitivity,
+        baseYear,
+        theme,
+        siteUrl: shareCardParams.siteUrl,
+        dataSource: shareCardParams.dataSource,
+      });
+
+      const historicalCardSvg = historicalData
+        ? generateHistoricalCardSvg({
+            chaserName: shareCardParams.chaserName,
+            targetName: shareCardParams.targetName,
+            historicalData,
+            metricUnit: shareCardParams.metricUnit,
+            theme,
+            siteUrl: shareCardParams.siteUrl,
+            dataSource: shareCardParams.dataSource,
+          })
+        : generatePlaceholderSvg("Historical Context", "Historical data not available", theme);
+
+      const implicationsCardSvg = implicationsData
+        ? generateImplicationsCardSvg({
+            chaserName: shareCardParams.chaserName,
+            implicationsData,
+            horizonYear: baseYear + horizonYears,
+            theme,
+            siteUrl: shareCardParams.siteUrl,
+            dataSource: shareCardParams.dataSource,
+          })
+        : generatePlaceholderSvg(
+            "Implications Summary",
+            "Implications data not available (requires GDP per capita metric)",
+            theme,
+          );
+
+      return [
+        { type: "main", svgString: mainCardSvg, caption: captions[0], index: 1 },
+        { type: "sensitivity", svgString: sensitivityCardSvg, caption: captions[1], index: 2 },
+        { type: "historical", svgString: historicalCardSvg, caption: captions[2], index: 3 },
+        { type: "implications", svgString: implicationsCardSvg, caption: captions[3], index: 4 },
+      ] satisfies ThreadCard[];
+    },
+    [appUrl, baseYear, historicalData, horizonYears, implicationsData, shareCardParams],
   );
-  const [cards, setCards] = useState<ThreadCard[]>([]);
-  const [regenerateKey, setRegenerateKey] = useState(0);
 
-  // Update theme when params change
-  useEffect(() => {
-    if (shareCardParams?.theme) {
-      setSelectedTheme(shareCardParams.theme);
-    }
-  }, [shareCardParams?.theme]);
-
-  // Generate all cards when modal opens or theme/regenerateKey changes
-  useEffect(() => {
-    if (!isOpen || !shareCardParams) {
-      setCards([]);
-      return;
-    }
-
-    const chaserValue = shareCardParams.projection[0]?.chaser ?? 1;
-    const targetValue = shareCardParams.projection[0]?.target ?? 2;
-
-    // Calculate sensitivity scenarios
-    const sensitivity = calculateSensitivityScenarios({
-      chaserValue,
-      targetValue,
-      chaserGrowthRate: shareCardParams.chaserGrowth,
-      targetGrowthRate: shareCardParams.targetGrowth,
-      baseYear,
-    });
-
-    // Generate caption context
-    const captionContext = {
-      chaserName: shareCardParams.chaserName,
-      targetName: shareCardParams.targetName,
-      yearsToConvergence: shareCardParams.yearsToConvergence,
-      convergenceYear: shareCardParams.convergenceYear,
-      chaserGrowthRate: shareCardParams.chaserGrowth,
-      targetGrowthRate: shareCardParams.targetGrowth,
-      optimisticYears: sensitivity.optimistic.yearsToConvergence,
-      pessimisticYears: sensitivity.pessimistic.yearsToConvergence,
-      historicalData,
-      implicationsData,
-      appUrl,
-    };
-
-    const captions = generateCaptions(captionContext);
-
-    // Card 1: Main convergence chart (reuse existing share card)
-    const mainCardSvg = generateShareCardSvg({
-      ...shareCardParams,
-      theme: selectedTheme,
-      dimensions: SHARE_CARD_SIZES.twitter,
-    });
-
-    // Card 2: Sensitivity analysis
-    const sensitivityCardSvg = generateSensitivityCardSvg({
-      chaserName: shareCardParams.chaserName,
-      targetName: shareCardParams.targetName,
-      chaserValue,
-      targetValue,
-      metricUnit: shareCardParams.metricUnit,
-      sensitivity,
-      baseYear,
-      theme: selectedTheme,
-      siteUrl: shareCardParams.siteUrl,
-      dataSource: shareCardParams.dataSource,
-    });
-
-    // Card 3: Historical context
-    const historicalCardSvg = historicalData
-      ? generateHistoricalCardSvg({
-          chaserName: shareCardParams.chaserName,
-          targetName: shareCardParams.targetName,
-          historicalData,
-          metricUnit: shareCardParams.metricUnit,
-          theme: selectedTheme,
-          siteUrl: shareCardParams.siteUrl,
-          dataSource: shareCardParams.dataSource,
-        })
-      : generatePlaceholderSvg(
-          "Historical Context",
-          "Historical data not available",
-          selectedTheme
-        );
-
-    // Card 4: Implications summary
-    const implicationsCardSvg = implicationsData
-      ? generateImplicationsCardSvg({
-          chaserName: shareCardParams.chaserName,
-          implicationsData,
-          horizonYear: baseYear + horizonYears,
-          theme: selectedTheme,
-          siteUrl: shareCardParams.siteUrl,
-          dataSource: shareCardParams.dataSource,
-        })
-      : generatePlaceholderSvg(
-          "Implications Summary",
-          "Implications data not available (requires GDP per capita metric)",
-          selectedTheme
-        );
-
-    const newCards: ThreadCard[] = [
-      { type: "main", svgString: mainCardSvg, caption: captions[0], index: 1 },
-      { type: "sensitivity", svgString: sensitivityCardSvg, caption: captions[1], index: 2 },
-      { type: "historical", svgString: historicalCardSvg, caption: captions[2], index: 3 },
-      { type: "implications", svgString: implicationsCardSvg, caption: captions[3], index: 4 },
-    ];
-
-    setCards(newCards);
-  }, [
-    isOpen,
-    shareCardParams,
-    selectedTheme,
-    historicalData,
-    implicationsData,
-    baseYear,
-    horizonYears,
-    appUrl,
-    regenerateKey,
-  ]);
+  const [cards, setCards] = useState<ThreadCard[]>(() => buildCards(initialTheme));
 
   const handleClose = useCallback(() => {
     onClose();
@@ -185,8 +154,16 @@ export function ThreadGeneratorModal({
   }, []);
 
   const handleRegenerate = useCallback(() => {
-    setRegenerateKey((k) => k + 1);
-  }, []);
+    setCards(buildCards(selectedTheme));
+  }, [buildCards, selectedTheme]);
+
+  const handleThemeChange = useCallback(
+    (theme: "light" | "dark") => {
+      setSelectedTheme(theme);
+      setCards(buildCards(theme));
+    },
+    [buildCards],
+  );
 
   // Handle ESC key and click outside
   useEffect(() => {
@@ -296,15 +273,15 @@ export function ThreadGeneratorModal({
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
               Theme
             </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedTheme("light")}
-                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
-                  selectedTheme === "light"
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
-                }`}
+	            <div className="flex gap-2">
+	              <button
+	                type="button"
+	                onClick={() => handleThemeChange("light")}
+	                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
+	                  selectedTheme === "light"
+	                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+	                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
+	                }`}
               >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,14 +290,14 @@ export function ThreadGeneratorModal({
                   Light
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={() => setSelectedTheme("dark")}
-                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
-                  selectedTheme === "dark"
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
-                }`}
+	              <button
+	                type="button"
+	                onClick={() => handleThemeChange("dark")}
+	                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
+	                  selectedTheme === "dark"
+	                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+	                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
+	                }`}
               >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
