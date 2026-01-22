@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
@@ -40,27 +40,15 @@ export function ThreadGeneratorModal({
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(
     shareCardParams?.theme ?? "light"
   );
-  const [cards, setCards] = useState<ThreadCard[]>([]);
+  const [captionOverrides, setCaptionOverrides] = useState<Record<number, string>>({});
   const [regenerateKey, setRegenerateKey] = useState(0);
 
-  // Update theme when params change
-  useEffect(() => {
-    if (shareCardParams?.theme) {
-      setSelectedTheme(shareCardParams.theme);
-    }
-  }, [shareCardParams?.theme]);
-
-  // Generate all cards when modal opens or theme/regenerateKey changes
-  useEffect(() => {
-    if (!isOpen || !shareCardParams) {
-      setCards([]);
-      return;
-    }
+  const baseCards = useMemo((): ThreadCard[] => {
+    if (!isOpen || !shareCardParams) return [];
 
     const chaserValue = shareCardParams.projection[0]?.chaser ?? 1;
     const targetValue = shareCardParams.projection[0]?.target ?? 2;
 
-    // Calculate sensitivity scenarios
     const sensitivity = calculateSensitivityScenarios({
       chaserValue,
       targetValue,
@@ -69,7 +57,6 @@ export function ThreadGeneratorModal({
       baseYear,
     });
 
-    // Generate caption context
     const captionContext = {
       chaserName: shareCardParams.chaserName,
       targetName: shareCardParams.targetName,
@@ -83,17 +70,14 @@ export function ThreadGeneratorModal({
       implicationsData,
       appUrl,
     };
-
     const captions = generateCaptions(captionContext);
 
-    // Card 1: Main convergence chart (reuse existing share card)
     const mainCardSvg = generateShareCardSvg({
       ...shareCardParams,
       theme: selectedTheme,
       dimensions: SHARE_CARD_SIZES.twitter,
     });
 
-    // Card 2: Sensitivity analysis
     const sensitivityCardSvg = generateSensitivityCardSvg({
       chaserName: shareCardParams.chaserName,
       targetName: shareCardParams.targetName,
@@ -107,7 +91,6 @@ export function ThreadGeneratorModal({
       dataSource: shareCardParams.dataSource,
     });
 
-    // Card 3: Historical context
     const historicalCardSvg = historicalData
       ? generateHistoricalCardSvg({
           chaserName: shareCardParams.chaserName,
@@ -118,13 +101,8 @@ export function ThreadGeneratorModal({
           siteUrl: shareCardParams.siteUrl,
           dataSource: shareCardParams.dataSource,
         })
-      : generatePlaceholderSvg(
-          "Historical Context",
-          "Historical data not available",
-          selectedTheme
-        );
+      : generatePlaceholderSvg("Historical Context", "Historical data not available", selectedTheme);
 
-    // Card 4: Implications summary
     const implicationsCardSvg = implicationsData
       ? generateImplicationsCardSvg({
           chaserName: shareCardParams.chaserName,
@@ -140,27 +118,37 @@ export function ThreadGeneratorModal({
           selectedTheme
         );
 
-    const newCards: ThreadCard[] = [
+    // Include regenerateKey to allow users to "roll" captions while keeping inputs the same.
+    void regenerateKey;
+
+    return [
       { type: "main", svgString: mainCardSvg, caption: captions[0], index: 1 },
       { type: "sensitivity", svgString: sensitivityCardSvg, caption: captions[1], index: 2 },
       { type: "historical", svgString: historicalCardSvg, caption: captions[2], index: 3 },
       { type: "implications", svgString: implicationsCardSvg, caption: captions[3], index: 4 },
     ];
-
-    setCards(newCards);
   }, [
-    isOpen,
-    shareCardParams,
-    selectedTheme,
-    historicalData,
-    implicationsData,
-    baseYear,
-    horizonYears,
     appUrl,
+    baseYear,
+    historicalData,
+    horizonYears,
+    implicationsData,
+    isOpen,
     regenerateKey,
+    selectedTheme,
+    shareCardParams,
   ]);
 
+  const cards = useMemo(() => {
+    if (!captionOverrides || Object.keys(captionOverrides).length === 0) return baseCards;
+    return baseCards.map((card) => ({
+      ...card,
+      caption: captionOverrides[card.index] ?? card.caption,
+    }));
+  }, [baseCards, captionOverrides]);
+
   const handleClose = useCallback(() => {
+    setCaptionOverrides({});
     onClose();
   }, [onClose]);
 
@@ -179,12 +167,11 @@ export function ThreadGeneratorModal({
   }, [isOpen]);
 
   const handleCaptionChange = useCallback((index: number, caption: string) => {
-    setCards((prev) =>
-      prev.map((card) => (card.index === index ? { ...card, caption } : card))
-    );
+    setCaptionOverrides((prev) => ({ ...prev, [index]: caption }));
   }, []);
 
   const handleRegenerate = useCallback(() => {
+    setCaptionOverrides({});
     setRegenerateKey((k) => k + 1);
   }, []);
 
