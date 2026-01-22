@@ -65,37 +65,37 @@ export function CountrySelector({
         aria-expanded={open}
         aria-label={`${label}: ${selectedCountry?.name ?? "Select a country"}`}
         className={[
-          "w-full px-3 text-left rounded-lg border transition-default",
-          "bg-surface-raised flex items-center justify-between gap-2",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          "w-full text-left rounded border transition-default",
+          "bg-surface-raised flex items-center justify-between gap-1.5",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
           "shadow-sm hover:shadow",
           colors.border,
-          dense ? "py-2" : "py-2.5",
+          dense ? "px-2 py-1" : "px-3 py-2",
         ].join(" ")}
       >
         {selectedCountry ? (
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             {dense && (
               <span
-                className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider ${labelPill}`}
+                className={`shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold uppercase tracking-wider ${labelPill}`}
               >
                 {label}
               </span>
             )}
-            <span className="text-sm font-semibold text-ink truncate">
+            <span className={`font-semibold text-ink truncate ${dense ? "text-xs" : "text-sm"}`}>
               {selectedCountry.name}
             </span>
             <span
-              className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-mono font-medium ${colors.badge}`}
+              className={`shrink-0 text-[9px] px-1 py-0.5 rounded font-mono font-medium ${colors.badge}`}
             >
               {selectedCountry.iso_alpha3}
             </span>
           </div>
         ) : (
-          <span className="text-ink-faint text-sm">Select...</span>
+          <span className={`text-ink-faint ${dense ? "text-xs" : "text-sm"}`}>Select...</span>
         )}
         <svg
-          className={`w-4 h-4 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

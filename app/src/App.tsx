@@ -635,7 +635,7 @@ export default function App() {
 				{/* Main two-column layout for large screens */}
 				<div className="layout-two-col">
 					{/* Left column - Main content */}
-						<div className="space-y-2.5 sm:space-y-3">
+					<div className="min-w-0 space-y-2.5 sm:space-y-3">
 						{/* Mode toggle and Selectors */}
 							<SelectorsPanel
 								comparisonMode={comparisonMode}
