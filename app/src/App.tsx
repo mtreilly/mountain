@@ -793,6 +793,7 @@ export default function App() {
 				onClose={() => setIsCitationPanelOpen(false)}
 				shareState={shareState}
 				indicator={selectedIndicator}
+				includeImplicationsSources={showImplications && comparisonMode === "countries"}
 				chaserName={displayChaserName}
 				targetName={displayTargetName}
 			/>
