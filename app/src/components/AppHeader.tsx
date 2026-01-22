@@ -10,6 +10,7 @@ export function AppHeader({
   headlineData,
   onOpenExportModal,
   onOpenShareCardModal,
+  onOpenCitationPanel,
   shareCardAvailable,
   theme,
   onToggleTheme,
@@ -23,6 +24,7 @@ export function AppHeader({
   headlineData?: HeadlineData;
   onOpenExportModal: () => void;
   onOpenShareCardModal?: () => void;
+  onOpenCitationPanel?: () => void;
   shareCardAvailable?: boolean;
   theme: "light" | "dark";
   onToggleTheme: () => void;
@@ -82,6 +84,7 @@ export function AppHeader({
             disabled={disableShareActions}
             headlineData={headlineData}
             onOpenExportModal={onOpenExportModal}
+            onOpenCitationPanel={onOpenCitationPanel}
           />
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
@@ -96,4 +99,3 @@ export function AppHeader({
     </header>
   );
 }
-

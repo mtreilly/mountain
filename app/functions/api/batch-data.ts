@@ -24,6 +24,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const startYear = parseInt(url.searchParams.get("start_year") || "1990");
   const endYear = parseInt(url.searchParams.get("end_year") || new Date().getFullYear().toString());
+  const includeSourceVintage = url.searchParams.get("include_source_vintage") === "1";
 
   if (countries.length === 0) {
     return Response.json(
@@ -64,7 +65,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   for (const row of indicatorRows.results || []) indicatorByCode[row.code] = row;
 
   const points = await DB.prepare(
-    `SELECT i.code AS indicator, c.iso_alpha3 AS iso, d.year AS year, d.value AS value
+    `SELECT i.code AS indicator, c.iso_alpha3 AS iso, d.year AS year, d.value AS value${
+      includeSourceVintage ? ", d.source_vintage AS source_vintage" : ""
+    }
      FROM data_points d
      JOIN countries c ON d.country_id = c.id
      JOIN indicators i ON d.indicator_id = i.id
@@ -74,13 +77,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
      ORDER BY i.code, c.iso_alpha3, d.year`
   )
     .bind(...indicators, ...countries, startYear, endYear)
-    .all<{ indicator: string; iso: string; year: number; value: number }>();
+    .all<{ indicator: string; iso: string; year: number; value: number; source_vintage?: string | null }>();
 
-  const data: Record<string, Record<string, Array<{ year: number; value: number }>>> = {};
+  const data: Record<
+    string,
+    Record<string, Array<{ year: number; value: number; source_vintage?: string | null }>>
+  > = {};
   for (const row of points.results || []) {
     if (!data[row.indicator]) data[row.indicator] = {};
     if (!data[row.indicator][row.iso]) data[row.indicator][row.iso] = [];
-    data[row.indicator][row.iso].push({ year: row.year, value: row.value });
+    data[row.indicator][row.iso].push(
+      includeSourceVintage
+        ? { year: row.year, value: row.value, source_vintage: row.source_vintage ?? null }
+        : { year: row.year, value: row.value }
+    );
   }
 
   return Response.json({ indicators: indicatorByCode, data });

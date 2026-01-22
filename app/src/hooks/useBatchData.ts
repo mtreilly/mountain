@@ -4,6 +4,7 @@ import type { Indicator } from "../types";
 export interface BatchSeriesPoint {
   year: number;
   value: number;
+  source_vintage?: string | null;
 }
 
 export type BatchSeries = Record<string, Record<string, BatchSeriesPoint[]>>; // indicator -> iso -> points
@@ -14,14 +15,22 @@ export function useBatchData(params: {
   startYear?: number;
   endYear?: number;
   enabled?: boolean;
+  includeSourceVintage?: boolean;
 }) {
-  const { countries, indicators, startYear = 1990, endYear, enabled = true } = params;
+  const {
+    countries,
+    indicators,
+    startYear = 1990,
+    endYear,
+    enabled = true,
+    includeSourceVintage = false,
+  } = params;
 
   const key = useMemo(() => {
     const c = [...countries].map((x) => x.trim().toUpperCase()).filter(Boolean).sort().join(",");
     const i = [...indicators].map((x) => x.trim().toUpperCase()).filter(Boolean).sort().join(",");
-    return `${c}__${i}__${startYear}__${endYear ?? ""}`;
-  }, [countries, endYear, indicators, startYear]);
+    return `${c}__${i}__${startYear}__${endYear ?? ""}__${includeSourceVintage ? "sv" : ""}`;
+  }, [countries, endYear, includeSourceVintage, indicators, startYear]);
 
   const [data, setData] = useState<BatchSeries>({});
   const [indicatorByCode, setIndicatorByCode] = useState<Record<string, Indicator>>({});
@@ -43,6 +52,7 @@ export function useBatchData(params: {
       start_year: String(startYear),
     });
     if (endYear != null) qs.set("end_year", String(endYear));
+    if (includeSourceVintage) qs.set("include_source_vintage", "1");
 
     fetch(`/api/batch-data?${qs}`)
       .then((res) => {
@@ -58,7 +68,7 @@ export function useBatchData(params: {
         setError(err.message);
         setLoading(false);
       });
-  }, [countries, endYear, enabled, indicators, key, startYear]);
+  }, [countries, endYear, enabled, includeSourceVintage, indicators, key, startYear]);
 
   const getLatestValue = (indicator: string, iso: string): number | null => {
     const pts = data[indicator]?.[iso];
@@ -70,4 +80,3 @@ export function useBatchData(params: {
 
   return { data, indicatorByCode, loading, error, getLatestValue };
 }
-
