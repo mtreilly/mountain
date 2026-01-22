@@ -7,6 +7,7 @@ interface UseConvergenceParams {
   targetValue: number;
   chaserGrowthRate: number;
   targetGrowthRate: number;
+  unit?: string | null;
   baseYear?: number;
 }
 
@@ -15,8 +16,20 @@ export function useConvergence({
   targetValue,
   chaserGrowthRate,
   targetGrowthRate,
+  unit = null,
   baseYear = new Date().getFullYear(),
 }: UseConvergenceParams) {
+  const shouldRoundProjectionValues = useMemo(() => {
+    const normalizedUnit = (unit || "").toLowerCase();
+    return (
+      normalizedUnit.includes("int$") ||
+      normalizedUnit.includes("usd") ||
+      normalizedUnit.includes("$") ||
+      normalizedUnit.includes("persons") ||
+      normalizedUnit.includes("people")
+    );
+  }, [unit]);
+
   // Calculate years to convergence with both growth rates
   // Formula: chaserValue * (1 + chaserRate)^n = targetValue * (1 + targetRate)^n
   // Solving: n = ln(targetValue/chaserValue) / ln((1+chaserRate)/(1+targetRate))
@@ -38,6 +51,11 @@ export function useConvergence({
   }, [baseYear, yearsToConvergence]);
 
   const { projection, milestones } = useMemo(() => {
+    const normalizeProjectionValue = (value: number) => {
+      if (shouldRoundProjectionValues) return Math.round(value);
+      return Number(value.toFixed(3));
+    };
+
     const points: Array<{ year: number; chaser: number; target: number }> = [];
     const maxYears = Math.min(
       isFinite(yearsToConvergence) ? Math.ceil(yearsToConvergence) + 20 : 100,
@@ -51,12 +69,12 @@ export function useConvergence({
 
       points.push({
         year,
-        chaser: Math.round(projectedChaser),
-        target: Math.round(projectedTarget),
+        chaser: normalizeProjectionValue(projectedChaser),
+        target: normalizeProjectionValue(projectedTarget),
       });
 
       // Stop if converged
-      if (projectedChaser >= projectedTarget) break;
+      if (i > 0 && projectedChaser >= projectedTarget) break;
     }
 
     const milestones: Milestone[] = calculateMilestones(points);
@@ -74,7 +92,15 @@ export function useConvergence({
     }
 
     return { projection: points, milestones };
-  }, [chaserValue, targetValue, chaserGrowthRate, targetGrowthRate, baseYear, yearsToConvergence]);
+  }, [
+    baseYear,
+    chaserGrowthRate,
+    chaserValue,
+    shouldRoundProjectionValues,
+    targetGrowthRate,
+    targetValue,
+    yearsToConvergence,
+  ]);
 
   const gap = useMemo(() => {
     return targetValue / chaserValue;

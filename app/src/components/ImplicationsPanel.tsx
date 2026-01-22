@@ -894,7 +894,7 @@ export function ImplicationsPanel({
       {!loading && !error && hasAny && (
         <div className="mt-3 space-y-2">
           {(macro.gdpTotalCurrent || macro.gdpTotalFuture) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-3 py-2">
+            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
               <div className="text-xs font-medium text-ink">Macro totals</div>
               <div className="mt-1 text-[11px] text-ink-faint">
                 GDP (total) {macro.gdpTotalCurrent ? formatTotal(macro.gdpTotalCurrent) : "—"}{" "}
@@ -905,7 +905,7 @@ export function ImplicationsPanel({
           )}
 
           {(macro.electricity.demandCurrentTWh != null || macro.electricity.demandFutureTWh != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-3 py-2">
+            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
               <div className="flex items-baseline justify-between gap-3">
                 <div className="text-xs font-medium text-ink">Electricity buildout</div>
                 <div className="text-[11px] text-ink-faint shrink-0">
@@ -1345,7 +1345,7 @@ export function ImplicationsPanel({
           )}
 
           {(macro.urban.currentPersons != null || macro.urban.futurePersons != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-3 py-2">
+            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-medium text-ink">Urbanization buildout</div>
                 <div className="text-[11px] text-ink-faint">Uses people/home in assumptions</div>
@@ -1386,7 +1386,7 @@ export function ImplicationsPanel({
           )}
 
           {(macro.co2.currentMt != null || macro.co2.futureMt != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-3 py-2">
+            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
               <div className="text-xs font-medium text-ink">CO₂ (territorial)</div>
               <div className="mt-1 text-[11px] text-ink-faint">
                 Total{" "}
@@ -1420,7 +1420,7 @@ export function ImplicationsPanel({
 
       <div className="mt-4 space-y-3">
         {rows.map((r) => (
-          <div key={r.code} className="rounded-lg border border-surface bg-surface-raised px-3 py-2">
+          <div key={r.code} className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
             <div className="flex items-baseline justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-xs font-medium text-ink truncate">

@@ -11,6 +11,7 @@ import { EmbedView } from "./components/EmbedView";
 import { ExportModal } from "./components/ExportModal";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
 import { ShareCardModal } from "./components/ShareCardModal";
+import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
 import { ImplicationsPanel } from "./components/ImplicationsPanel";
 import { ProjectionCard } from "./components/ProjectionCard";
@@ -26,6 +27,12 @@ import { useTheme } from "./hooks/useTheme";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
+import { ALL_TL2_REGIONS, getRegionDataSeries } from "./lib/oecdRegions";
+import {
+	toRegionalObservedCsv,
+	toRegionalProjectionCsv,
+	toRegionalReportJson,
+} from "./lib/regionsDataExport";
 import type { HeadlineData } from "./lib/headlineGenerator";
 import type { ShareCardParams } from "./lib/shareCardSvg";
 import {
@@ -92,6 +99,7 @@ export default function App() {
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
 	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
+	const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -140,6 +148,7 @@ export default function App() {
 		targetValue,
 		chaserGrowthRate,
 		targetGrowthRate,
+		unit: metricUnit,
 		baseYear,
 	});
 
@@ -286,6 +295,16 @@ export default function App() {
 		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
 	}, [shareState]);
 
+	const citationIndicator = useMemo(() => {
+		if (comparisonMode !== "regions") return selectedIndicator;
+		return {
+			code: "GDP_PCAP_PPP",
+			name: "GDP per capita (USD PPP)",
+			unit: "USD PPP",
+			source: "OECD",
+		};
+	}, [comparisonMode, selectedIndicator]);
+
 	const exportBasename = useMemo(() => {
 		const safe = (s: string) =>
 			s
@@ -293,9 +312,19 @@ export default function App() {
 				.replace(/-+/g, "-")
 				.replace(/^-|-$/g, "");
 		return safe(
-			`mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
+			comparisonMode === "regions"
+				? `mountain-${chaserRegionCode}-${targetRegionCode}-GDP_PCAP_PPP-${baseYear}`
+				: `mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
 		);
-	}, [baseYear, chaserIso, indicatorCode, targetIso]);
+	}, [
+		baseYear,
+		chaserIso,
+		chaserRegionCode,
+		comparisonMode,
+		indicatorCode,
+		targetIso,
+		targetRegionCode,
+	]);
 
 	const headlineData: HeadlineData | undefined = useMemo(() => {
 		if (comparisonMode !== "countries") return undefined;
@@ -368,6 +397,55 @@ export default function App() {
 		theme,
 	]);
 
+	// Historical data for thread generator
+	const historicalData = useMemo(() => {
+		if (comparisonMode !== "countries" || !data) return null;
+
+		const chaserSeries = data[chaserIso] || [];
+		const targetSeries = data[targetIso] || [];
+
+		const getEarliest = (series: Array<{ year: number; value: number }>) => {
+			if (!series.length) return null;
+			const sorted = [...series].sort((a, b) => a.year - b.year);
+			return { year: sorted[0].year, value: sorted[0].value };
+		};
+
+		const getLatest = (series: Array<{ year: number; value: number }>) => {
+			if (!series.length) return null;
+			const sorted = [...series].sort((a, b) => b.year - a.year);
+			return { year: sorted[0].year, value: sorted[0].value };
+		};
+
+		return {
+			chaserStart: getEarliest(chaserSeries),
+			chaserCurrent: getLatest(chaserSeries),
+			targetStart: getEarliest(targetSeries),
+			targetCurrent: getLatest(targetSeries),
+		};
+	}, [comparisonMode, data, chaserIso, targetIso]);
+
+	// Simplified implications data for thread generator (only when GDP per capita is selected)
+	const implicationsData = useMemo(() => {
+		if (comparisonMode !== "countries") return null;
+		if (indicatorCode !== "GDP_PCAP_PPP") return null;
+		if (!chaserValue || !yearsToConvergence) return null;
+
+		// Simple projections based on growth
+		const gdpFuture = chaserValue * Math.pow(1 + chaserGrowthRate, impHorizonYears);
+
+		// Very rough estimates (these would need real population data for accuracy)
+		// For now, just provide GDP values and let other fields be null
+		return {
+			electricityDeltaTWh: null,
+			nuclearPlants: null,
+			urbanDeltaPersons: null,
+			homesNeeded: null,
+			co2DeltaMt: null,
+			gdpCurrent: chaserValue,
+			gdpFuture,
+		};
+	}, [comparisonMode, indicatorCode, chaserValue, yearsToConvergence, chaserGrowthRate, impHorizonYears]);
+
 	const countriesByIso3 = useMemo(() => {
 		const map: Record<string, { name: string }> = {};
 		for (const c of countries) map[c.iso_alpha3] = { name: c.name };
@@ -380,6 +458,33 @@ export default function App() {
 
 	const onDownloadObservedCsv = useMemo(() => {
 		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
+			return () => {
+				const csv = toRegionalObservedCsv({
+					state: shareState,
+					observed: {
+						[chaserRegion.code]: getRegionDataSeries(chaserRegion.code).map((p) => ({
+							year: p.year,
+							value: p.gdpPerCapita,
+						})),
+						[targetRegion.code]: getRegionDataSeries(targetRegion.code).map((p) => ({
+							year: p.year,
+							value: p.gdpPerCapita,
+						})),
+					},
+					chaserRegion,
+					targetRegion,
+				});
+				const filename = `${exportBasename}-observed.csv`;
+				downloadText(filename, csv, "text/csv;charset=utf-8");
+				return filename;
+			};
+		}
+
 		return () => {
 			const csv = toObservedCsv({
 				state: shareState,
@@ -387,55 +492,103 @@ export default function App() {
 				countriesByIso3,
 				data,
 			});
-			downloadText(
-				`${exportBasename}-observed.csv`,
-				csv,
-				"text/csv;charset=utf-8",
-			);
+			const filename = `${exportBasename}-observed.csv`;
+			downloadText(filename, csv, "text/csv;charset=utf-8");
+			return filename;
 		};
 	}, [
+		comparisonMode,
 		countriesByIso3,
 		data,
 		exportBasename,
 		exportIndicator,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
 		hasData,
 		shareState,
 	]);
 
 	const onDownloadProjectionCsv = useMemo(() => {
 		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
+			return () => {
+				const csv = toRegionalProjectionCsv({
+					state: shareState,
+					projection,
+					chaserRegion,
+					targetRegion,
+				});
+				const filename = `${exportBasename}-projection.csv`;
+				downloadText(filename, csv, "text/csv;charset=utf-8");
+				return filename;
+			};
+		}
+
 		return () => {
 			const csv = toProjectionCsv({
 				state: shareState,
 				indicator: exportIndicator,
 				projection,
 			});
-			downloadText(
-				`${exportBasename}-projection.csv`,
-				csv,
-				"text/csv;charset=utf-8",
-			);
+			const filename = `${exportBasename}-projection.csv`;
+			downloadText(filename, csv, "text/csv;charset=utf-8");
+			return filename;
 		};
-	}, [exportBasename, exportIndicator, hasData, projection, shareState]);
+	}, [
+		comparisonMode,
+		exportBasename,
+		exportIndicator,
+		hasData,
+		projection,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
+		shareState,
+	]);
 
-		const onDownloadReportJson = useMemo(() => {
-			if (!hasData) return undefined;
+	const onDownloadReportJson = useMemo(() => {
+		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
 			return () => {
-				const json = toReportJson({
+				const json = toRegionalReportJson({
 					state: shareState,
-					indicator: exportIndicator,
-					countriesByIso3,
-					observed: data,
+					observed: {
+						[chaserRegion.code]: getRegionDataSeries(chaserRegion.code),
+						[targetRegion.code]: getRegionDataSeries(targetRegion.code),
+					},
 					projection,
 					derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+					chaserRegion,
+					targetRegion,
 				});
-				downloadText(
-					`${exportBasename}-report.json`,
-					json,
-					"application/json;charset=utf-8",
-				);
+				const filename = `${exportBasename}-report.json`;
+				downloadText(filename, json, "application/json;charset=utf-8");
+				return filename;
 			};
-		}, [
+		}
+
+		return () => {
+			const json = toReportJson({
+				state: shareState,
+				indicator: exportIndicator,
+				countriesByIso3,
+				observed: data,
+				projection,
+				derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+			});
+			const filename = `${exportBasename}-report.json`;
+			downloadText(filename, json, "application/json;charset=utf-8");
+			return filename;
+		};
+	}, [
+		comparisonMode,
 		convergenceYear,
 		countriesByIso3,
 		data,
@@ -444,6 +597,8 @@ export default function App() {
 		gap,
 		hasData,
 		projection,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
 		shareState,
 		yearsToConvergence,
 	]);
@@ -562,7 +717,7 @@ export default function App() {
 	return (
 		<div className="min-h-screen bg-surface grain">
 			<Toaster theme={theme} position="bottom-right" closeButton richColors />
-				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
 				{/* Header - Compact */}
 				<AppHeader
 					comparisonMode={comparisonMode}
@@ -571,6 +726,7 @@ export default function App() {
 					onOpenExportModal={() => setIsExportModalOpen(true)}
 					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
 					onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
+					onOpenThreadGenerator={() => setIsThreadGeneratorOpen(true)}
 					shareCardAvailable={shareCardParams !== null}
 					theme={theme}
 					onToggleTheme={toggleTheme}
@@ -583,7 +739,7 @@ export default function App() {
 				{/* Main two-column layout for large screens */}
 				<div className="layout-two-col">
 					{/* Left column - Main content */}
-						<div className="space-y-3 sm:space-y-4">
+					<div className="min-w-0 space-y-2.5 sm:space-y-3">
 						{/* Mode toggle and Selectors */}
 							<SelectorsPanel
 								comparisonMode={comparisonMode}
@@ -759,7 +915,11 @@ export default function App() {
 					</aside>
 				</div>
 
-				<AppFooter countriesCount={countries.length} />
+				<AppFooter
+					comparisonMode={comparisonMode}
+					countriesCount={countries.length}
+					regionsCount={ALL_TL2_REGIONS.length}
+				/>
 			</div>
 
 			{/* Export Modal */}
@@ -772,6 +932,7 @@ export default function App() {
 					setBaseYear(Math.max(1950, Math.min(2100, year)));
 				}}
 				onReset={resetToDefaults}
+				comparisonMode={comparisonMode}
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
@@ -792,10 +953,21 @@ export default function App() {
 				isOpen={isCitationPanelOpen}
 				onClose={() => setIsCitationPanelOpen(false)}
 				shareState={shareState}
-				indicator={selectedIndicator}
-				includeImplicationsSources={showImplications && comparisonMode === "countries"}
+				indicator={citationIndicator}
 				chaserName={displayChaserName}
 				targetName={displayTargetName}
+			/>
+
+			{/* Thread Generator Modal */}
+			<ThreadGeneratorModal
+				isOpen={isThreadGeneratorOpen}
+				onClose={() => setIsThreadGeneratorOpen(false)}
+				shareCardParams={shareCardParams}
+				historicalData={historicalData}
+				implicationsData={implicationsData}
+				baseYear={baseYear}
+				horizonYears={impHorizonYears}
+				appUrl={appUrl}
 			/>
 		</div>
 	);

@@ -233,27 +233,27 @@ export function MetricSelector({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         className={[
-          "w-full px-3 text-left rounded-lg border transition-default",
-          "bg-surface-raised flex items-center justify-between gap-2",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-accent)]",
+          "w-full text-left rounded border transition-default",
+          "bg-surface-raised flex items-center justify-between gap-1.5",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--color-accent)]",
           "shadow-sm hover:shadow",
           "border-surface hover:border-[var(--color-ink-faint)]",
           disabled ? "opacity-60 cursor-not-allowed" : "",
-          dense ? "py-2" : "py-2.5",
+          dense ? "px-2 py-1" : "px-3 py-2",
         ].join(" ")}
       >
-        <span className="min-w-0 flex-1 flex items-center gap-2">
+        <span className="min-w-0 flex-1 flex items-center gap-1.5">
           {dense && (
-            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider bg-surface-sunken border border-surface text-ink-muted">
+            <span className="shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold uppercase tracking-wider bg-surface-sunken border border-surface text-ink-muted">
               Metric
             </span>
           )}
-          <span className={`text-sm truncate ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}>
+          <span className={`truncate ${dense ? "text-xs" : "text-sm"} ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}>
             {selectedIndicator?.name || "Select..."}
           </span>
         </span>
         <svg
-          className={`w-4 h-4 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

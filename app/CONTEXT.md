@@ -92,6 +92,11 @@ We follow the same approach for energy-by-source:
 Implementation note:
 - `scripts/fetch-owid-energy.ts` supports pinning via `OWID_ENERGY_REF=<commit-or-tag>` and records `OWID_ENERGY_VINTAGE` (defaults to `owid-energy-data@<ref>`) into `data_points.source_vintage`.
 
+### Future-proofing (high priority)
+- Pin external datasets to a specific version (Git commit SHA or tagged release) rather than tracking `master` by default. Record this in `data_points.source_vintage`.
+- Keep the ingestion scripts strict about required columns, but tolerant of extra columns (OWID adds columns over time).
+- Prefer sources that are: (1) open and linkable, (2) stable URLs, (3) widely used in research/media, and (4) consistently country-coded (ISO3).
+
 ### Electricity by source (TWh)
 Best sources:
 - Our World in Data energy dataset (often Ember/IEA/EIA/EIA-backed): electricity generation by source by country-year.

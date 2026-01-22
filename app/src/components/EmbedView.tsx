@@ -62,14 +62,23 @@ export function EmbedView({
 
 	// Generate headline text
 	const headline = useMemo(() => {
+		const alreadyAhead =
+			projection.length > 0 &&
+			Number.isFinite(projection[0].chaser) &&
+			Number.isFinite(projection[0].target) &&
+			projection[0].chaser >= projection[0].target;
+
+		if (alreadyAhead) {
+			return `${chaserName} is already ahead of ${targetName}`;
+		}
 		if (yearsToConvergence === null) {
 			return `${chaserName} won't catch up to ${targetName}`;
 		}
 		if (yearsToConvergence <= 0) {
-			return `${chaserName} has already caught up to ${targetName}`;
+			return `${chaserName} is already ahead of ${targetName}`;
 		}
 		return `${chaserName} catches up in ${Math.round(yearsToConvergence)} years`;
-	}, [chaserName, targetName, yearsToConvergence]);
+	}, [chaserName, projection, targetName, yearsToConvergence]);
 
 	const showMilestones = shareState.ms !== false;
 
