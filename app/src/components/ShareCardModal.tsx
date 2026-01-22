@@ -30,6 +30,7 @@ export function ShareCardModal({
   shareCardParams,
 }: ShareCardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(
     shareCardParams?.theme ?? "light"
   );
@@ -56,6 +57,20 @@ export function ShareCardModal({
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
+
+  // Manage focus when opening/closing
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.activeElement as HTMLElement | null;
+    queueMicrotask(() => closeButtonRef.current?.focus());
+    return () => {
+      if (prev && prev.isConnected && prev.tagName !== "BODY" && prev.tagName !== "HTML") {
+        prev.focus();
+        return;
+      }
+      document.querySelector<HTMLButtonElement>('button[aria-label="More options"]')?.focus();
+    };
+  }, [isOpen]);
 
   const handleCopyToClipboard = async () => {
     if (!paramsWithOverrides) return;
@@ -91,6 +106,40 @@ export function ShareCardModal({
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
+
+      if (e.key === "Tab") {
+        const root = modalRef.current;
+        if (!root) return;
+
+        const focusables = Array.from(
+          root.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+
+        if (focusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+
+        if (active && !root.contains(active)) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+          return;
+        }
+
+        if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
     };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -120,6 +169,7 @@ export function ShareCardModal({
       <div
         ref={modalRef}
         role="dialog"
+        aria-modal="true"
         aria-label="Create Share Card"
         className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
@@ -134,6 +184,7 @@ export function ShareCardModal({
           <button
             type="button"
             onClick={handleClose}
+            ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
             aria-label="Close share card modal"
           >

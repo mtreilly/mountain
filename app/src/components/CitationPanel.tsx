@@ -47,12 +47,27 @@ export function CitationPanel({
 	targetName,
 }: CitationPanelProps) {
 	const modalRef = useRef<HTMLDivElement>(null);
+	const closeButtonRef = useRef<HTMLButtonElement>(null);
 	const [selectedFormat, setSelectedFormat] = useState<CitationFormat>("bibtex");
 	const formatRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
 	const handleClose = useCallback(() => {
 		onClose();
 	}, [onClose]);
+
+	// Manage focus when opening/closing
+	useEffect(() => {
+		if (!isOpen) return;
+		const prev = document.activeElement as HTMLElement | null;
+		queueMicrotask(() => closeButtonRef.current?.focus());
+		return () => {
+			if (prev && prev.isConnected && prev.tagName !== "BODY" && prev.tagName !== "HTML") {
+				prev.focus();
+				return;
+			}
+			document.querySelector<HTMLButtonElement>('button[aria-label="More options"]')?.focus();
+		};
+	}, [isOpen]);
 
 	// Handle ESC key and click outside
 	useEffect(() => {
@@ -61,6 +76,41 @@ export function CitationPanel({
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				handleClose();
+				return;
+			}
+
+			if (e.key === "Tab") {
+				const root = modalRef.current;
+				if (!root) return;
+				const focusables = Array.from(
+					root.querySelectorAll<HTMLElement>(
+						'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+					),
+				).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+
+				if (focusables.length === 0) {
+					e.preventDefault();
+					return;
+				}
+
+				const first = focusables[0];
+				const last = focusables[focusables.length - 1];
+				const active = document.activeElement as HTMLElement | null;
+
+				if (active && !root.contains(active)) {
+					e.preventDefault();
+					(e.shiftKey ? last : first).focus();
+					return;
+				}
+
+				if (!e.shiftKey && active === last) {
+					e.preventDefault();
+					first.focus();
+				} else if (e.shiftKey && active === first) {
+					e.preventDefault();
+					last.focus();
+				}
+
 				return;
 			}
 
@@ -120,7 +170,9 @@ export function CitationPanel({
 	const dataSourceCitation = useMemo(() => {
 		if (!indicator?.source) return "";
 		const sourceCode =
-			WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null;
+			indicator.source === "World Bank"
+				? WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null
+				: null;
 		return generateDataSourceCitation(
 			indicator.source,
 			sourceCode,
@@ -133,7 +185,10 @@ export function CitationPanel({
 
 	const dataSourceUrl = useMemo(() => {
 		if (!indicator?.source) return null;
-		const sourceCode = WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null;
+		const sourceCode =
+			indicator.source === "World Bank"
+				? WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null
+				: null;
 		return getDataSourceUrl(indicator.source, sourceCode);
 	}, [indicator]);
 
@@ -166,6 +221,7 @@ export function CitationPanel({
 			<div
 				ref={modalRef}
 				role="dialog"
+				aria-modal="true"
 				aria-label="Cite this comparison"
 				className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
 			>
@@ -180,6 +236,7 @@ export function CitationPanel({
 					<button
 						type="button"
 						onClick={handleClose}
+						ref={closeButtonRef}
 						className="p-2 rounded-lg hover:bg-surface transition-default"
 						aria-label="Close citation panel"
 					>
@@ -287,7 +344,8 @@ export function CitationPanel({
 										<div className="text-xs text-ink-muted mt-0.5">
 											{indicator.name}
 										</div>
-										{WORLD_BANK_INDICATOR_CODES[indicator.code] && (
+										{indicator.source === "World Bank" &&
+											WORLD_BANK_INDICATOR_CODES[indicator.code] && (
 											<div className="text-xs text-ink-faint mt-1 font-mono">
 												{WORLD_BANK_INDICATOR_CODES[indicator.code]}
 											</div>
