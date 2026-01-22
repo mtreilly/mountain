@@ -36,12 +36,15 @@ export function ShareCardPreview({
   return (
     <div
       className={`overflow-hidden rounded-lg shadow-md ${className}`}
+      role="img"
+      aria-label="Share card preview"
       style={{
         width: scaledWidth,
         height: scaledHeight,
       }}
     >
       <div
+        aria-hidden="true"
         style={{
           width: dimensions.width,
           height: dimensions.height,

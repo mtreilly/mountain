@@ -201,7 +201,7 @@ export function useRegionalConvergence({
       const target = targetValue * Math.pow(1 + targetGrowthRate, y);
       projection.push({ year, chaser: Math.round(chaser), target: Math.round(target) });
 
-      if (chaser >= target) break;
+      if (y > 0 && chaser >= target) break;
     }
 
     const milestones = calculateMilestones(projection);

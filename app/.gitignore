@@ -17,6 +17,9 @@ dist-ssr
 .wrangler/state/**/miniflare-D1DatabaseObject/*.sqlite-wal
 .wrangler/state/**/miniflare-D1DatabaseObject/*.sqlite-shm
 
+# Cloudflare Wrangler local state
+.wrangler
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

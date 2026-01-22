@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import type { ShareState } from "../lib/shareState";
 import { EmbedCodeGenerator } from "./EmbedCodeGenerator";
 
+type DownloadCallback = () => void | string | Promise<void | string>;
+
 interface DataExportCardProps {
   label: string;
   description: string;
@@ -54,6 +56,7 @@ export function ExportModal({
   baseYear,
   onBaseYearChange,
   onReset,
+  comparisonMode = "countries",
   onDownloadObservedCsv,
   onDownloadProjectionCsv,
   onDownloadReportJson,
@@ -66,18 +69,35 @@ export function ExportModal({
   baseYear: number;
   onBaseYearChange: (year: number) => void;
   onReset?: () => void;
-  onDownloadObservedCsv?: () => void | Promise<void>;
-  onDownloadProjectionCsv?: () => void | Promise<void>;
-  onDownloadReportJson?: () => void | Promise<void>;
+  comparisonMode?: "countries" | "regions";
+  onDownloadObservedCsv?: DownloadCallback;
+  onDownloadProjectionCsv?: DownloadCallback;
+  onDownloadReportJson?: DownloadCallback;
   shareState?: ShareState;
   ogImageUrl?: string;
   onOpenCitationPanel?: () => void;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const isRegionsMode = comparisonMode === "regions";
 
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
+
+  // Manage focus when opening/closing
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.activeElement as HTMLElement | null;
+    queueMicrotask(() => closeButtonRef.current?.focus());
+    return () => {
+      if (prev && prev.isConnected && prev.tagName !== "BODY" && prev.tagName !== "HTML") {
+        prev.focus();
+        return;
+      }
+      document.querySelector<HTMLButtonElement>('button[aria-label="More options"]')?.focus();
+    };
+  }, [isOpen]);
 
   // Handle ESC key and click outside
   useEffect(() => {
@@ -85,6 +105,40 @@ export function ExportModal({
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
+
+      if (e.key === "Tab") {
+        const root = modalRef.current;
+        if (!root) return;
+
+        const focusables = Array.from(
+          root.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+
+        if (focusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+
+        if (active && !root.contains(active)) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+          return;
+        }
+
+        if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
     };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -113,6 +167,7 @@ export function ExportModal({
       <div
         ref={modalRef}
         role="dialog"
+        aria-modal="true"
         aria-label="Export Options"
         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
@@ -125,6 +180,7 @@ export function ExportModal({
           <button
             type="button"
             onClick={handleClose}
+            ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
             aria-label="Close export modal"
           >
@@ -134,7 +190,7 @@ export function ExportModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-4">
           {/* Data section */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
@@ -143,28 +199,52 @@ export function ExportModal({
             <div className="space-y-2">
               <DataExportCard
                 label="Historical Data (CSV)"
-                description="Actual recorded values from World Bank"
+                description={
+                  isRegionsMode
+                    ? "Recorded values from OECD regional dataset"
+                    : "Actual recorded values from World Bank"
+                }
                 onDownload={async () => {
-                  await onDownloadObservedCsv?.();
-                  toast.success("Downloaded historical data");
+                  const filename = await onDownloadObservedCsv?.();
+                  toast.success(
+                    typeof filename === "string" && filename.length
+                      ? `Downloaded historical data: ${filename}`
+                      : "Downloaded historical data"
+                  );
                 }}
                 disabled={!onDownloadObservedCsv}
               />
               <DataExportCard
                 label="Projection Data (CSV)"
-                description="Calculated future values based on growth rates"
+                description={
+                  isRegionsMode
+                    ? "Calculated future GDP per capita based on growth rates"
+                    : "Calculated future values based on growth rates"
+                }
                 onDownload={async () => {
-                  await onDownloadProjectionCsv?.();
-                  toast.success("Downloaded projection data");
+                  const filename = await onDownloadProjectionCsv?.();
+                  toast.success(
+                    typeof filename === "string" && filename.length
+                      ? `Downloaded projection data: ${filename}`
+                      : "Downloaded projection data"
+                  );
                 }}
                 disabled={!onDownloadProjectionCsv}
               />
               <DataExportCard
                 label="Full Report (JSON)"
-                description="Complete data including metadata and calculations"
+                description={
+                  isRegionsMode
+                    ? "Complete report including metadata, observed series, and projections"
+                    : "Complete data including metadata and calculations"
+                }
                 onDownload={async () => {
-                  await onDownloadReportJson?.();
-                  toast.success("Downloaded report");
+                  const filename = await onDownloadReportJson?.();
+                  toast.success(
+                    typeof filename === "string" && filename.length
+                      ? `Downloaded report: ${filename}`
+                      : "Downloaded report"
+                  );
                 }}
                 disabled={!onDownloadReportJson}
               />
@@ -199,6 +279,34 @@ export function ExportModal({
                   shareState={shareState}
                   ogImageUrl={ogImageUrl}
                 />
+              </div>
+            </section>
+          )}
+
+          {/* Cite section */}
+          {onOpenCitationPanel && (
+            <section>
+              <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+                Citation
+              </h3>
+              <div className="p-4 rounded-lg border border-surface bg-surface">
+                <p className="text-sm text-ink-muted mb-3">
+                  Generate properly formatted citations for academic papers, blog posts, and publications.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    onOpenCitationPanel();
+                  }}
+                  className="w-full px-4 py-2.5 rounded-lg border border-surface bg-surface-raised text-ink text-sm font-medium hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Open Citation Panel
+                  <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
+                </button>
               </div>
             </section>
           )}

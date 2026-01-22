@@ -46,9 +46,8 @@ export function ProjectionTable({
       </div>
 
       <p className="mt-2 text-[11px] text-ink-faint">
-        Tip: use “Projection CSV” in Share → Exports for a file download.
+        Tip: use “Projection Data (CSV)” in More options → Data / Embed for a file download.
       </p>
     </div>
   );
 }
-
