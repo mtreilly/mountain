@@ -8,11 +8,15 @@ export function ShareMenu({
   headlineData,
   onOpenExportModal,
   onOpenCitationPanel,
+  theme,
+  onToggleTheme,
 }: {
   disabled?: boolean;
   headlineData?: HeadlineData;
   onOpenExportModal?: () => void;
   onOpenCitationPanel?: () => void;
+  theme?: "light" | "dark";
+  onToggleTheme?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [popover, setPopover] = useState<{ top: number; left: number; width: number } | null>(
@@ -26,8 +30,7 @@ export function ShareMenu({
     if (!rect) return;
 
     const margin = 8;
-    const maxWidth = 320;
-    const width = Math.min(maxWidth, Math.max(260, rect.width * 1.2));
+    const width = 220;
     const left = Math.max(
       margin,
       Math.min(rect.right - width, window.innerWidth - margin - width)
@@ -88,12 +91,12 @@ export function ShareMenu({
         type="button"
         onClick={() => (isOpen ? close() : open())}
         disabled={disabled}
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-surface bg-surface-raised text-sm font-medium text-ink hover:bg-surface transition-default disabled:opacity-50"
+        aria-label="More options"
+        className="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-surface bg-surface-raised text-ink-muted hover:text-ink hover:bg-surface transition-default disabled:opacity-50"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
         </svg>
-        Export Options
       </button>
 
       {isOpen &&
@@ -101,69 +104,78 @@ export function ShareMenu({
         createPortal(
           <div
             ref={popoverRef}
-            role="dialog"
-            aria-label="Export Options"
-            className="fixed z-50 rounded-xl border border-surface bg-surface-raised shadow-xl p-3 space-y-3"
+            role="menu"
+            aria-label="More options"
+            className="fixed z-50 rounded-xl border border-surface bg-surface-raised shadow-xl py-1"
             style={{ top: popover.top, left: popover.left, width: popover.width }}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-ink">Export Options</div>
+            {/* Theme toggle */}
+            {onToggleTheme && (
               <button
                 type="button"
-                onClick={close}
-                className="p-1.5 rounded-md hover:bg-surface transition-default"
-                aria-label="Close export menu"
+                role="menuitem"
+                onClick={() => {
+                  onToggleTheme();
+                }}
+                className="w-full px-3 py-2 text-sm text-left text-ink hover:bg-surface transition-default inline-flex items-center gap-3"
+              >
+                {theme === "dark" ? (
+                  <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </button>
+            )}
+
+            {/* Data / Embed */}
+            {onOpenExportModal && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  close();
+                  onOpenExportModal();
+                }}
+                className="w-full px-3 py-2 text-sm text-left text-ink hover:bg-surface transition-default inline-flex items-center gap-3"
               >
                 <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
+                Data / Embed
               </button>
-            </div>
+            )}
+
+            {/* Cite This */}
+            {onOpenCitationPanel && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  close();
+                  onOpenCitationPanel();
+                }}
+                className="w-full px-3 py-2 text-sm text-left text-ink hover:bg-surface transition-default inline-flex items-center gap-3"
+              >
+                <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Cite This
+              </button>
+            )}
 
             {/* Share headline */}
             {headlineData && (
-              <div className="border-t border-surface pt-3">
-                <ShareHeadline data={headlineData} />
-              </div>
-            )}
-
-            {/* More export options link */}
-            {onOpenExportModal && (
-              <div className={headlineData ? "border-t border-surface pt-3" : ""}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    close();
-                    onOpenExportModal();
-                  }}
-                  className="w-full px-3 py-2 rounded-lg text-sm font-medium text-[var(--color-accent)] hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
-                >
-                  Data / Embed
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            {/* Cite this option */}
-            {onOpenCitationPanel && (
-              <div className={onOpenExportModal || headlineData ? "border-t border-surface pt-3" : ""}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    close();
-                    onOpenCitationPanel();
-                  }}
-                  className="w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Cite This
-                  <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
-                </button>
-              </div>
+              <>
+                <div className="my-1 border-t border-surface" />
+                <div className="px-3 py-2">
+                  <ShareHeadline data={headlineData} compact onCopied={close} />
+                </div>
+              </>
             )}
           </div>,
           document.body

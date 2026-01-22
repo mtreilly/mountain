@@ -58,22 +58,22 @@ export function RegionSelector({
         aria-expanded={open}
         aria-label={`${label}: ${selectedRegion?.name ?? "Select a region"}`}
         className={[
-          `w-full px-3 rounded-lg border-l-4 ${colorClasses} border border-surface bg-surface text-left text-sm text-ink hover:bg-surface-raised transition-default flex items-center justify-between gap-2`,
-          dense ? "py-2" : "py-2.5",
+          `w-full rounded border-l-4 ${colorClasses} border border-surface bg-surface text-left text-ink hover:bg-surface-raised transition-default flex items-center justify-between gap-1.5`,
+          dense ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm",
         ].join(" ")}
       >
-        <span className="min-w-0 flex-1 flex items-center gap-2 truncate">
+        <span className="min-w-0 flex-1 flex items-center gap-1.5 truncate">
           {dense && (
             <span
-              className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider ${labelPill}`}
+              className={`shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold uppercase tracking-wider ${labelPill}`}
             >
               {label}
             </span>
           )}
           {selectedRegion ? (
             <>
-              {selectedRegion.name}
-              <span className="text-ink-muted ml-1">
+              <span className="truncate">{selectedRegion.name}</span>
+              <span className="text-ink-muted text-[10px] shrink-0">
                 ({selectedRegion.countryName})
               </span>
             </>
@@ -82,7 +82,7 @@ export function RegionSelector({
           )}
         </span>
         <svg
-          className={`w-4 h-4 text-ink-muted shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-ink-muted shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

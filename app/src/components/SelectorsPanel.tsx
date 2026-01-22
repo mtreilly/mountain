@@ -79,35 +79,29 @@ export function SelectorsPanel({
       </div>
 
       {comparisonMode === "countries" && (
-        <div className="card p-3 sm:p-4">
+        <div className="card p-2 sm:p-3">
           {/* Desktop: single row with all 4 items */}
-	          <div className="hidden lg:flex lg:items-center lg:gap-3">
-	            <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden shrink-0">
-	              <button
-	                type="button"
-	                onClick={() => onComparisonModeChange("countries")}
-	                aria-pressed
-	                className={[
-	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
-	                  "bg-surface-raised text-ink shadow-sm",
-	                ].join(" ")}
-	              >
-	                Countries
-	              </button>
-	              <button
-	                type="button"
-	                onClick={() => onComparisonModeChange("regions")}
-	                aria-pressed={false}
-	                className={[
-	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
-	                  "text-ink-muted hover:bg-surface-raised/60",
-	                ].join(" ")}
-	              >
-	                Regions
-	              </button>
-	            </div>
+          <div className="hidden lg:flex lg:items-center lg:gap-2">
+            <div className="inline-flex rounded border border-surface bg-surface overflow-hidden shrink-0">
+              <button
+                type="button"
+                onClick={() => onComparisonModeChange("countries")}
+                aria-pressed
+                className="px-2 py-1 text-[11px] font-medium transition-default focus-ring bg-surface-raised text-ink shadow-sm"
+              >
+                Countries
+              </button>
+              <button
+                type="button"
+                onClick={() => onComparisonModeChange("regions")}
+                aria-pressed={false}
+                className="px-2 py-1 text-[11px] font-medium transition-default focus-ring text-ink-muted hover:bg-surface-raised/60"
+              >
+                Regions
+              </button>
+            </div>
 
-            <div className="min-w-[240px] flex-1">
+            <div className="min-w-[180px] flex-1">
               <CountrySelector
                 dense
                 label="Chaser"
@@ -121,15 +115,15 @@ export function SelectorsPanel({
             <button
               type="button"
               onClick={onSwapCountries}
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
+              className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
               title="Swap chaser and target"
               aria-label="Swap chaser and target countries"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </button>
-            <div className="min-w-[240px] flex-1">
+            <div className="min-w-[180px] flex-1">
               <CountrySelector
                 dense
                 label="Target"
@@ -140,7 +134,7 @@ export function SelectorsPanel({
                 color="target"
               />
             </div>
-            <div className="w-[360px] shrink-0">
+            <div className="w-[280px] shrink-0">
               <MetricSelector
                 dense
                 value={indicatorCode}
@@ -233,34 +227,28 @@ export function SelectorsPanel({
       )}
 
       {comparisonMode === "regions" && (
-        <div className="card p-3 sm:p-4">
-	          <div className="hidden lg:flex lg:items-center lg:gap-3">
-	            <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden shrink-0">
-	              <button
-	                type="button"
-	                onClick={() => onComparisonModeChange("countries")}
-	                aria-pressed={false}
-	                className={[
-	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
-	                  "text-ink-muted hover:bg-surface-raised/60",
-	                ].join(" ")}
-	              >
-	                Countries
-	              </button>
-	              <button
-	                type="button"
-	                onClick={() => onComparisonModeChange("regions")}
-	                aria-pressed
-	                className={[
-	                  "px-3 py-2 text-xs font-medium transition-default focus-ring",
-	                  "bg-surface-raised text-ink shadow-sm",
-	                ].join(" ")}
-	              >
-	                Regions
-	              </button>
-	            </div>
+        <div className="card p-2 sm:p-3">
+          <div className="hidden lg:flex lg:items-center lg:gap-2">
+            <div className="inline-flex rounded border border-surface bg-surface overflow-hidden shrink-0">
+              <button
+                type="button"
+                onClick={() => onComparisonModeChange("countries")}
+                aria-pressed={false}
+                className="px-2 py-1 text-[11px] font-medium transition-default focus-ring text-ink-muted hover:bg-surface-raised/60"
+              >
+                Countries
+              </button>
+              <button
+                type="button"
+                onClick={() => onComparisonModeChange("regions")}
+                aria-pressed
+                className="px-2 py-1 text-[11px] font-medium transition-default focus-ring bg-surface-raised text-ink shadow-sm"
+              >
+                Regions
+              </button>
+            </div>
 
-            <div className="min-w-[260px] flex-1">
+            <div className="min-w-[200px] flex-1">
               <RegionSelector
                 dense
                 label="Chaser"
@@ -273,15 +261,15 @@ export function SelectorsPanel({
             <button
               type="button"
               onClick={onSwapRegions}
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
+              className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
               title="Swap chaser and target"
               aria-label="Swap chaser and target regions"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </button>
-            <div className="min-w-[260px] flex-1">
+            <div className="min-w-[200px] flex-1">
               <RegionSelector
                 dense
                 label="Target"
@@ -291,8 +279,8 @@ export function SelectorsPanel({
                 color="target"
               />
             </div>
-            <div className="shrink-0 text-xs text-ink-faint whitespace-nowrap px-2 pb-1.5">
-              GDP per capita (USD PPP) · OECD Data
+            <div className="shrink-0 text-[11px] text-ink-faint whitespace-nowrap px-1">
+              GDP/cap (PPP) · OECD
             </div>
           </div>
 
