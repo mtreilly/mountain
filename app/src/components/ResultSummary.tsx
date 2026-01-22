@@ -38,8 +38,11 @@ export function ResultSummary({
 	targetIsAdjusted,
 	milestones,
 }: ResultSummaryProps) {
+	const chaserAlreadyAhead = chaserValue >= targetValue;
 	const willConverge =
-		Number.isFinite(yearsToConvergence) && yearsToConvergence > 0;
+		!chaserAlreadyAhead &&
+		Number.isFinite(yearsToConvergence) &&
+		yearsToConvergence > 0;
 
 	const milestoneText =
 		milestones && milestones.length > 0
@@ -50,40 +53,37 @@ export function ResultSummary({
 					.join(", ")
 			: null;
 
+	const headline = willConverge ? (
+		<>
+			<span className="font-bold text-chaser">{chaserName}</span> could
+			match <span className="font-bold text-target">{targetName}</span> in{" "}
+			<span className="text-lg sm:text-xl font-display font-black">
+				{formatYears(yearsToConvergence)}
+			</span>
+			{convergenceYear && (
+				<span className="text-ink-muted text-xs"> ({convergenceYear})</span>
+			)}
+		</>
+	) : chaserAlreadyAhead ? (
+		<>
+			<span className="font-bold text-chaser">{chaserName}</span> is already
+			ahead of{" "}
+			<span className="font-bold text-target">{targetName}</span>
+		</>
+	) : (
+		<>
+			<span className="font-bold text-chaser">{chaserName}</span>{" "}
+			<span className="font-bold text-amber-600 dark:text-amber-400">
+				won't catch up
+			</span>{" "}
+			to <span className="font-bold text-target">{targetName}</span>
+		</>
+	);
+
 	return (
 		<div className="card p-3 sm:p-4">
 			{/* Main headline - more compact */}
-			<p className="text-sm sm:text-base leading-snug text-ink">
-				{willConverge ? (
-					<>
-						<span className="font-bold text-chaser">{chaserName}</span> could
-						match <span className="font-bold text-target">{targetName}</span> in{" "}
-						<span className="text-lg sm:text-xl font-display font-black">
-							{formatYears(yearsToConvergence)}
-						</span>
-						{convergenceYear && (
-							<span className="text-ink-muted text-xs">
-								{" "}
-								({convergenceYear})
-							</span>
-						)}
-					</>
-				) : chaserGrowthRate <= targetGrowthRate ? (
-					<>
-						<span className="font-bold text-chaser">{chaserName}</span>{" "}
-						<span className="font-bold text-amber-600 dark:text-amber-400">
-							won't catch up
-						</span>{" "}
-						to <span className="font-bold text-target">{targetName}</span>
-					</>
-				) : (
-					<>
-						<span className="font-bold text-chaser">{chaserName}</span> is
-						already ahead of{" "}
-						<span className="font-bold text-target">{targetName}</span>
-					</>
-				)}
-			</p>
+			<p className="text-sm sm:text-base leading-snug text-ink">{headline}</p>
 
 			{/* Growth rate comparison - inline and compact */}
 			<div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-ink-muted">

@@ -61,7 +61,11 @@ const CARD_DIMENSIONS = { width: 1200, height: 675 };
 function generateMainCaption(ctx: CaptionContext): string {
   const { chaserName, targetName, yearsToConvergence, chaserGrowthRate, targetGrowthRate } = ctx;
 
-  if (yearsToConvergence == null || !Number.isFinite(yearsToConvergence) || yearsToConvergence <= 0) {
+  if (yearsToConvergence === 0) {
+    return `1/4 ${chaserName} is already ahead of ${targetName}.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the lead compounds over time.\n\n#economics #convergence`;
+  }
+
+  if (yearsToConvergence == null || !Number.isFinite(yearsToConvergence) || yearsToConvergence < 0) {
     return `1/4 ${chaserName} won't catch ${targetName} at current rates.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the gap keeps growing.\n\n#economics #convergence`;
   }
 
@@ -75,7 +79,8 @@ function generateSensitivityCaption(ctx: CaptionContext): string {
   const { optimisticYears, yearsToConvergence, pessimisticYears } = ctx;
 
   const formatScenario = (years: number | null) => {
-    if (years == null || !Number.isFinite(years) || years <= 0) return "Never";
+    if (years === 0) return "Already ahead";
+    if (years == null || !Number.isFinite(years) || years < 0) return "Never";
     return `${Math.round(years)} years`;
   };
 

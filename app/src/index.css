@@ -65,6 +65,16 @@
   }
   html.dark {
     color-scheme: dark;
+    /* Map base tokens to dark equivalents so Tailwind alpha variants (e.g. bg-surface/50) stay correct. */
+    --color-surface: var(--color-surface-dark);
+    --color-surface-raised: var(--color-surface-raised-dark);
+    --color-surface-sunken: var(--color-surface-sunken-dark);
+    --color-ink: var(--color-ink-dark);
+    --color-ink-muted: var(--color-ink-muted-dark);
+    --color-ink-faint: var(--color-ink-faint-dark);
+    --color-border: var(--color-border-dark);
+    --color-border-subtle: var(--color-border-subtle-dark);
+    --color-chart-grid: var(--color-chart-grid-dark);
   }
 
   body {

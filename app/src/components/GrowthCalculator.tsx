@@ -43,6 +43,8 @@ export function GrowthCalculator({
       ? "Assumes target is static."
       : `Assumes target grows at ${formatPercent(targetGrowthRate)}/yr.`;
 
+  const yearsLabel = years === 1 ? "year" : "years";
+
   return (
     <div className="card p-4">
       <div className="flex items-start justify-between gap-3">
@@ -84,7 +86,7 @@ export function GrowthCalculator({
         ) : (
           <p className="text-sm text-ink-muted leading-relaxed">
             To catch up in{" "}
-            <span className="font-semibold text-ink">{years}</span> years,{" "}
+            <span className="font-semibold text-ink">{years}</span> {yearsLabel},{" "}
             <span className="font-semibold text-chaser">{chaserName}</span> needs{" "}
             <span className={["font-semibold", toneClass].join(" ")}>
               {formatPercent(required)}
@@ -107,4 +109,3 @@ export function GrowthCalculator({
     </div>
   );
 }
-

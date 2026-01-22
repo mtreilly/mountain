@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { HeadlineData } from "../lib/headlineGenerator";
 import { ShareHeadline } from "./ShareHeadline";
@@ -18,12 +18,27 @@ export function ShareMenu({
   theme?: "light" | "dark";
   onToggleTheme?: () => void;
 }) {
+  const menuId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [popover, setPopover] = useState<{ top: number; left: number; width: number } | null>(
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  const focusFirstMenuItem = useCallback(() => {
+    const root = popoverRef.current;
+    if (!root) return;
+    const first = root.querySelector<HTMLElement>('[role="menuitem"]');
+    first?.focus();
+  }, []);
+
+  const focusLastMenuItem = useCallback(() => {
+    const root = popoverRef.current;
+    if (!root) return;
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    items.at(-1)?.focus();
+  }, []);
 
   const updatePopover = useCallback(() => {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -45,9 +60,10 @@ export function ShareMenu({
     setIsOpen(true);
   }, [updatePopover]);
 
-  const close = useCallback(() => {
+  const close = useCallback((opts?: { restoreFocus?: boolean }) => {
     setIsOpen(false);
     setPopover(null);
+    if (opts?.restoreFocus) queueMicrotask(() => triggerRef.current?.focus());
   }, []);
 
   useEffect(() => {
@@ -61,7 +77,7 @@ export function ShareMenu({
       close();
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") close({ restoreFocus: true });
     };
 
     document.addEventListener("pointerdown", onPointerDown, true);
@@ -69,6 +85,23 @@ export function ShareMenu({
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [close, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (triggerRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
+      close();
+    };
+
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
     };
   }, [close, isOpen]);
 
@@ -84,14 +117,34 @@ export function ShareMenu({
     };
   }, [isOpen, updatePopover]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    queueMicrotask(() => focusFirstMenuItem());
+  }, [focusFirstMenuItem, isOpen]);
+
   return (
     <div className="relative">
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => (isOpen ? close() : open())}
+        onClick={() => (isOpen ? close({ restoreFocus: true }) : open())}
         disabled={disabled}
         aria-label="More options"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? menuId : undefined}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!isOpen) open();
+            queueMicrotask(() => focusFirstMenuItem());
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (!isOpen) open();
+            queueMicrotask(() => focusLastMenuItem());
+          }
+        }}
         className="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-surface bg-surface-raised text-ink-muted hover:text-ink hover:bg-surface transition-default disabled:opacity-50"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -104,8 +157,42 @@ export function ShareMenu({
         createPortal(
           <div
             ref={popoverRef}
+            id={menuId}
             role="menu"
             aria-label="More options"
+            onKeyDown={(e) => {
+              if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End")
+                return;
+
+              const root = popoverRef.current;
+              if (!root) return;
+              const items = Array.from(root.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+              if (!items.length) return;
+
+              const active = document.activeElement as HTMLElement | null;
+              const currentIndex = active ? items.indexOf(active) : -1;
+
+              const focusIndex = (idx: number) => {
+                const target = items.at(idx);
+                if (target) target.focus();
+              };
+
+              e.preventDefault();
+              if (e.key === "Home") {
+                focusIndex(0);
+                return;
+              }
+              if (e.key === "End") {
+                focusIndex(-1);
+                return;
+              }
+              if (e.key === "ArrowDown") {
+                focusIndex(currentIndex === -1 ? 0 : (currentIndex + 1) % items.length);
+              }
+              if (e.key === "ArrowUp") {
+                focusIndex(currentIndex === -1 ? -1 : (currentIndex - 1 + items.length) % items.length);
+              }
+            }}
             className="fixed z-50 rounded-xl border border-surface bg-surface-raised shadow-xl py-1"
             style={{ top: popover.top, left: popover.left, width: popover.width }}
           >

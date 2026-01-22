@@ -8,6 +8,7 @@ export type DataSourceName =
 	| "World Bank"
 	| "UNDP"
 	| "Our World in Data"
+	| "OECD"
 	| string;
 
 /**
@@ -39,6 +40,10 @@ const DATA_SOURCE_URL_GENERATORS: Record<
 			return `https://ourworldindata.org/grapher/${variable}`;
 		}
 		return `https://ourworldindata.org/grapher/${sourceCode}`;
+	},
+
+	OECD: () => {
+		return "https://www.oecd.org/en/publications/regions-and-cities-at-a-glance-2024_744f47eb-en.html";
 	},
 };
 
@@ -126,6 +131,10 @@ export const DATA_SOURCE_LICENSES: Record<string, { name: string; url: string }>
 	"Our World in Data": {
 		name: "CC-BY 4.0",
 		url: "https://ourworldindata.org/faqs#can-i-use-or-reproduce-your-data-visualizations",
+	},
+	OECD: {
+		name: "OECD Terms and Conditions",
+		url: "https://www.oecd.org/termsandconditions/",
 	},
 };
 

@@ -27,6 +27,12 @@ import { useTheme } from "./hooks/useTheme";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
+import { ALL_TL2_REGIONS, getRegionDataSeries } from "./lib/oecdRegions";
+import {
+	toRegionalObservedCsv,
+	toRegionalProjectionCsv,
+	toRegionalReportJson,
+} from "./lib/regionsDataExport";
 import type { HeadlineData } from "./lib/headlineGenerator";
 import type { ShareCardParams } from "./lib/shareCardSvg";
 import {
@@ -142,6 +148,7 @@ export default function App() {
 		targetValue,
 		chaserGrowthRate,
 		targetGrowthRate,
+		unit: metricUnit,
 		baseYear,
 	});
 
@@ -288,6 +295,16 @@ export default function App() {
 		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
 	}, [shareState]);
 
+	const citationIndicator = useMemo(() => {
+		if (comparisonMode !== "regions") return selectedIndicator;
+		return {
+			code: "GDP_PCAP_PPP",
+			name: "GDP per capita (USD PPP)",
+			unit: "USD PPP",
+			source: "OECD",
+		};
+	}, [comparisonMode, selectedIndicator]);
+
 	const exportBasename = useMemo(() => {
 		const safe = (s: string) =>
 			s
@@ -295,9 +312,19 @@ export default function App() {
 				.replace(/-+/g, "-")
 				.replace(/^-|-$/g, "");
 		return safe(
-			`mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
+			comparisonMode === "regions"
+				? `mountain-${chaserRegionCode}-${targetRegionCode}-GDP_PCAP_PPP-${baseYear}`
+				: `mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
 		);
-	}, [baseYear, chaserIso, indicatorCode, targetIso]);
+	}, [
+		baseYear,
+		chaserIso,
+		chaserRegionCode,
+		comparisonMode,
+		indicatorCode,
+		targetIso,
+		targetRegionCode,
+	]);
 
 	const headlineData: HeadlineData | undefined = useMemo(() => {
 		if (comparisonMode !== "countries") return undefined;
@@ -431,6 +458,33 @@ export default function App() {
 
 	const onDownloadObservedCsv = useMemo(() => {
 		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
+			return () => {
+				const csv = toRegionalObservedCsv({
+					state: shareState,
+					observed: {
+						[chaserRegion.code]: getRegionDataSeries(chaserRegion.code).map((p) => ({
+							year: p.year,
+							value: p.gdpPerCapita,
+						})),
+						[targetRegion.code]: getRegionDataSeries(targetRegion.code).map((p) => ({
+							year: p.year,
+							value: p.gdpPerCapita,
+						})),
+					},
+					chaserRegion,
+					targetRegion,
+				});
+				const filename = `${exportBasename}-observed.csv`;
+				downloadText(filename, csv, "text/csv;charset=utf-8");
+				return filename;
+			};
+		}
+
 		return () => {
 			const csv = toObservedCsv({
 				state: shareState,
@@ -438,55 +492,103 @@ export default function App() {
 				countriesByIso3,
 				data,
 			});
-			downloadText(
-				`${exportBasename}-observed.csv`,
-				csv,
-				"text/csv;charset=utf-8",
-			);
+			const filename = `${exportBasename}-observed.csv`;
+			downloadText(filename, csv, "text/csv;charset=utf-8");
+			return filename;
 		};
 	}, [
+		comparisonMode,
 		countriesByIso3,
 		data,
 		exportBasename,
 		exportIndicator,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
 		hasData,
 		shareState,
 	]);
 
 	const onDownloadProjectionCsv = useMemo(() => {
 		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
+			return () => {
+				const csv = toRegionalProjectionCsv({
+					state: shareState,
+					projection,
+					chaserRegion,
+					targetRegion,
+				});
+				const filename = `${exportBasename}-projection.csv`;
+				downloadText(filename, csv, "text/csv;charset=utf-8");
+				return filename;
+			};
+		}
+
 		return () => {
 			const csv = toProjectionCsv({
 				state: shareState,
 				indicator: exportIndicator,
 				projection,
 			});
-			downloadText(
-				`${exportBasename}-projection.csv`,
-				csv,
-				"text/csv;charset=utf-8",
-			);
+			const filename = `${exportBasename}-projection.csv`;
+			downloadText(filename, csv, "text/csv;charset=utf-8");
+			return filename;
 		};
-	}, [exportBasename, exportIndicator, hasData, projection, shareState]);
+	}, [
+		comparisonMode,
+		exportBasename,
+		exportIndicator,
+		hasData,
+		projection,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
+		shareState,
+	]);
 
-		const onDownloadReportJson = useMemo(() => {
-			if (!hasData) return undefined;
+	const onDownloadReportJson = useMemo(() => {
+		if (!hasData) return undefined;
+		if (comparisonMode === "regions") {
+			const chaserRegion = regionalConvergence.chaserRegion;
+			const targetRegion = regionalConvergence.targetRegion;
+			if (!chaserRegion || !targetRegion) return undefined;
+
 			return () => {
-				const json = toReportJson({
+				const json = toRegionalReportJson({
 					state: shareState,
-					indicator: exportIndicator,
-					countriesByIso3,
-					observed: data,
+					observed: {
+						[chaserRegion.code]: getRegionDataSeries(chaserRegion.code),
+						[targetRegion.code]: getRegionDataSeries(targetRegion.code),
+					},
 					projection,
 					derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+					chaserRegion,
+					targetRegion,
 				});
-				downloadText(
-					`${exportBasename}-report.json`,
-					json,
-					"application/json;charset=utf-8",
-				);
+				const filename = `${exportBasename}-report.json`;
+				downloadText(filename, json, "application/json;charset=utf-8");
+				return filename;
 			};
-		}, [
+		}
+
+		return () => {
+			const json = toReportJson({
+				state: shareState,
+				indicator: exportIndicator,
+				countriesByIso3,
+				observed: data,
+				projection,
+				derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+			});
+			const filename = `${exportBasename}-report.json`;
+			downloadText(filename, json, "application/json;charset=utf-8");
+			return filename;
+		};
+	}, [
+		comparisonMode,
 		convergenceYear,
 		countriesByIso3,
 		data,
@@ -495,6 +597,8 @@ export default function App() {
 		gap,
 		hasData,
 		projection,
+		regionalConvergence.chaserRegion,
+		regionalConvergence.targetRegion,
 		shareState,
 		yearsToConvergence,
 	]);
@@ -811,7 +915,11 @@ export default function App() {
 					</aside>
 				</div>
 
-				<AppFooter countriesCount={countries.length} />
+				<AppFooter
+					comparisonMode={comparisonMode}
+					countriesCount={countries.length}
+					regionsCount={ALL_TL2_REGIONS.length}
+				/>
 			</div>
 
 			{/* Export Modal */}
@@ -824,6 +932,7 @@ export default function App() {
 					setBaseYear(Math.max(1950, Math.min(2100, year)));
 				}}
 				onReset={resetToDefaults}
+				comparisonMode={comparisonMode}
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
@@ -844,7 +953,7 @@ export default function App() {
 				isOpen={isCitationPanelOpen}
 				onClose={() => setIsCitationPanelOpen(false)}
 				shareState={shareState}
-				indicator={selectedIndicator}
+				indicator={citationIndicator}
 				chaserName={displayChaserName}
 				targetName={displayTargetName}
 			/>
