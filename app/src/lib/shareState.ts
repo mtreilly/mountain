@@ -278,3 +278,10 @@ export function toSearchString(state: ShareState): string {
 	const s = params.toString();
 	return s ? `?${s}` : "";
 }
+
+export function toSyncedSearchString(
+	state: ShareState,
+	embedParams?: Partial<EmbedParams>,
+): string {
+	return embedParams?.embed ? toEmbedSearchString(state, embedParams) : toSearchString(state);
+}

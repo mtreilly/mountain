@@ -1,5 +1,10 @@
 import { strict as assert } from "node:assert";
-import { parseShareStateFromSearch, toSearchString } from "../src/lib/shareState";
+import {
+  parseEmbedParams,
+  parseShareStateFromSearch,
+  toSearchString,
+  toSyncedSearchString,
+} from "../src/lib/shareState";
 import { toObservedCsv, toProjectionCsv } from "../src/lib/dataExport";
 import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
 import {
@@ -45,6 +50,27 @@ function testStaticTargetForcesTgZero() {
   assert.equal(parsed.tmode, "static");
   assert.equal(parsed.tg, 0);
   assert.ok(toSearchString(parsed).includes("tg=0"));
+}
+
+function testEmbedUrlSyncPreservesEmbedParams() {
+  const search =
+    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tmode=growing&tg=0.015&baseYear=2023&embed=true&interactive=false&embedTheme=dark&h=500";
+  const state = parseShareStateFromSearch(search);
+  const embedParams = parseEmbedParams(search);
+
+  assert.equal(embedParams.embed, true);
+  assert.equal(embedParams.interactive, false);
+  assert.equal(embedParams.embedTheme, "dark");
+  assert.equal(embedParams.height, 500);
+
+  const synced = toSyncedSearchString(state, embedParams);
+  assert.ok(synced.includes("embed=true"));
+  assert.ok(synced.includes("interactive=false"));
+  assert.ok(synced.includes("embedTheme=dark"));
+  assert.ok(synced.includes("h=500"));
+
+  const nonEmbed = toSyncedSearchString(state, { embed: false });
+  assert.equal(nonEmbed, toSearchString(state));
 }
 
 function testCsvExports() {
@@ -407,6 +433,7 @@ function run() {
   const tests = [
     ["shareState roundtrip", testShareStateRoundtrip],
     ["tmode static forces tg=0", testStaticTargetForcesTgZero],
+    ["embed mode preserves embed params", testEmbedUrlSyncPreservesEmbedParams],
     ["csv exports", testCsvExports],
     ["implications math", testImplicationsMath],
     // Citation tests
