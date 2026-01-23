@@ -149,6 +149,9 @@ export default function App() {
 	const [impHorizonYears, setImpHorizonYears] = useState(
 		initialShareState.ih ?? 25,
 	);
+	const [impCard, setImpCard] = useState(
+		initialShareState.impCard ?? "gdp",
+	);
 	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
 	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
@@ -378,6 +381,7 @@ export default function App() {
 			ms: showMilestones,
 			tpl: impTemplate,
 			ih: impHorizonYears,
+			impCard,
 			mode: comparisonMode,
 			cr: chaserRegionCode,
 			tr: targetRegionCode,
@@ -389,6 +393,7 @@ export default function App() {
 		chaserIso,
 		chaserRegionCode,
 		comparisonMode,
+		impCard,
 		indicatorCode,
 		impHorizonYears,
 		impTemplate,
@@ -1036,6 +1041,8 @@ export default function App() {
 									onHorizonYearsChange={setImpHorizonYears}
 									template={impTemplate}
 									onTemplateChange={setImpTemplate}
+									activeCard={impCard}
+									onActiveCardChange={setImpCard}
 									enabled={showImplications}
 								/>
 							</div>
