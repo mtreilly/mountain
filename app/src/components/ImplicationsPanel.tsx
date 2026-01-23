@@ -16,6 +16,14 @@ import {
   IMPLICATION_SCENARIOS,
   type ScenarioId,
 } from "../lib/implicationsScenarios";
+import type { ImplicationCardType } from "../lib/shareState";
+import { ImplicationsTabs } from "./implications/ImplicationsTabs";
+import { GdpTotalsCard } from "./implications/GdpTotalsCard";
+import { ElectricityDemandCard } from "./implications/ElectricityDemandCard";
+import { ElectricityMixCard } from "./implications/ElectricityMixCard";
+import { ElectricityAssumptionsCard } from "./implications/ElectricityAssumptionsCard";
+import { UrbanizationCard } from "./implications/UrbanizationCard";
+import { Co2EmissionsCard } from "./implications/Co2EmissionsCard";
 
 type PopAssumption = "trend" | "static";
 type PowerMixKey = "solar" | "wind" | "nuclear" | "coal";
@@ -68,6 +76,8 @@ export function ImplicationsPanel({
   onHorizonYearsChange,
   template,
   onTemplateChange,
+  activeCard,
+  onActiveCardChange,
   enabled,
 }: {
   chaserIso: string;
@@ -79,6 +89,8 @@ export function ImplicationsPanel({
   onHorizonYearsChange: (years: number) => void;
   template: TemplateId;
   onTemplateChange: (id: TemplateId) => void;
+  activeCard: ImplicationCardType;
+  onActiveCardChange: (card: ImplicationCardType) => void;
   enabled: boolean;
 }) {
   const templateDef = TEMPLATE_PATHS.find((t) => t.id === template) ?? TEMPLATE_PATHS[0];
@@ -153,7 +165,6 @@ export function ImplicationsPanel({
   const [assumptions, setAssumptions] = useState<ImplicationAssumptions>(DEFAULT_ASSUMPTIONS);
   const [mixMode, setMixMode] = useState(false);
   const [mix, setMix] = useState<Record<PowerMixKey, number>>(MIX_PRESETS[0].mix);
-  const [showAssumptions, setShowAssumptions] = useState(false);
   const [scenario, setScenario] = useState<ScenarioId>("baseline");
   const scenarioDef = useMemo(
     () => IMPLICATION_SCENARIOS.find((s) => s.id === scenario) ?? IMPLICATION_SCENARIOS[0],
@@ -585,6 +596,11 @@ export function ImplicationsPanel({
       coal: clamp(assumptions.coalCf, 0.05, 0.95),
     } satisfies Record<PowerMixKey, number>;
 
+    const solarCf = cf.solar;
+    const windCf = cf.wind;
+    const nuclearCf = cf.nuclear;
+    const coalCf = cf.coal;
+
     const capFromTWh = (twh: number, key: PowerMixKey) => twh / twhPerYearPerGW(cf[key]);
 
     const maxAnnualizedGrowth = (points: Array<{ year: number; value: number }> | undefined) => {
@@ -745,7 +761,10 @@ export function ImplicationsPanel({
           ? ("reported" as const)
           : ("inferred" as const),
       assumptions: {
-        ...cf,
+        solarCf,
+        windCf,
+        nuclearCf,
+        coalCf,
         panelWatts: clamp(assumptions.panelWatts, 100, 1000),
         windTurbineMw: clamp(assumptions.windTurbineMw, 0.5, 20),
       },
@@ -892,515 +911,85 @@ export function ImplicationsPanel({
       </div>
 
       {!loading && !error && hasAny && (
-        <div className="mt-3 space-y-2">
-          {(macro.gdpTotalCurrent || macro.gdpTotalFuture) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
-              <div className="text-xs font-medium text-ink">Macro totals</div>
-              <div className="mt-1 text-[11px] text-ink-faint">
-                GDP (total) {macro.gdpTotalCurrent ? formatTotal(macro.gdpTotalCurrent) : "—"}{" "}
-                <span className="mx-1">→</span>
-                {macro.gdpTotalFuture ? formatTotal(macro.gdpTotalFuture) : "—"}
-              </div>
-            </div>
-          )}
+        <>
+          <div className="mt-3">
+            <ImplicationsTabs activeCard={activeCard} onCardChange={onActiveCardChange} />
+          </div>
 
-          {(macro.electricity.demandCurrentTWh != null || macro.electricity.demandFutureTWh != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <div className="text-xs font-medium text-ink">Electricity buildout</div>
-                <div className="text-[11px] text-ink-faint shrink-0">
-                  Losses {Math.round(macro.electricity.assumptions.gridLossPct)}% · Net imports{" "}
-                  {Math.round(macro.electricity.assumptions.netImportsPct)}%
-                  {macro.electricity.equivalents?.assumptions && (
-                    <>
-                      {" · "}CF: nuclear{" "}
-                      {Math.round(macro.electricity.equivalents.assumptions.nuclearCf * 100)}% · coal{" "}
-                      {Math.round(macro.electricity.equivalents.assumptions.coalCf * 100)}% · solar{" "}
-                      {Math.round(macro.electricity.equivalents.assumptions.solarCf * 100)}% · wind{" "}
-                      {Math.round(macro.electricity.equivalents.assumptions.windCf * 100)}%
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="mt-1 text-[11px] text-ink-faint">
-                Demand (WB){" "}
-                {macro.electricity.demandCurrentTWh != null
-                  ? formatTotal({ unit: "TWh", value: macro.electricity.demandCurrentTWh })
-                  : "—"}
-                <span className="mx-1">→</span>
-                {macro.electricity.demandFutureTWh != null
-                  ? formatTotal({ unit: "TWh", value: macro.electricity.demandFutureTWh })
-                  : "—"}
-                {macro.electricity.demandDeltaTWh != null && (
-                  <>
-                    {" "}
-                    (<span className="font-medium text-ink">
-                      {formatSignedTotal({ unit: "TWh", value: macro.electricity.demandDeltaTWh })}
-                    </span>
-                    )
-                  </>
-                )}
-              </div>
-              {macro.electricity.requiredDomesticGenerationFutureTWh != null && (
-                <div className="mt-0.5 text-[11px] text-ink-faint">
-                  Required domestic generation (to meet demand):{" "}
-                  <span className="font-medium text-ink">
-                    {formatTotal({ unit: "TWh", value: macro.electricity.requiredDomesticGenerationFutureTWh })}
-                  </span>{" "}
-                  {macro.electricity.buildoutDeltaTWh != null && (
-                    <>
-                      {" · "}Buildout vs observed{" "}
-                      <span className="font-medium text-ink">
-                        {formatSignedTotal({ unit: "TWh", value: macro.electricity.buildoutDeltaTWh })}
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
-              {observedElectricity && (
-                <div className="mt-0.5 text-[11px] text-ink-faint">
-                  Observed generation mix{" "}
-                  <span className="font-medium text-ink">
-                    {formatTotal({ unit: "TWh", value: observedElectricity.totalTWh })}
-                  </span>{" "}
-                  ({observedElectricity.year}
-                  {observedElectricity.totalSourceVintage
-                    ? ` · ${formatSourceVintage(observedElectricity.totalSourceVintage)}`
-                    : ""}) ·
-                  Solar{" "}
-                  {observedElectricity.shares.solar != null ? `${observedElectricity.shares.solar.toFixed(0)}%` : "—"} ·
-                  Wind{" "}
-                  {observedElectricity.shares.wind != null ? `${observedElectricity.shares.wind.toFixed(0)}%` : "—"} ·
-                  Coal{" "}
-                  {observedElectricity.shares.coal != null ? `${observedElectricity.shares.coal.toFixed(0)}%` : "—"} ·
-                  Nuclear{" "}
-                  {observedElectricity.shares.nuclear != null
-                    ? `${observedElectricity.shares.nuclear.toFixed(0)}%`
-                    : "—"}
-                </div>
-              )}
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setMixMode(false)}
-                    aria-pressed={!mixMode}
-                    className={[
-                      "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-                      !mixMode
-                        ? "bg-surface-raised text-ink shadow-sm"
-                        : "text-ink-muted hover:bg-surface-raised/60",
-                    ].join(" ")}
-                  >
-                    Compare
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMixMode(true)}
-                    aria-pressed={mixMode}
-                    disabled={!mixBuildout}
-                    className={[
-                      "px-2.5 py-1 text-xs font-medium transition-default focus-ring disabled:opacity-50",
-                      mixMode
-                        ? "bg-surface-raised text-ink shadow-sm"
-                        : "text-ink-muted hover:bg-surface-raised/60",
-                    ].join(" ")}
-                  >
-                    Mix
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAssumptions((v) => !v)}
-                  className="text-[11px] text-ink-muted hover:text-ink transition-default focus-ring px-2 py-1 rounded-md hover:bg-surface"
-                >
-                  Assumptions
-                </button>
-              </div>
+          <div className="mt-3">
+            {activeCard === "gdp" && (
+              <GdpTotalsCard
+                data={{
+                  gdpTotalCurrent: macro.gdpTotalCurrent,
+                  gdpTotalFuture: macro.gdpTotalFuture,
+                  popCurrent,
+                  popFuture,
+                }}
+              />
+            )}
 
-              {showAssumptions && (
-                <div className="mt-2 rounded-lg border border-surface bg-surface px-3 py-2">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <AssumptionField
-                      label="Solar CF"
-                      value={assumptions.solarCf * 100}
-                      unit="%"
-                      step={1}
-                      min={5}
-                      max={50}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, solarCf: clamp(next / 100, 0.01, 1) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Wind CF"
-                      value={assumptions.windCf * 100}
-                      unit="%"
-                      step={1}
-                      min={5}
-                      max={70}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, windCf: clamp(next / 100, 0.01, 1) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Nuclear CF"
-                      value={assumptions.nuclearCf * 100}
-                      unit="%"
-                      step={1}
-                      min={5}
-                      max={98}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, nuclearCf: clamp(next / 100, 0.01, 1) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Coal CF"
-                      value={assumptions.coalCf * 100}
-                      unit="%"
-                      step={1}
-                      min={5}
-                      max={95}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, coalCf: clamp(next / 100, 0.01, 1) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Panel size"
-                      value={assumptions.panelWatts}
-                      unit="W"
-                      step={10}
-                      min={100}
-                      max={1000}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, panelWatts: clamp(next, 100, 1000) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Turbine size"
-                      value={assumptions.windTurbineMw}
-                      unit="MW"
-                      step={0.5}
-                      min={0.5}
-                      max={20}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, windTurbineMw: clamp(next, 0.5, 20) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="People/home"
-                      value={assumptions.householdSize}
-                      unit=""
-                      step={0.1}
-                      min={1}
-                      max={10}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, householdSize: clamp(next, 1, 10) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Grid losses"
-                      value={assumptions.gridLossPct}
-                      unit="%"
-                      step={1}
-                      min={0}
-                      max={50}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, gridLossPct: clamp(next, 0, 50) }))
-                      }
-                    />
-                    <AssumptionField
-                      label="Net imports"
-                      value={assumptions.netImportsPct}
-                      unit="%"
-                      step={1}
-                      min={-50}
-                      max={50}
-                      onChange={(next) =>
-                        setAssumptions((a) => ({ ...a, netImportsPct: clamp(next, -50, 50) }))
-                      }
-                    />
-                    <div className="flex items-end">
-                      <button
-                        type="button"
-                        onClick={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
-                        className="w-full px-2 py-1 rounded-md border border-surface bg-surface-raised text-xs font-medium text-ink hover:bg-surface transition-default focus-ring"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+            {activeCard === "elec-demand" && (
+              <ElectricityDemandCard
+                data={{
+                  demandCurrentTWh: macro.electricity.demandCurrentTWh,
+                  demandFutureTWh: macro.electricity.demandFutureTWh,
+                  demandDeltaTWh: macro.electricity.demandDeltaTWh,
+                  requiredDomesticGenerationFutureTWh:
+                    macro.electricity.requiredDomesticGenerationFutureTWh,
+                  buildoutDeltaTWh: macro.electricity.buildoutDeltaTWh,
+                  demandDeltaAvgGW: macro.electricity.demandDeltaAvgGW,
+                  buildoutDeltaAvgGW: macro.electricity.buildoutDeltaAvgGW,
+                  assumptions: macro.electricity.assumptions,
+                }}
+              />
+            )}
 
-              {!mixMode && baselineMultipliers && (
-                <div className="mt-0.5 text-[11px] text-ink-faint">
-                  Buildout vs today (
-                  {baselineMultipliers.kind === "reported"
-                    ? "reported installed GW (IRENA/Ember solar+wind; inferred otherwise)"
-                    : "estimated GW from TWh & CF"}
-                  , {baselineMultipliers.year}): Solar{" "}
-                  {baselineMultipliers.ratio.solar != null ? `${baselineMultipliers.ratio.solar.toFixed(1)}×` : "—"} ·
-                  Wind {baselineMultipliers.ratio.wind != null ? `${baselineMultipliers.ratio.wind.toFixed(1)}×` : "—"} ·
-                  Coal {baselineMultipliers.ratio.coal != null ? `${baselineMultipliers.ratio.coal.toFixed(1)}×` : "—"} ·
-                  Nuclear{" "}
-                  {baselineMultipliers.ratio.nuclear != null ? `${baselineMultipliers.ratio.nuclear.toFixed(1)}×` : "—"}
-                </div>
-              )}
-              {macro.electricity.equivalents?.deltaAvgGW != null && !mixMode && (
-                <div className="mt-0.5 text-[11px] text-ink-faint">
-                  Average load{" "}
-                  <span className="font-medium text-ink">
-                    {formatSignedNumber(macro.electricity.equivalents.deltaAvgGW, "GW")}
-                  </span>{" "}
-                  (GWavg)
-                </div>
-              )}
-              {macro.electricity.equivalents && !mixMode && (
-                <div className="mt-1 grid grid-cols-1 sm:grid-cols-4 gap-1 text-[11px] text-ink-faint">
-                  <div>
-                    Nuclear:{" "}
-                    <span className="font-medium text-ink">
-                      {formatUnitCount(macro.electricity.equivalents.nuclear.plants)}
-                    </span>{" "}
-                    1-GW plants ({formatUnitCount(macro.electricity.equivalents.nuclear.plants / horizonYears)}/yr)
-                  </div>
-                  <div>
-                    Coal:{" "}
-                    <span className="font-medium text-ink">
-                      {formatUnitCount(macro.electricity.equivalents.coal.plants)}
-                    </span>{" "}
-                    1-GW plants ({formatUnitCount(macro.electricity.equivalents.coal.plants / horizonYears)}/yr)
-                  </div>
-                  <div>
-                    Solar:{" "}
-                    <span className="font-medium text-ink">
-                      {formatUnitCount(macro.electricity.equivalents.solar.gw)}
-                    </span>{" "}
-                    GW ({formatUnitCount(macro.electricity.equivalents.solar.gw / horizonYears)} GW/yr)
-                    {macro.electricity.equivalents.solar.panels != null && (
-                      <>
-                        {" "}
-                        (<span className="font-medium text-ink">
-                          {formatUnitCount(macro.electricity.equivalents.solar.panels)}
-                        </span>{" "}
-                        panels)
-                      </>
-                    )}
-                  </div>
-                  <div>
-                    Wind:{" "}
-                    <span className="font-medium text-ink">
-                      {formatUnitCount(macro.electricity.equivalents.wind.gw)}
-                    </span>{" "}
-                    GW ({formatUnitCount(macro.electricity.equivalents.wind.gw / horizonYears)} GW/yr)
-                    {macro.electricity.equivalents.wind.turbines != null && (
-                      <>
-                        {" "}
-                        (<span className="font-medium text-ink">
-                          {formatUnitCount(macro.electricity.equivalents.wind.turbines)}
-                        </span>{" "}
-                        turbines)
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+            {activeCard === "elec-mix" && (
+              <ElectricityMixCard
+                observedMix={observedElectricity}
+                techEquivalents={macro.electricity.equivalents}
+                baselineMultipliers={baselineMultipliers}
+                mixMode={mixMode}
+                onMixModeChange={setMixMode}
+                mixBuildout={mixBuildout}
+                mix={mix}
+                onMixChange={setMix}
+                mixPresets={MIX_PRESETS}
+                horizonYears={horizonYears}
+              />
+            )}
 
-              {mixMode && mixBuildout && (
-                <div className="mt-2">
-                  <div className="h-2 rounded-full overflow-hidden bg-surface flex">
-                    <div
-                      className="bg-amber-400"
-                      style={{ width: `${mixBuildout.percent.solar}%` }}
-                      aria-label={`Solar ${mixBuildout.percent.solar}%`}
-                    />
-                    <div
-                      className="bg-sky-400"
-                      style={{ width: `${mixBuildout.percent.wind}%` }}
-                      aria-label={`Wind ${mixBuildout.percent.wind}%`}
-                    />
-                    <div
-                      className="bg-violet-400"
-                      style={{ width: `${mixBuildout.percent.nuclear}%` }}
-                      aria-label={`Nuclear ${mixBuildout.percent.nuclear}%`}
-                    />
-                    <div
-                      className="bg-slate-400"
-                      style={{ width: `${mixBuildout.percent.coal}%` }}
-                      aria-label={`Coal ${mixBuildout.percent.coal}%`}
-                    />
-                  </div>
+            {activeCard === "elec-assumptions" && (
+              <ElectricityAssumptionsCard
+                assumptions={assumptions}
+                onAssumptionsChange={setAssumptions}
+                onReset={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
+              />
+            )}
 
-                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <MixField
-                      label="Solar"
-                      value={mix.solar}
-                      color="bg-amber-400"
-                      onChange={(v) => setMix((m) => ({ ...m, solar: v }))}
-                    />
-                    <MixField
-                      label="Wind"
-                      value={mix.wind}
-                      color="bg-sky-400"
-                      onChange={(v) => setMix((m) => ({ ...m, wind: v }))}
-                    />
-                    <MixField
-                      label="Nuclear"
-                      value={mix.nuclear}
-                      color="bg-violet-400"
-                      onChange={(v) => setMix((m) => ({ ...m, nuclear: v }))}
-                    />
-                    <MixField
-                      label="Coal"
-                      value={mix.coal}
-                      color="bg-slate-400"
-                      onChange={(v) => setMix((m) => ({ ...m, coal: v }))}
-                    />
-                  </div>
+            {activeCard === "urban" && (
+              <UrbanizationCard
+                data={{
+                  currentPersons: macro.urban.currentPersons,
+                  futurePersons: macro.urban.futurePersons,
+                  deltaPersons: macro.urban.deltaPersons,
+                  homesNeeded: macro.urban.homesNeeded,
+                  householdSize: assumptions.householdSize,
+                  yearsToProject: horizonYears,
+                }}
+              />
+            )}
 
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {MIX_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setMix(p.mix)}
-                        className="px-2 py-1 rounded-md border border-surface bg-surface text-[11px] text-ink-muted hover:text-ink hover:bg-surface-raised transition-default focus-ring"
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-2 text-[11px] text-ink-faint">
-                    Baseline:{" "}
-                    {mixBuildout.baselineKind === "reported"
-                      ? "reported installed GW (IRENA/Ember solar+wind; inferred otherwise)"
-                      : "estimated from observed generation + CF"}
-                    {" · "}
-                    Mix is normalized from inputs (sum {mixBuildout.sum.toFixed(0)}).
-                  </div>
-
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <MixResultCard
-                      title="Solar"
-                      color="bg-amber-400"
-                      twh={mixBuildout.tech.solar.twh}
-                      gw={mixBuildout.tech.solar.gw}
-                      perYearGw={mixBuildout.tech.solar.perYear.gw}
-                      perYearTwh={mixBuildout.tech.solar.perYear.twh}
-                      equivalentLabel="panels"
-                      equivalentCount={mixBuildout.tech.solar.equivalents.panels}
-                      capacityX={mixBuildout.tech.solar.multiplier.capacityX}
-                      generationX={mixBuildout.tech.solar.multiplier.generationX}
-                      paceX={mixBuildout.tech.solar.pace.paceX}
-                      paceBenchmarkTwhPerYear={mixBuildout.tech.solar.pace.max5yTwhPerYear}
-                    />
-                    <MixResultCard
-                      title="Wind"
-                      color="bg-sky-400"
-                      twh={mixBuildout.tech.wind.twh}
-                      gw={mixBuildout.tech.wind.gw}
-                      perYearGw={mixBuildout.tech.wind.perYear.gw}
-                      perYearTwh={mixBuildout.tech.wind.perYear.twh}
-                      equivalentLabel="turbines"
-                      equivalentCount={mixBuildout.tech.wind.equivalents.turbines}
-                      capacityX={mixBuildout.tech.wind.multiplier.capacityX}
-                      generationX={mixBuildout.tech.wind.multiplier.generationX}
-                      paceX={mixBuildout.tech.wind.pace.paceX}
-                      paceBenchmarkTwhPerYear={mixBuildout.tech.wind.pace.max5yTwhPerYear}
-                    />
-                    <MixResultCard
-                      title="Nuclear"
-                      color="bg-violet-400"
-                      twh={mixBuildout.tech.nuclear.twh}
-                      gw={mixBuildout.tech.nuclear.gw}
-                      perYearGw={mixBuildout.tech.nuclear.perYear.gw}
-                      perYearTwh={mixBuildout.tech.nuclear.perYear.twh}
-                      equivalentLabel="1‑GW plants"
-                      equivalentCount={mixBuildout.tech.nuclear.equivalents.plants}
-                      capacityX={mixBuildout.tech.nuclear.multiplier.capacityX}
-                      generationX={mixBuildout.tech.nuclear.multiplier.generationX}
-                      paceX={mixBuildout.tech.nuclear.pace.paceX}
-                      paceBenchmarkTwhPerYear={mixBuildout.tech.nuclear.pace.max5yTwhPerYear}
-                    />
-                    <MixResultCard
-                      title="Coal"
-                      color="bg-slate-400"
-                      twh={mixBuildout.tech.coal.twh}
-                      gw={mixBuildout.tech.coal.gw}
-                      perYearGw={mixBuildout.tech.coal.perYear.gw}
-                      perYearTwh={mixBuildout.tech.coal.perYear.twh}
-                      equivalentLabel="1‑GW plants"
-                      equivalentCount={mixBuildout.tech.coal.equivalents.plants}
-                      capacityX={mixBuildout.tech.coal.multiplier.capacityX}
-                      generationX={mixBuildout.tech.coal.multiplier.generationX}
-                      paceX={mixBuildout.tech.coal.pace.paceX}
-                      paceBenchmarkTwhPerYear={mixBuildout.tech.coal.pace.max5yTwhPerYear}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {(macro.urban.currentPersons != null || macro.urban.futurePersons != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-xs font-medium text-ink">Urbanization buildout</div>
-                <div className="text-[11px] text-ink-faint">Uses people/home in assumptions</div>
-              </div>
-              <div className="mt-1 text-[11px] text-ink-faint">
-                Urban residents{" "}
-                {macro.urban.currentPersons != null
-                  ? formatTotal({ unit: "persons", value: macro.urban.currentPersons })
-                  : "—"}
-                <span className="mx-1">→</span>
-                {macro.urban.futurePersons != null
-                  ? formatTotal({ unit: "persons", value: macro.urban.futurePersons })
-                  : "—"}
-                {macro.urban.deltaPersons != null && (
-                  <>
-                    {" "}
-                    (<span className="font-medium text-ink">
-                      {formatSignedTotal({ unit: "persons", value: macro.urban.deltaPersons })}
-                    </span>
-                    )
-                  </>
-                )}
-              </div>
-              {macro.urban.homesNeeded != null && (
-                <div className="mt-0.5 text-[11px] text-ink-faint">
-                  Homes (rough):{" "}
-                  <span className="font-medium text-ink">
-                    {formatUnitCount(macro.urban.homesNeeded)}
-                  </span>{" "}
-                  total (
-                  <span className="font-medium text-ink">
-                    {formatUnitCount(macro.urban.homesNeeded / horizonYears)}
-                  </span>
-                  /yr)
-                </div>
-              )}
-            </div>
-          )}
-
-          {(macro.co2.currentMt != null || macro.co2.futureMt != null) && (
-            <div className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
-              <div className="text-xs font-medium text-ink">CO₂ (territorial)</div>
-              <div className="mt-1 text-[11px] text-ink-faint">
-                Total{" "}
-                {macro.co2.currentMt != null
-                  ? formatTotal({ unit: "MtCO2", value: macro.co2.currentMt })
-                  : "—"}
-                <span className="mx-1">→</span>
-                {macro.co2.futureMt != null
-                  ? formatTotal({ unit: "MtCO2", value: macro.co2.futureMt })
-                  : "—"}
-              </div>
-            </div>
-          )}
-        </div>
+            {activeCard === "co2" && (
+              <Co2EmissionsCard
+                data={{
+                  currentMt: macro.co2.currentMt,
+                  futureMt: macro.co2.futureMt,
+                }}
+              />
+            )}
+          </div>
+        </>
       )}
 
       {loading && (
@@ -1418,240 +1007,11 @@ export function ImplicationsPanel({
         </div>
       )}
 
-      <div className="mt-4 space-y-3">
-        {rows.map((r) => (
-          <div key={r.code} className="rounded-lg border border-surface bg-surface-raised px-2.5 py-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-xs font-medium text-ink truncate">
-                  {r.indicator?.name || r.code}
-                </div>
-                {r.indicator?.unit && (
-                  <div className="text-[11px] text-ink-faint truncate">{r.indicator.unit}</div>
-                )}
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-ink-muted">
-                  {r.current == null || r.indicator == null
-                    ? "—"
-                    : formatMetricValue(r.current, r.indicator.unit)}
-                  <span className="mx-1 text-ink-faint">→</span>
-                  {r.implied == null || r.indicator == null
-                    ? "—"
-                    : formatMetricValue(r.implied, r.indicator.unit)}
-                </div>
-                {r.deltaLabel && (
-                  <div className="text-[11px] text-ink-faint">{r.deltaLabel}</div>
-                )}
-                {(r.currentTotal || r.impliedTotal) && (
-                  <div className="text-[11px] text-ink-faint mt-0.5">
-                    Total{" "}
-                    {r.currentTotal ? formatTotal(r.currentTotal) : "—"}
-                    <span className="mx-1">→</span>
-                    {r.impliedTotal ? formatTotal(r.impliedTotal) : "—"}
-                  </div>
-                )}
-              </div>
-            </div>
-            {r.note && <div className="mt-1 text-[11px] text-ink-faint">{r.note}</div>}
-          </div>
-        ))}
-      </div>
-
       <p className="mt-3 text-[11px] text-ink-faint">
-        Estimates vary widely by policy, technology, and economic structure; treat as “what-if” context, not a forecast.
+        Estimates vary widely by policy, technology, and economic structure; treat as "what-if" context, not a forecast.
       </p>
     </div>
   );
 }
 
-function formatTotal(t: { unit: string; value: number }) {
-  if (!Number.isFinite(t.value)) return "—";
-  if (t.unit === "persons") return formatNumber(t.value);
-  if (t.unit === "toe") return `${formatNumber(t.value)} toe`;
-  if (t.unit === "TWh") return `${t.value.toFixed(t.value >= 10 ? 0 : 1)} TWh`;
-  if (t.unit === "MtCO2") return `${t.value.toFixed(t.value >= 10 ? 0 : 1)} MtCO₂`;
-  if (t.unit === "int$") return `$${formatNumber(t.value)}`;
-  return `${formatNumber(t.value)} ${t.unit}`;
-}
 
-function formatSignedTotal(t: { unit: string; value: number }) {
-  if (!Number.isFinite(t.value)) return "—";
-  const sign = t.value > 0 ? "+" : t.value < 0 ? "−" : "";
-  const abs = Math.abs(t.value);
-  if (t.unit === "TWh") return `${sign}${abs.toFixed(abs >= 10 ? 0 : 1)} TWh`;
-  if (t.unit === "MtCO2") return `${sign}${abs.toFixed(abs >= 10 ? 0 : 1)} MtCO₂`;
-  if (t.unit === "int$") return `${sign}$${formatNumber(abs)}`;
-  if (t.unit === "persons") return `${sign}${formatNumber(abs)}`;
-  return `${sign}${formatNumber(abs)} ${t.unit}`;
-}
-
-function formatUnitCount(value: number) {
-  if (!Number.isFinite(value)) return "—";
-  const abs = Math.abs(value);
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  if (abs < 1) return `${sign}<1`;
-  if (abs < 10) return `${sign}${abs.toFixed(1).replace(/\\.0$/, "")}`;
-  return `${sign}${formatNumber(Math.round(abs))}`;
-}
-
-function formatSignedNumber(value: number, unit: string) {
-  if (!Number.isFinite(value)) return "—";
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  const abs = Math.abs(value);
-  const rounded = abs >= 10 ? Math.round(abs) : abs >= 1 ? abs.toFixed(1).replace(/\\.0$/, "") : abs.toFixed(2);
-  return `${sign}${rounded} ${unit}`;
-}
-
-function formatMultiplier(value: number | null) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  if (value < 0.1) return "<0.1×";
-  if (value < 10) return `${value.toFixed(1)}×`;
-  if (value < 100) return `${Math.round(value)}×`;
-  return `${formatNumber(Math.round(value))}×`;
-}
-
-function formatSourceVintage(vintage: string) {
-  const v = vintage.trim();
-  if (!v) return "—";
-  const [kindRaw, suffixRaw] = v.split("@");
-  const kind = (kindRaw || "").trim().toLowerCase();
-  const suffix = (suffixRaw || "").trim();
-
-  if (kind.includes("ember-electricity-generation")) return suffix ? `Ember gen ${suffix}` : "Ember gen";
-  if (kind.includes("ember-installed-capacity")) return suffix ? `Ember cap ${suffix}` : "Ember cap";
-  if (kind.includes("owid-energy-data")) return suffix ? `OWID energy ${suffix}` : "OWID energy";
-  if (kind.includes("owid-co2-data")) return suffix ? `OWID CO₂ ${suffix}` : "OWID CO₂";
-
-  return v.length > 40 ? `${v.slice(0, 37)}…` : v;
-}
-
-function AssumptionField(props: {
-  label: string;
-  value: number;
-  unit: string;
-  step: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
-}) {
-  const { label, value, unit, step, min, max, onChange } = props;
-  return (
-    <label className="block">
-      <div className="text-[11px] text-ink-faint">{label}</div>
-      <div className="mt-1 flex items-center gap-1">
-        <input
-          type="number"
-          value={Number.isFinite(value) ? value : 0}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(e) => {
-            const next = Number(e.target.value);
-            if (!Number.isFinite(next)) return;
-            onChange(clamp(next, min, max));
-          }}
-          className="w-full px-2 py-1 rounded-md bg-surface-raised border border-surface text-ink text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-        />
-        {unit && <span className="text-[11px] text-ink-faint shrink-0">{unit}</span>}
-      </div>
-    </label>
-  );
-}
-
-function MixField(props: {
-  label: string;
-  value: number;
-  color: string;
-  onChange: (value: number) => void;
-}) {
-  const { label, value, color, onChange } = props;
-  return (
-    <label className="block rounded-lg border border-surface bg-surface px-2 py-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
-          <span className="text-[11px] text-ink truncate">{label}</span>
-        </div>
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => {
-            const next = Number(e.target.value);
-            if (!Number.isFinite(next)) return;
-            onChange(Math.max(0, next));
-          }}
-          className="w-16 px-2 py-1 rounded-md bg-surface-raised border border-surface text-ink text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-          aria-label={`${label} percent`}
-        />
-        <span className="text-[11px] text-ink-faint">%</span>
-      </div>
-    </label>
-  );
-}
-
-function MixResultCard(props: {
-  title: string;
-  color: string;
-  twh: number;
-  gw: number;
-  perYearTwh: number;
-  perYearGw: number;
-  equivalentLabel: string;
-  equivalentCount: number | null;
-  capacityX: number | null;
-  generationX: number | null;
-  paceBenchmarkTwhPerYear: number | null;
-  paceX: number | null;
-}) {
-  const {
-    title,
-    color,
-    twh,
-    gw,
-    perYearTwh,
-    perYearGw,
-    equivalentLabel,
-    equivalentCount,
-    capacityX,
-    generationX,
-    paceBenchmarkTwhPerYear,
-    paceX,
-  } = props;
-
-  return (
-    <div className="rounded-lg border border-surface bg-surface px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
-          <div className="text-xs font-medium text-ink truncate">{title}</div>
-        </div>
-        <div className="text-[11px] text-ink-faint shrink-0">
-          {formatTotal({ unit: "TWh", value: twh })} · {formatUnitCount(gw)} GW
-        </div>
-      </div>
-      <div className="mt-1 text-[11px] text-ink-faint">
-        Rate: {formatTotal({ unit: "TWh", value: perYearTwh })}/yr · {formatUnitCount(perYearGw)} GW/yr
-      </div>
-      <div className="mt-1 text-[11px] text-ink-faint">
-        Equivalent:{" "}
-        <span className="font-medium text-ink">
-          {equivalentCount != null ? formatUnitCount(equivalentCount) : "—"}
-        </span>{" "}
-        {equivalentLabel}
-      </div>
-      <div className="mt-1 text-[11px] text-ink-faint">
-        vs today: capacity {formatMultiplier(capacityX)} · generation {formatMultiplier(generationX)}
-      </div>
-      {(paceBenchmarkTwhPerYear != null || paceX != null) && (
-        <div className="mt-1 text-[11px] text-ink-faint">
-          Pace: {formatTotal({ unit: "TWh", value: perYearTwh })}/yr vs best 5y avg{" "}
-          {paceBenchmarkTwhPerYear != null ? formatTotal({ unit: "TWh", value: paceBenchmarkTwhPerYear }) : "—"}/yr (
-          {formatMultiplier(paceX)})
-        </div>
-      )}
-    </div>
-  );
-}

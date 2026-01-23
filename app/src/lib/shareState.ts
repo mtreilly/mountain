@@ -3,6 +3,8 @@ export type ViewMode = "chart" | "table";
 export type TemplateMode = "china" | "us" | "eu";
 export type ComparisonMode = "countries" | "regions";
 export type EmbedTheme = "light" | "dark" | "auto";
+export type ImplicationCardType = "gdp" | "elec-demand" | "elec-mix" | "elec-assumptions" | "urban" | "co2";
+export type ElectricityMode = "compare" | "mix";
 
 export interface ShareState {
 	chaser: string;
@@ -19,6 +21,8 @@ export interface ShareState {
 	ms?: boolean; // Show milestone markers (default: true)
 	tpl?: TemplateMode; // Template path for implications (default: china)
 	ih?: number; // Implications horizon years (default: 25)
+	impCard?: ImplicationCardType; // Active implications card (default: gdp)
+	impElecMode?: ElectricityMode; // Electricity mix card mode (default: compare)
 	// Regional mode
 	mode?: ComparisonMode; // "countries" (default) or "regions"
 	cr?: string; // Chaser region code (e.g., "UKC")
@@ -98,6 +102,8 @@ export const DEFAULT_SHARE_STATE: ShareState = {
 	ms: true,
 	tpl: "china",
 	ih: 25,
+	impCard: "gdp",
+	impElecMode: "compare",
 	mode: "countries",
 	cr: "UKC", // North East England
 	tr: "UKI", // London
@@ -156,6 +162,22 @@ function parseRegionCode(value: string | null): string | null {
 	return /^[A-Z]{2,3}(-[A-Z]{2})?[0-9]?$/.test(code) ? code : null;
 }
 
+function parseImplicationCard(value: string | null): ImplicationCardType | null {
+	if (!value) return null;
+	const v = value.trim().toLowerCase();
+	if (v === "gdp" || v === "elec-demand" || v === "elec-mix" || v === "elec-assumptions" || v === "urban" || v === "co2") {
+		return v;
+	}
+	return null;
+}
+
+function parseElectricityMode(value: string | null): ElectricityMode | null {
+	if (!value) return null;
+	const v = value.trim().toLowerCase();
+	if (v === "compare" || v === "mix") return v;
+	return null;
+}
+
 export function parseShareStateFromSearch(
 	search: string,
 	defaults: ShareState = DEFAULT_SHARE_STATE,
@@ -197,6 +219,10 @@ export function parseShareStateFromSearch(
 	const cr = parseRegionCode(params.get("cr")) ?? (defaults.cr ?? "UKC");
 	const tr = parseRegionCode(params.get("tr")) ?? (defaults.tr ?? "UKI");
 
+	// Implications cards
+	const impCard = parseImplicationCard(params.get("impCard")) ?? (defaults.impCard ?? "gdp");
+	const impElecMode = parseElectricityMode(params.get("impElecMode")) ?? (defaults.impElecMode ?? "compare");
+
 	if (tmode === "static") {
 		return {
 			...defaults,
@@ -214,6 +240,8 @@ export function parseShareStateFromSearch(
 			ms,
 			tpl,
 			ih,
+			impCard,
+			impElecMode,
 			mode,
 			cr,
 			tr,
@@ -238,6 +266,8 @@ export function parseShareStateFromSearch(
 		ms,
 		tpl,
 		ih,
+		impCard,
+		impElecMode,
 		mode,
 		cr,
 		tr,
@@ -264,6 +294,9 @@ export function toSearchParams(state: ShareState): URLSearchParams {
 	if (state.ms === false) params.set("ms", "0");
 	if ((state.tpl ?? "china") !== "china") params.set("tpl", state.tpl ?? "china");
 	if ((state.ih ?? 25) !== 25) params.set("ih", String(clamp(state.ih ?? 25, 1, 150)));
+	// Implications cards - only include when non-default
+	if ((state.impCard ?? "gdp") !== "gdp") params.set("impCard", state.impCard ?? "gdp");
+	if ((state.impElecMode ?? "compare") !== "compare") params.set("impElecMode", state.impElecMode ?? "compare");
 	// Regional mode - only include when in regions mode
 	if (state.mode === "regions") {
 		params.set("mode", "regions");
