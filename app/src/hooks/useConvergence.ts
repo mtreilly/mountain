@@ -34,8 +34,8 @@ export function useConvergence({
   // Formula: chaserValue * (1 + chaserRate)^n = targetValue * (1 + targetRate)^n
   // Solving: n = ln(targetValue/chaserValue) / ln((1+chaserRate)/(1+targetRate))
   const yearsToConvergence = useMemo(() => {
-    if (chaserGrowthRate <= targetGrowthRate) return Infinity; // Will never catch up
     if (chaserValue >= targetValue) return 0;
+    if (chaserGrowthRate <= targetGrowthRate) return Infinity; // Will never catch up
 
     const ratio = targetValue / chaserValue;
     const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);

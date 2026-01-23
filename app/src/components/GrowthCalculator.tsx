@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { calculateRequiredChaserGrowthRate, formatPercent } from "../lib/convergence";
 import { benchmarkGrowthRate } from "../lib/growthBenchmarks";
 
@@ -20,6 +21,8 @@ export function GrowthCalculator({
   years: number;
   onYearsChange: (years: number) => void;
 }) {
+  const yearsInputId = useId();
+
   const required = calculateRequiredChaserGrowthRate({
     chaserValue,
     targetValue,
@@ -55,11 +58,11 @@ export function GrowthCalculator({
           <p className="text-[11px] text-ink-faint mt-1">{targetAssumption}</p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-ink-muted" htmlFor="catch-up-years">
+          <label className="text-xs text-ink-muted" htmlFor={yearsInputId}>
             Years
           </label>
           <input
-            id="catch-up-years"
+            id={yearsInputId}
             type="number"
             min={1}
             max={150}

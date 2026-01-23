@@ -152,15 +152,15 @@ export function CitationPanel({
 	// Generate citations
 	const citationContext = useMemo(() => {
 		if (typeof window === "undefined") return null;
-		return createCitationContext({
-			state: shareState,
-			indicator,
-			chaserName,
-			targetName,
-			toolUrl: window.location.origin,
-			accessDate: new Date(),
-		});
-	}, [shareState, indicator, chaserName, targetName]);
+			return createCitationContext({
+				state: shareState,
+				indicator,
+				chaserName,
+				targetName,
+				toolUrl: `${window.location.origin}${window.location.pathname}`,
+				accessDate: new Date(),
+			});
+		}, [shareState, indicator, chaserName, targetName]);
 
 	const toolCitation = useMemo(() => {
 		if (!citationContext) return "";

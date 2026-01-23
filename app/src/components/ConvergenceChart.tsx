@@ -108,13 +108,33 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
   }, [projection, scales]);
 
   const yTicks = useMemo(() => {
-    const ticks: number[] = [];
+    const max = scales.yMax;
+    if (!Number.isFinite(max) || max <= 0) return [0];
+
     const segments = (pixelWidth ?? width) < 420 ? 4 : 5;
-    const step = scales.yMax / segments;
-    for (let i = 0; i <= segments; i++) {
-      ticks.push(Math.round(step * i));
+    const step = (() => {
+      const raw = max / Math.max(1, segments);
+      if (!Number.isFinite(raw) || raw <= 0) return 0;
+
+      const exponent = Math.floor(Math.log10(raw));
+      const base = 10 ** exponent;
+      const fraction = raw / base;
+
+      let niceFraction = 10;
+      if (fraction <= 1) niceFraction = 1;
+      else if (fraction <= 2) niceFraction = 2;
+      else if (fraction <= 5) niceFraction = 5;
+
+      return niceFraction * base;
+    })();
+    if (!Number.isFinite(step) || step <= 0) return [0, max];
+
+    const maxTick = Math.ceil(max / step) * step;
+    const ticks: number[] = [];
+    for (let v = 0, i = 0; v <= maxTick + step / 2 && i < 24; i++, v += step) {
+      ticks.push(v);
     }
-    return ticks;
+    return ticks.length ? ticks : [0, max];
   }, [pixelWidth, scales.yMax, width]);
 
   const xTicks = useMemo(() => {
@@ -166,9 +186,9 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
 
       {/* Grid lines */}
       <g>
-        {yTicks.map((tick) => (
+        {yTicks.map((tick, i) => (
           <line
-            key={tick}
+            key={`y-grid-${i}`}
             x1={padding.left}
             y1={scales.y(tick)}
             x2={width - padding.right}
@@ -299,9 +319,9 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
 
       {/* Y-axis labels */}
       <g fontSize={11} fontFamily={fontFamily}>
-        {yTicks.map((tick) => (
+        {yTicks.map((tick, i) => (
           <text
-            key={tick}
+            key={`y-label-${i}`}
             x={padding.left - 12}
             y={scales.y(tick)}
             textAnchor="end"

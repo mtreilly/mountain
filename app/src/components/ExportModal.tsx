@@ -57,29 +57,31 @@ export function ExportModal({
   onBaseYearChange,
   onReset,
   comparisonMode = "countries",
-  onDownloadObservedCsv,
-  onDownloadProjectionCsv,
-  onDownloadReportJson,
-  shareState,
-  ogImageUrl,
-  onOpenCitationPanel,
-}: {
+  dataSourceName,
+	  onDownloadObservedCsv,
+	  onDownloadProjectionCsv,
+	  onDownloadReportJson,
+	  shareState,
+	  onOpenCitationPanel,
+	}: {
   isOpen: boolean;
   onClose: () => void;
   baseYear: number;
   onBaseYearChange: (year: number) => void;
   onReset?: () => void;
   comparisonMode?: "countries" | "regions";
-  onDownloadObservedCsv?: DownloadCallback;
-  onDownloadProjectionCsv?: DownloadCallback;
-  onDownloadReportJson?: DownloadCallback;
-  shareState?: ShareState;
-  ogImageUrl?: string;
-  onOpenCitationPanel?: () => void;
-}) {
+  dataSourceName?: string | null;
+	  onDownloadObservedCsv?: DownloadCallback;
+	  onDownloadProjectionCsv?: DownloadCallback;
+	  onDownloadReportJson?: DownloadCallback;
+	  shareState?: ShareState;
+	  onOpenCitationPanel?: () => void;
+	}) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isRegionsMode = comparisonMode === "regions";
+  const resolvedDataSourceName =
+    (dataSourceName?.trim() ? dataSourceName.trim() : null) ?? (isRegionsMode ? "OECD" : "World Bank");
 
   const handleClose = useCallback(() => {
     onClose();
@@ -202,7 +204,7 @@ export function ExportModal({
                 description={
                   isRegionsMode
                     ? "Recorded values from OECD regional dataset"
-                    : "Actual recorded values from World Bank"
+                    : `Actual recorded values from ${resolvedDataSourceName}`
                 }
                 onDownload={async () => {
                   const filename = await onDownloadObservedCsv?.();
@@ -258,10 +260,9 @@ export function ExportModal({
                 Embed
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
-                <EmbedCodeGenerator
-                  shareState={shareState}
-                  ogImageUrl={ogImageUrl}
-                />
+	                <EmbedCodeGenerator
+	                  shareState={shareState}
+	                />
               </div>
             </section>
           )}

@@ -98,7 +98,9 @@ export function buildPermalink(toolUrl: string, state: ShareState): string {
 	const search = toSearchString(state);
 	// Add version param for URL schema stability
 	const versionedSearch = search ? `${search}&v=1` : "?v=1";
-	return `${toolUrl}${versionedSearch}`;
+	const [noHash, hash] = toolUrl.split("#", 2);
+	const base = noHash.split("?", 2)[0];
+	return `${base}${versionedSearch}${hash ? `#${hash}` : ""}`;
 }
 
 /**

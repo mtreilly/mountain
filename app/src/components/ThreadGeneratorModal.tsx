@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
@@ -37,6 +44,10 @@ export function ThreadGeneratorModal({
 }: ThreadGeneratorModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const themeButtonRefs = useRef<Record<"light" | "dark", HTMLButtonElement | null>>({
+    light: null,
+    dark: null,
+  });
   const initialTheme: "light" | "dark" = shareCardParams?.theme ?? "light";
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(initialTheme);
 
@@ -154,7 +165,13 @@ export function ThreadGeneratorModal({
   }, []);
 
   const handleRegenerate = useCallback(() => {
-    setCards(buildCards(selectedTheme));
+    const nonce = Date.now();
+    const next = buildCards(selectedTheme).map((card) => ({
+      ...card,
+      svgString: `${card.svgString}\n<!-- regenerated:${nonce}:${card.index} -->`,
+    }));
+    setCards(next);
+    toast.success("Regenerated thread cards");
   }, [buildCards, selectedTheme]);
 
   const handleThemeChange = useCallback(
@@ -227,6 +244,21 @@ export function ThreadGeneratorModal({
 
   if (!isOpen || !shareCardParams) return null;
 
+  const handleThemeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const order: Array<"light" | "dark"> = ["light", "dark"];
+    const current = order.indexOf(selectedTheme);
+    const next =
+      e.key === "Home"
+        ? order[0]
+        : e.key === "End"
+          ? order[order.length - 1]
+          : order[(current + (e.key === "ArrowRight" ? 1 : -1) + order.length) % order.length];
+    handleThemeChange(next);
+    queueMicrotask(() => themeButtonRefs.current[next]?.focus());
+  };
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div
@@ -267,22 +299,33 @@ export function ThreadGeneratorModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-5">
-          {/* Theme Selector */}
-          <section>
-            <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Theme
-            </h3>
-	            <div className="flex gap-2">
-	              <button
-	                type="button"
-	                onClick={() => handleThemeChange("light")}
-	                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
-	                  selectedTheme === "light"
-	                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-	                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
-	                }`}
-              >
+	        <div className="p-4 space-y-5">
+	          {/* Theme Selector */}
+	          <section>
+	            <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+	              Theme
+	            </h3>
+		            <div
+		              role="radiogroup"
+		              aria-label="Theme"
+		              className="flex gap-2"
+		              onKeyDown={handleThemeKeyDown}
+		            >
+		              <button
+		                type="button"
+		                onClick={() => handleThemeChange("light")}
+		                ref={(el) => {
+		                  themeButtonRefs.current.light = el;
+		                }}
+		                role="radio"
+		                aria-checked={selectedTheme === "light"}
+		                tabIndex={selectedTheme === "light" ? 0 : -1}
+		                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
+		                  selectedTheme === "light"
+		                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+		                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
+		                }`}
+	              >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -290,15 +333,21 @@ export function ThreadGeneratorModal({
                   Light
                 </span>
               </button>
-	              <button
-	                type="button"
-	                onClick={() => handleThemeChange("dark")}
-	                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
-	                  selectedTheme === "dark"
-	                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-	                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
-	                }`}
-              >
+		              <button
+		                type="button"
+		                onClick={() => handleThemeChange("dark")}
+		                ref={(el) => {
+		                  themeButtonRefs.current.dark = el;
+		                }}
+		                role="radio"
+		                aria-checked={selectedTheme === "dark"}
+		                tabIndex={selectedTheme === "dark" ? 0 : -1}
+		                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
+		                  selectedTheme === "dark"
+		                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+		                    : "border-surface bg-surface-raised text-ink hover:bg-surface"
+		                }`}
+	              >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />

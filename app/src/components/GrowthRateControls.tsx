@@ -1,5 +1,5 @@
 import { formatPercent } from "../lib/convergence";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 interface GrowthRateControlsProps {
   chaserRate: number;
@@ -37,6 +37,8 @@ export function GrowthRateControls({
 }: GrowthRateControlsProps) {
   const netAdvantage = chaserRate - targetRate;
   const lastDynamicTargetRate = useRef(0.015);
+  const chaserSliderId = useId();
+  const targetSliderId = useId();
 
   useEffect(() => {
     if (targetRate !== 0) lastDynamicTargetRate.current = targetRate;
@@ -61,12 +63,14 @@ export function GrowthRateControls({
             </span>
           </div>
           <input
+            id={chaserSliderId}
             type="range"
             min={RATE_RANGE.min}
             max={RATE_RANGE.maxChaser}
             step={RATE_RANGE.step}
             value={chaserRate}
             onChange={(e) => onChaserRateChange(parseFloat(e.target.value))}
+            aria-label={`${chaserName} growth rate`}
             className="w-full slider-chaser"
           />
           <div className="flex flex-wrap gap-1">
@@ -125,12 +129,14 @@ export function GrowthRateControls({
           </div>
 
           <input
+            id={targetSliderId}
             type="range"
             min={RATE_RANGE.min}
             max={RATE_RANGE.maxTarget}
             step={RATE_RANGE.step}
             value={targetRate}
             onChange={(e) => onTargetRateChange(parseFloat(e.target.value))}
+            aria-label={`${targetName} growth rate`}
             className="w-full slider-target"
           />
 
@@ -192,19 +198,23 @@ export function GrowthRateControls({
         {/* Chaser growth rate */}
         <div className="rounded-xl border border-chaser bg-chaser-light p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-sm font-medium text-chaser truncate">{chaserName}</label>
+            <label htmlFor={chaserSliderId} className="text-sm font-medium text-chaser truncate">
+              {chaserName}
+            </label>
             <span className="text-lg font-display font-bold text-chaser tabular-nums">
               {formatPercent(chaserRate)}
             </span>
           </div>
 
           <input
+            id={chaserSliderId}
             type="range"
             min={RATE_RANGE.min}
             max={RATE_RANGE.maxChaser}
             step={RATE_RANGE.step}
             value={chaserRate}
             onChange={(e) => onChaserRateChange(parseFloat(e.target.value))}
+            aria-label={`${chaserName} growth rate`}
             className="w-full slider-chaser"
           />
 
@@ -230,7 +240,9 @@ export function GrowthRateControls({
         {/* Target growth rate */}
         <div className="rounded-xl border border-target bg-target-light p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-sm font-medium text-target truncate">{targetName}</label>
+            <label htmlFor={targetSliderId} className="text-sm font-medium text-target truncate">
+              {targetName}
+            </label>
             <span className="text-lg font-display font-bold text-target tabular-nums">
               {targetRate === 0 ? "Static" : formatPercent(targetRate)}
             </span>
@@ -264,12 +276,14 @@ export function GrowthRateControls({
           </div>
 
           <input
+            id={targetSliderId}
             type="range"
             min={RATE_RANGE.min}
             max={RATE_RANGE.maxTarget}
             step={RATE_RANGE.step}
             value={targetRate}
             onChange={(e) => onTargetRateChange(parseFloat(e.target.value))}
+            aria-label={`${targetName} growth rate`}
             className="w-full slider-target"
           />
 

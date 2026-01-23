@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
@@ -31,6 +38,15 @@ export function ShareCardModal({
 }: ShareCardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const themeButtonRefs = useRef<Record<"light" | "dark", HTMLButtonElement | null>>({
+    light: null,
+    dark: null,
+  });
+  const sizeButtonRefs = useRef<Record<ShareCardSize, HTMLButtonElement | null>>({
+    twitter: null,
+    linkedin: null,
+    square: null,
+  });
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(
     shareCardParams?.theme ?? "light"
   );
@@ -163,6 +179,35 @@ export function ShareCardModal({
   if (!isOpen || !shareCardParams) return null;
 
   const previewScale = selectedSize === "square" ? 0.35 : 0.4;
+  const handleThemeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const order: Array<"light" | "dark"> = ["light", "dark"];
+    const current = order.indexOf(selectedTheme);
+    const next =
+      e.key === "Home"
+        ? order[0]
+        : e.key === "End"
+          ? order[order.length - 1]
+          : order[(current + (e.key === "ArrowRight" ? 1 : -1) + order.length) % order.length];
+    setSelectedTheme(next);
+    queueMicrotask(() => themeButtonRefs.current[next]?.focus());
+  };
+
+  const handleSizeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const order = SIZE_OPTIONS.map((o) => o.value);
+    const current = order.indexOf(selectedSize);
+    const next =
+      e.key === "Home"
+        ? order[0]
+        : e.key === "End"
+          ? order[order.length - 1]
+          : order[(current + (e.key === "ArrowRight" ? 1 : -1) + order.length) % order.length];
+    setSelectedSize(next);
+    queueMicrotask(() => sizeButtonRefs.current[next]?.focus());
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
@@ -232,10 +277,21 @@ export function ShareCardModal({
                 <label className="block text-sm font-medium text-ink mb-2">
                   Theme
                 </label>
-                <div className="flex gap-2">
+                <div
+                  role="radiogroup"
+                  aria-label="Theme"
+                  className="flex gap-2"
+                  onKeyDown={handleThemeKeyDown}
+                >
                   <button
                     type="button"
                     onClick={() => setSelectedTheme("light")}
+                    ref={(el) => {
+                      themeButtonRefs.current.light = el;
+                    }}
+                    role="radio"
+                    aria-checked={selectedTheme === "light"}
+                    tabIndex={selectedTheme === "light" ? 0 : -1}
                     className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
                       selectedTheme === "light"
                         ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
@@ -252,6 +308,12 @@ export function ShareCardModal({
                   <button
                     type="button"
                     onClick={() => setSelectedTheme("dark")}
+                    ref={(el) => {
+                      themeButtonRefs.current.dark = el;
+                    }}
+                    role="radio"
+                    aria-checked={selectedTheme === "dark"}
+                    tabIndex={selectedTheme === "dark" ? 0 : -1}
                     className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-default ${
                       selectedTheme === "dark"
                         ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
@@ -273,12 +335,23 @@ export function ShareCardModal({
                 <label className="block text-sm font-medium text-ink mb-2">
                   Size
                 </label>
-                <div className="flex gap-2">
+                <div
+                  role="radiogroup"
+                  aria-label="Share card size"
+                  className="flex gap-2"
+                  onKeyDown={handleSizeKeyDown}
+                >
                   {SIZE_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => setSelectedSize(option.value)}
+                      ref={(el) => {
+                        sizeButtonRefs.current[option.value] = el;
+                      }}
+                      role="radio"
+                      aria-checked={selectedSize === option.value}
+                      tabIndex={selectedSize === option.value ? 0 : -1}
                       className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-default ${
                         selectedSize === option.value
                           ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
