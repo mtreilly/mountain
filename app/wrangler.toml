@@ -5,4 +5,4 @@ pages_build_output_dir = "./dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "convergence-db"
-database_id = "local" # Replace with actual ID after: npx wrangler d1 create convergence-db
+database_id = "e3f335e8-087d-4612-a9f1-ef3e6cce4a3d"
