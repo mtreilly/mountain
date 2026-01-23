@@ -15,7 +15,8 @@
     "pages:deploy": "pnpm build && wrangler pages deploy dist",
     "db:init": "wrangler d1 execute convergence-db --local --file=./schema.sql",
     "db:import": "wrangler d1 execute convergence-db --local --file=./data-import-fixed.sql",
-    "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && tsx scripts/fetch-owid-co2.ts >> data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql"
+    "data:refresh": "pnpm data:fetch && pnpm db:import",
+    "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && tsx scripts/fetch-owid-co2.ts >> data-import.sql && tsx scripts/fetch-owid-energy.ts >> data-import.sql && tsx scripts/fetch-irena-capacity.ts >> data-import.sql && tsx scripts/fetch-ember-generation.ts >> data-import.sql && tsx scripts/fetch-ember-capacity.ts >> data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2",

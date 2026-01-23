@@ -559,25 +559,29 @@ export default function App() {
 	}, [comparisonMode, data, chaserIso, targetIso]);
 
 	// Simplified implications data for thread generator (only when GDP per capita is selected)
-	const implicationsData =
-		comparisonMode !== "countries" ||
-		indicatorCode !== "GDP_PCAP_PPP" ||
-		!chaserValue ||
-		!yearsToConvergence
-			? null
-			: (() => {
-					const gdpFuture =
-						chaserValue * Math.pow(1 + chaserGrowthRate, impHorizonYears);
-					return {
-						electricityDeltaTWh: null,
-						nuclearPlants: null,
-						urbanDeltaPersons: null,
-						homesNeeded: null,
-						co2DeltaMt: null,
-						gdpCurrent: chaserValue,
-						gdpFuture,
-					};
-				})();
+	const implicationsData = (() => {
+		if (comparisonMode !== "countries") return null;
+		if (indicatorCode !== "GDP_PCAP_PPP") return null;
+		if (!yearsToConvergence) return null;
+		if (chaserValueRaw == null) return null;
+
+		const gdpCurrent = applyAdjustment(
+			chaserValueRaw,
+			chaserAdjustment,
+			useChaserAdjusted,
+		);
+		const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, impHorizonYears);
+
+		return {
+			electricityDeltaTWh: null,
+			nuclearPlants: null,
+			urbanDeltaPersons: null,
+			homesNeeded: null,
+			co2DeltaMt: null,
+			gdpCurrent,
+			gdpFuture,
+		};
+	})();
 
 	const countriesByIso3 = useMemo(() => {
 		const map: Record<string, { name: string }> = {};
