@@ -1,6 +1,6 @@
 import type { ShareState } from "./shareState";
-import { toSearchString } from "./shareState";
 import type { OECDRegion, OECDRegionData } from "./oecdRegions";
+import { buildPermalink } from "./citations";
 
 type ProjectionPoint = { year: number; chaser: number; target: number };
 type SeriesPoint = { year: number; value: number };
@@ -21,7 +21,7 @@ function generateRegionalCsvHeader(params: {
   const { state, chaserName, targetName, metricName, unit, toolUrl = "https://convergence.example.com" } =
     params;
   const now = new Date();
-  const permalink = `${toolUrl}${toSearchString(state)}&v=1`;
+  const permalink = buildPermalink(toolUrl, state);
 
   const lines = [
     "# Convergence Explorer Data Export",
@@ -180,7 +180,7 @@ export function toRegionalReportJson(params: {
     params;
 
   const now = new Date();
-  const permalink = `${toolUrl}${toSearchString(state)}&v=1`;
+  const permalink = buildPermalink(toolUrl, state);
 
   const lastObservedYear = (regionCode: string) => {
     const s = observed[regionCode] || [];

@@ -9,26 +9,37 @@ interface IndicatorInfo {
   code: string;
   name: string;
   unit: string | null;
+  source?: string | null;
 }
 
 interface UseCountryDataParams {
   countries: string[];
   indicator: string;
+  enabled?: boolean;
+  invalidIndicator?: boolean;
 }
 
-export function useCountryData({ countries, indicator }: UseCountryDataParams) {
+export function useCountryData({
+  countries,
+  indicator,
+  enabled = true,
+  invalidIndicator = false,
+}: UseCountryDataParams) {
   const [data, setData] = useState<Record<string, DataPoint[]>>({});
   const [indicatorInfo, setIndicatorInfo] = useState<IndicatorInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const countriesKey = countries.join(",");
 
   useEffect(() => {
     if (countries.length === 0 || !indicator) return;
+    if (!enabled) return;
 
     queueMicrotask(() => {
       setLoading(true);
       setError(null);
+      setHasLoaded(false);
     });
     const params = new URLSearchParams({
       countries: countriesKey,
@@ -44,12 +55,16 @@ export function useCountryData({ countries, indicator }: UseCountryDataParams) {
         setData(result.data || {});
         setIndicatorInfo(result.indicator || null);
         setLoading(false);
+        setHasLoaded(true);
       })
       .catch((err) => {
         setError(err.message);
         setLoading(false);
+        setHasLoaded(true);
       });
-  }, [countriesKey, countries.length, indicator]);
+  }, [countriesKey, countries.length, enabled, indicator, invalidIndicator]);
+
+  const resolvedError = !enabled && invalidIndicator && indicator ? "INDICATOR_NOT_FOUND" : error;
 
   // Get the latest value for a country
   const getLatestValue = (iso: string): number | null => {
@@ -61,5 +76,12 @@ export function useCountryData({ countries, indicator }: UseCountryDataParams) {
     return sorted[0].value;
   };
 
-  return { data, indicator: indicatorInfo, loading, error, getLatestValue };
+  return {
+    data: enabled ? data : {},
+    indicator: enabled ? indicatorInfo : null,
+    loading: enabled ? loading : false,
+    error: resolvedError,
+    hasLoaded: enabled ? hasLoaded : false,
+    getLatestValue,
+  };
 }

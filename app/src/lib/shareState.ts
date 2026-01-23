@@ -178,7 +178,7 @@ export function parseShareStateFromSearch(
 	const goalRaw = parseIntSafe(params.get("goal"));
 	const ihRaw = parseIntSafe(params.get("ih"));
 
-		const cg = round(clamp(cgRaw ?? defaults.cg, -0.1, 0.15), 0.001);
+		const cg = round(clamp(cgRaw ?? defaults.cg, -0.05, 0.12), 0.001);
 		const baseYear = clamp(baseYearRaw ?? defaults.baseYear, 1950, 2100);
 		const goal = clamp(goalRaw ?? defaults.goal ?? 25, 1, 150);
 		const ih = clamp(ihRaw ?? defaults.ih ?? 25, 1, 150);
@@ -220,7 +220,7 @@ export function parseShareStateFromSearch(
 		};
 	}
 
-		const tg = round(clamp(tgRaw ?? defaults.tg, -0.1, 0.15), 0.001);
+		const tg = round(clamp(tgRaw ?? defaults.tg, -0.05, 0.08), 0.001);
 
 	return {
 		...defaults,

@@ -6,14 +6,18 @@ import { ConvergenceChart } from "./ConvergenceChart";
 import { ConvergenceChartInteractive } from "./ConvergenceChartInteractive";
 import { EmbedFooter } from "./EmbedFooter";
 
+type EmbedViewStatus = "ready" | "loading" | "no-data";
+
 interface EmbedViewProps {
 	shareState: ShareState;
 	embedParams: EmbedParams;
 	chaserName: string;
 	targetName: string;
-	projection: Array<{ year: number; chaser: number; target: number }>;
-	convergenceYear: number | null;
-	yearsToConvergence: number | null;
+	status?: EmbedViewStatus;
+	message?: string;
+	projection?: Array<{ year: number; chaser: number; target: number }>;
+	convergenceYear?: number | null;
+	yearsToConvergence?: number | null;
 	milestones?: Milestone[];
 	unit?: string | null;
 	resolvedTheme: "light" | "dark";
@@ -24,9 +28,11 @@ export function EmbedView({
 	embedParams,
 	chaserName,
 	targetName,
+	status = "ready",
+	message,
 	projection,
-	convergenceYear,
-	yearsToConvergence,
+	convergenceYear = null,
+	yearsToConvergence = null,
 	milestones,
 	unit,
 	resolvedTheme,
@@ -62,8 +68,20 @@ export function EmbedView({
 
 	// Generate headline text
 	const headline = useMemo(() => {
+		if (status !== "ready") {
+			return (
+				message ??
+				(status === "no-data"
+					? "Data unavailable for this embed"
+					: "Loading…")
+			);
+		}
+
+		if (!projection || projection.length === 0) {
+			return message ?? "Loading…";
+		}
+
 		const alreadyAhead =
-			projection.length > 0 &&
 			Number.isFinite(projection[0].chaser) &&
 			Number.isFinite(projection[0].target) &&
 			projection[0].chaser >= projection[0].target;
@@ -71,14 +89,14 @@ export function EmbedView({
 		if (alreadyAhead) {
 			return `${chaserName} is already ahead of ${targetName}`;
 		}
-		if (yearsToConvergence === null) {
+		if (yearsToConvergence == null) {
 			return `${chaserName} won't catch up to ${targetName}`;
 		}
 		if (yearsToConvergence <= 0) {
 			return `${chaserName} is already ahead of ${targetName}`;
 		}
 		return `${chaserName} catches up in ${Math.round(yearsToConvergence)} years`;
-	}, [chaserName, projection, targetName, yearsToConvergence]);
+	}, [chaserName, message, projection, status, targetName, yearsToConvergence]);
 
 	const showMilestones = shareState.ms !== false;
 
@@ -89,38 +107,46 @@ export function EmbedView({
 		>
 			{/* Chart area */}
 			<div className="embed-chart-wrapper">
-				{embedParams.interactive ? (
-					<ConvergenceChartInteractive
-						svgRef={chartRef}
-						projection={projection}
-						chaserName={chaserName}
-						targetName={targetName}
-						convergenceYear={convergenceYear}
-						milestones={showMilestones ? milestones : undefined}
-						unit={unit}
-						theme={theme}
-					/>
+				{status === "ready" && projection && projection.length > 0 ? (
+					embedParams.interactive ? (
+						<ConvergenceChartInteractive
+							svgRef={chartRef}
+							projection={projection}
+							chaserName={chaserName}
+							targetName={targetName}
+							convergenceYear={convergenceYear ?? null}
+							milestones={showMilestones ? milestones : undefined}
+							unit={unit}
+							theme={theme}
+						/>
+					) : (
+						<ConvergenceChart
+							ref={chartRef}
+							projection={projection}
+							chaserName={chaserName}
+							targetName={targetName}
+							convergenceYear={convergenceYear ?? null}
+							milestones={showMilestones ? milestones : undefined}
+							unit={unit}
+							theme={theme}
+							svgProps={{
+								className: "w-full pointer-events-none",
+							}}
+						/>
+					)
 				) : (
-					<ConvergenceChart
-						ref={chartRef}
-						projection={projection}
-						chaserName={chaserName}
-						targetName={targetName}
-						convergenceYear={convergenceYear}
-						milestones={showMilestones ? milestones : undefined}
-						unit={unit}
-						theme={theme}
-						svgProps={{
-							className: "w-full pointer-events-none",
-						}}
-					/>
+					<div className="h-full flex items-center justify-center">
+						<div className="text-sm text-ink-muted">
+							{headline}
+						</div>
+					</div>
 				)}
 			</div>
 
 			{/* Compact headline */}
 			<div className="embed-headline">
 				<span className="text-ink font-medium">{headline}</span>
-				{convergenceYear && (
+				{status === "ready" && convergenceYear && (
 					<span className="text-ink-muted ml-2">({convergenceYear})</span>
 				)}
 			</div>

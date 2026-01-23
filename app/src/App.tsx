@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { AppErrorScreen } from "./components/AppErrorScreen";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
@@ -27,7 +27,11 @@ import { useTheme } from "./hooks/useTheme";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
-import { ALL_TL2_REGIONS, getRegionDataSeries } from "./lib/oecdRegions";
+import {
+	ALL_TL2_REGIONS,
+	getRegionByCode,
+	getRegionDataSeries,
+} from "./lib/oecdRegions";
 import {
 	toRegionalObservedCsv,
 	toRegionalProjectionCsv,
@@ -44,19 +48,66 @@ import {
 	toSearchString,
 } from "./lib/shareState";
 
+let lastInvalidRegionToastKey: string | null = null;
+let lastInvalidIndicatorToastKey: string | null = null;
+let lastInvalidCountryToastKey: string | null = null;
+
 export default function App() {
-	const initialShareState = useMemo(() => {
-		if (typeof window === "undefined") return DEFAULT_SHARE_STATE;
-		return parseShareStateFromSearch(
-			window.location.search,
-			DEFAULT_SHARE_STATE,
-		);
-	}, []);
+	const [{ initialShareState, initialRegionToast }] = useState(() => {
+		const state =
+			typeof window === "undefined"
+				? DEFAULT_SHARE_STATE
+				: parseShareStateFromSearch(window.location.search, DEFAULT_SHARE_STATE);
+
+		const defaultChaserCode = DEFAULT_SHARE_STATE.cr ?? "UKC";
+		const defaultTargetCode = DEFAULT_SHARE_STATE.tr ?? "UKI";
+
+		if (state.mode !== "regions") {
+			return { initialShareState: state, initialRegionToast: null as null };
+		}
+
+		const rawChaserCode = state.cr ?? defaultChaserCode;
+		const rawTargetCode = state.tr ?? defaultTargetCode;
+
+		const chaserInvalid = getRegionByCode(rawChaserCode) == null;
+		const targetInvalid = getRegionByCode(rawTargetCode) == null;
+
+		const normalizedState: ShareState = {
+			...state,
+			cr: chaserInvalid ? defaultChaserCode : rawChaserCode,
+			tr: targetInvalid ? defaultTargetCode : rawTargetCode,
+		};
+
+		if (!chaserInvalid && !targetInvalid) {
+			return { initialShareState: normalizedState, initialRegionToast: null };
+		}
+
+		const parts: string[] = [];
+		if (chaserInvalid) parts.push(`chaser region "${rawChaserCode}"`);
+		if (targetInvalid) parts.push(`target region "${rawTargetCode}"`);
+
+		const resolvedChaserName = getRegionByCode(defaultChaserCode)?.name;
+		const resolvedTargetName = getRegionByCode(defaultTargetCode)?.name;
+		const toastKey = `${parts.join("|")}=>${defaultChaserCode}|${defaultTargetCode}`;
+
+		return {
+			initialShareState: normalizedState,
+			initialRegionToast: {
+				toastKey,
+				message: `Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName ?? defaultChaserCode} and ${resolvedTargetName ?? defaultTargetCode}.`,
+			},
+		};
+	});
 
 	// Parse embed parameters (separate from share state)
 	const embedParams = useMemo(() => {
 		if (typeof window === "undefined")
-			return { embed: false, interactive: true, embedTheme: "auto" as const, height: 400 };
+			return {
+				embed: false,
+				interactive: true,
+				embedTheme: "auto" as const,
+				height: 400,
+			};
 		return parseEmbedParams(window.location.search);
 	}, []);
 
@@ -111,19 +162,119 @@ export default function App() {
 	} = useCountries();
 	const { indicators, loading: indicatorsLoading } = useIndicators();
 
+	const indicatorExists = useMemo(() => {
+		if (indicatorsLoading) return null;
+		return indicators.some((i) => i.code === indicatorCode);
+	}, [indicatorCode, indicators, indicatorsLoading]);
+
+	useEffect(() => {
+		if (comparisonMode !== "countries") return;
+		if (indicatorsLoading) return;
+		if (indicatorExists !== false) return;
+
+		const unknownIndicator = indicatorCode;
+		const fallback = DEFAULT_SHARE_STATE.indicator;
+		if (unknownIndicator === fallback) return;
+
+		// In non-interactive embed mode, normalize quietly (no toasts).
+		if (embedParams.embed && embedParams.interactive === false) {
+			setIndicatorCode(fallback);
+			return;
+		}
+
+		const toastKey = `${unknownIndicator}=>${fallback}`;
+		if (lastInvalidIndicatorToastKey === toastKey) return;
+		lastInvalidIndicatorToastKey = toastKey;
+
+		setIndicatorCode(fallback);
+		const fallbackName =
+			indicators.find((i) => i.code === fallback)?.name ?? fallback;
+		toast.error(
+			`Unknown metric "${unknownIndicator}" in URL. Reset to ${fallbackName}.`,
+		);
+	}, [
+		comparisonMode,
+		embedParams.embed,
+		embedParams.interactive,
+		indicatorCode,
+		indicatorExists,
+		indicators,
+		indicatorsLoading,
+	]);
+
 	const {
 		data,
 		getLatestValue,
 		indicator: indicatorInfo,
 		loading: dataLoading,
 		error: dataError,
+		hasLoaded: dataHasLoaded,
 	} = useCountryData({
-		countries: [chaserIso, targetIso],
+		countries:
+			comparisonMode === "countries" && indicatorExists === true
+				? [chaserIso, targetIso]
+				: [],
 		indicator: indicatorCode,
+		enabled: comparisonMode === "countries" && indicatorExists === true,
+		invalidIndicator: comparisonMode === "countries" && indicatorExists === false,
 	});
 
 	const chaserCountry = countries.find((c) => c.iso_alpha3 === chaserIso);
 	const targetCountry = countries.find((c) => c.iso_alpha3 === targetIso);
+
+	useEffect(() => {
+		if (comparisonMode !== "countries") return;
+		if (countriesLoading) return;
+
+		const defaultChaser = DEFAULT_SHARE_STATE.chaser;
+		const defaultTarget = DEFAULT_SHARE_STATE.target;
+
+		const rawChaserIso = chaserIso;
+		const rawTargetIso = targetIso;
+
+		const chaserValid = countries.some((c) => c.iso_alpha3 === rawChaserIso);
+		const targetValid = countries.some((c) => c.iso_alpha3 === rawTargetIso);
+
+		if (chaserValid && targetValid) return;
+
+		const nextChaserIso = chaserValid ? rawChaserIso : defaultChaser;
+		const nextTargetIso = targetValid ? rawTargetIso : defaultTarget;
+
+		// In non-interactive embed mode, normalize quietly (no toasts).
+		if (embedParams.embed && embedParams.interactive === false) {
+			if (!chaserValid) setChaserIso(nextChaserIso);
+			if (!targetValid) setTargetIso(nextTargetIso);
+			return;
+		}
+
+		const parts: string[] = [];
+		if (!chaserValid) parts.push(`chaser country "${rawChaserIso}"`);
+		if (!targetValid) parts.push(`target country "${rawTargetIso}"`);
+
+		const toastKey = `${parts.join("|")}=>${nextChaserIso}|${nextTargetIso}`;
+		if (lastInvalidCountryToastKey === toastKey) return;
+		lastInvalidCountryToastKey = toastKey;
+
+		if (!chaserValid) setChaserIso(nextChaserIso);
+		if (!targetValid) setTargetIso(nextTargetIso);
+
+		const resolvedChaserName =
+			countries.find((c) => c.iso_alpha3 === nextChaserIso)?.name ?? nextChaserIso;
+		const resolvedTargetName =
+			countries.find((c) => c.iso_alpha3 === nextTargetIso)?.name ?? nextTargetIso;
+
+		toast.error(
+			`Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName} and ${resolvedTargetName}.`,
+		);
+	}, [
+		chaserIso,
+		comparisonMode,
+		countries,
+		countriesLoading,
+		embedParams.embed,
+		embedParams.interactive,
+		targetIso,
+	]);
 
 	const selectedIndicator =
 		indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
@@ -162,6 +313,20 @@ export default function App() {
 		targetGrowthRate,
 		baseYear,
 	});
+
+	useEffect(() => {
+		if (comparisonMode !== "regions") return;
+		if (!initialRegionToast) return;
+		if (embedParams.embed && embedParams.interactive === false) return;
+		if (lastInvalidRegionToastKey === initialRegionToast.toastKey) return;
+		lastInvalidRegionToastKey = initialRegionToast.toastKey;
+		toast.error(initialRegionToast.message);
+	}, [
+		comparisonMode,
+		embedParams.embed,
+		embedParams.interactive,
+		initialRegionToast,
+	]);
 
 	// Use the appropriate convergence data based on mode
 	const { yearsToConvergence, convergenceYear, projection, gap, milestones } =
@@ -293,11 +458,6 @@ export default function App() {
 		return `${window.location.origin}${window.location.pathname}${toSearchString(shareState)}`;
 	}, [shareState]);
 
-	const ogImageUrl = useMemo(() => {
-		if (typeof window === "undefined") return "";
-		return `${window.location.origin}/api/og.png${toSearchString(shareState)}`;
-	}, [shareState]);
-
 	const citationIndicator =
 		comparisonMode !== "regions"
 			? selectedIndicator
@@ -365,7 +525,10 @@ export default function App() {
 				theme,
 				siteUrl:
 					typeof window !== "undefined" ? window.location.origin : undefined,
-				dataSource: comparisonMode === "regions" ? "OECD" : "World Bank",
+				dataSource:
+					comparisonMode === "regions"
+						? "OECD"
+						: selectedIndicator?.source ?? "World Bank",
 			};
 
 	// Historical data for thread generator
@@ -617,40 +780,120 @@ export default function App() {
 			</div>
 		) : null;
 
+	const toaster =
+		embedParams.embed && embedParams.interactive === false ? null : (
+			<Toaster
+				theme={theme}
+				position="bottom-right"
+				closeButton
+				richColors
+			/>
+		);
+
 	if (countriesLoading) {
-		return <AppLoadingScreen />;
+		if (embedParams.embed) {
+			return (
+				<>
+					{toaster}
+					<EmbedView
+						shareState={shareState}
+						embedParams={embedParams}
+						chaserName={displayChaserName}
+						targetName={displayTargetName}
+						status="loading"
+						resolvedTheme={theme}
+					/>
+				</>
+			);
+		}
+		return (
+			<>
+				{toaster}
+				<AppLoadingScreen />
+			</>
+		);
 	}
 
 	if (countriesError) {
+		if (embedParams.embed) {
+			return (
+				<>
+					{toaster}
+					<EmbedView
+						shareState={shareState}
+						embedParams={embedParams}
+						chaserName={displayChaserName}
+						targetName={displayTargetName}
+						status="no-data"
+						message={countriesError}
+						resolvedTheme={theme}
+					/>
+				</>
+			);
+		}
 		return (
-			<AppErrorScreen
-				message={countriesError}
-				onRetry={() => window.location.reload()}
-			/>
+			<>
+				{toaster}
+				<AppErrorScreen
+					message={countriesError}
+					onRetry={() => window.location.reload()}
+				/>
+			</>
 		);
 	}
 
 	// Embed mode: render minimal chart-only view
-	if (embedParams.embed && hasData) {
+	if (embedParams.embed) {
+		const hasInvalidCountryIso =
+			comparisonMode === "countries" &&
+			(chaserCountry == null || targetCountry == null);
+
+		const status =
+			comparisonMode === "countries"
+				? indicatorsLoading ||
+					indicatorExists === null ||
+					indicatorExists === false ||
+					hasInvalidCountryIso ||
+					dataLoading
+					? "loading"
+					: dataError
+						? "no-data"
+						: hasData
+							? "ready"
+							: "no-data"
+				: hasData
+					? "ready"
+					: "no-data";
+
 		return (
-			<EmbedView
-				shareState={shareState}
-				embedParams={embedParams}
-				chaserName={displayChaserName}
-				targetName={displayTargetName}
-				projection={projection}
-				convergenceYear={convergenceYear}
-				yearsToConvergence={yearsToConvergence}
-				milestones={milestones}
-				unit={displayMetricUnit}
-				resolvedTheme={theme}
-			/>
+			<>
+				{toaster}
+				<EmbedView
+					shareState={shareState}
+					embedParams={embedParams}
+					chaserName={displayChaserName}
+					targetName={displayTargetName}
+					status={status}
+					message={
+						status === "no-data" && typeof dataError === "string"
+							? dataError
+							: undefined
+					}
+					projection={status === "ready" ? projection : undefined}
+					convergenceYear={status === "ready" ? convergenceYear : undefined}
+					yearsToConvergence={status === "ready" ? yearsToConvergence : undefined}
+					milestones={status === "ready" ? milestones : undefined}
+					unit={status === "ready" ? displayMetricUnit : undefined}
+					resolvedTheme={theme}
+				/>
+			</>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-surface grain">
-			<Toaster theme={theme} position="bottom-right" closeButton richColors />
+		<>
+			{toaster}
+			<div className="min-h-screen bg-surface grain">
 				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
 				{/* Header - Compact */}
 				<AppHeader
@@ -675,10 +918,10 @@ export default function App() {
 					{/* Left column - Main content */}
 					<div className="min-w-0 space-y-2.5 sm:space-y-3">
 						{/* Mode toggle and Selectors */}
-							<SelectorsPanel
-								comparisonMode={comparisonMode}
-								onComparisonModeChange={setComparisonMode}
-								countries={countries}
+						<SelectorsPanel
+							comparisonMode={comparisonMode}
+							onComparisonModeChange={setComparisonMode}
+							countries={countries}
 							indicators={indicators}
 							indicatorsLoading={indicatorsLoading}
 							chaserIso={chaserIso}
@@ -691,25 +934,27 @@ export default function App() {
 							chaserRegionCode={chaserRegionCode}
 							targetRegionCode={targetRegionCode}
 							onChaserRegionCodeChange={setChaserRegionCode}
-								onTargetRegionCodeChange={setTargetRegionCode}
-								onSwapRegions={swapRegions}
+							onTargetRegionCodeChange={setTargetRegionCode}
+							onSwapRegions={swapRegions}
+						/>
+						<div className="hidden lg:block no-print">
+							<GrowthRateBar
+								chaserName={displayChaserName}
+								targetName={displayTargetName}
+								chaserRate={chaserGrowthRate}
+								targetRate={targetGrowthRate}
+								onChaserRateChange={setChaserGrowthRate}
+								onTargetRateChange={setTargetGrowthRate}
 							/>
-							<div className="hidden lg:block no-print">
-								<GrowthRateBar
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									chaserRate={chaserGrowthRate}
-									targetRate={targetGrowthRate}
-									onChaserRateChange={setChaserGrowthRate}
-									onTargetRateChange={setTargetGrowthRate}
-								/>
-							</div>
-							<DataStates
-								loading={dataLoading}
-								error={dataError}
-								metricName={metricName}
+						</div>
+						<DataStates
+							loading={dataLoading || indicatorsLoading}
+							error={dataError}
+							metricName={metricName}
 							showMissingData={
 								comparisonMode === "countries" &&
+								dataHasLoaded &&
+								!indicatorsLoading &&
 								chaserCountry != null &&
 								targetCountry != null &&
 								(chaserValueRaw == null || targetValueRaw == null)
@@ -851,6 +1096,11 @@ export default function App() {
 
 				<AppFooter
 					comparisonMode={comparisonMode}
+					dataSourceName={
+						comparisonMode === "regions"
+							? "OECD"
+							: selectedIndicator?.source ?? "World Bank"
+					}
 					countriesCount={countries.length}
 					regionsCount={ALL_TL2_REGIONS.length}
 				/>
@@ -867,11 +1117,15 @@ export default function App() {
 				}}
 				onReset={resetToDefaults}
 				comparisonMode={comparisonMode}
+				dataSourceName={
+					comparisonMode === "regions"
+						? "OECD"
+						: selectedIndicator?.source ?? "World Bank"
+				}
 				onDownloadObservedCsv={onDownloadObservedCsv}
 				onDownloadProjectionCsv={onDownloadProjectionCsv}
 				onDownloadReportJson={onDownloadReportJson}
 				shareState={shareState}
-				ogImageUrl={ogImageUrl}
 				onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
 			/>
 
@@ -906,5 +1160,6 @@ export default function App() {
 					/>
 				)}
 			</div>
-		);
+		</>
+	);
 	}

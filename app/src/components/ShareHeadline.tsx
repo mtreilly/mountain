@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { toast } from "sonner";
 import { copyTextToClipboard } from "../lib/clipboard";
 import {
@@ -17,6 +17,10 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
   const [mode, setMode] = useState<"short" | "long">("short");
   const headline = generateHeadline(data);
   const text = mode === "short" ? headline.short : headline.long;
+  const modeButtonRefs = useRef<Record<"short" | "long", HTMLButtonElement | null>>({
+    short: null,
+    long: null,
+  });
 
   const handleCopy = async () => {
     try {
@@ -40,15 +44,38 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
     window.open(url, "_blank", "noopener,noreferrer,width=600,height=400");
   };
 
+  const handleModeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+
+    const order: Array<"short" | "long"> = ["short", "long"];
+    const current = order.indexOf(mode);
+    const next =
+      e.key === "Home"
+        ? order[0]
+        : e.key === "End"
+          ? order[order.length - 1]
+          : order[(current + (e.key === "ArrowRight" ? 1 : -1) + order.length) % order.length];
+    setMode(next);
+    queueMicrotask(() => modeButtonRefs.current[next]?.focus());
+  };
+
   if (compact) {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-ink-muted">Share text</span>
-          <div className="flex gap-1">
+          <div role="radiogroup" aria-label="Share text length" className="flex gap-1" onKeyDown={handleModeKeyDown}>
             <button
               type="button"
               onClick={() => setMode("short")}
+              role="radio"
+              aria-checked={mode === "short"}
+              tabIndex={mode === "short" ? 0 : -1}
+              data-share-mode="short"
+              ref={(el) => {
+                modeButtonRefs.current.short = el;
+              }}
               className={`px-2 py-0.5 text-[10px] rounded transition-default ${
                 mode === "short"
                   ? "bg-[var(--color-accent)] text-white"
@@ -60,6 +87,13 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
             <button
               type="button"
               onClick={() => setMode("long")}
+              role="radio"
+              aria-checked={mode === "long"}
+              tabIndex={mode === "long" ? 0 : -1}
+              data-share-mode="long"
+              ref={(el) => {
+                modeButtonRefs.current.long = el;
+              }}
               className={`px-2 py-0.5 text-[10px] rounded transition-default ${
                 mode === "long"
                   ? "bg-[var(--color-accent)] text-white"
@@ -110,10 +144,17 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-ink-muted">Share text</span>
-        <div className="flex gap-1">
+        <div role="radiogroup" aria-label="Share text length" className="flex gap-1" onKeyDown={handleModeKeyDown}>
           <button
             type="button"
             onClick={() => setMode("short")}
+            role="radio"
+            aria-checked={mode === "short"}
+            tabIndex={mode === "short" ? 0 : -1}
+            data-share-mode="short"
+            ref={(el) => {
+              modeButtonRefs.current.short = el;
+            }}
             className={`px-2 py-0.5 text-[10px] rounded transition-default ${
               mode === "short"
                 ? "bg-[var(--color-accent)] text-white"
@@ -125,6 +166,13 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
           <button
             type="button"
             onClick={() => setMode("long")}
+            role="radio"
+            aria-checked={mode === "long"}
+            tabIndex={mode === "long" ? 0 : -1}
+            data-share-mode="long"
+            ref={(el) => {
+              modeButtonRefs.current.long = el;
+            }}
             className={`px-2 py-0.5 text-[10px] rounded transition-default ${
               mode === "long"
                 ? "bg-[var(--color-accent)] text-white"

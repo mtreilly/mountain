@@ -45,9 +45,11 @@ export function MetricSelector({
 
   const grouped = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const tokens = q.split(/\s+/).filter(Boolean);
     const filtered = indicators.filter((ind) => {
-      if (!q) return true;
-      return ind.name.toLowerCase().includes(q) || ind.code.toLowerCase().includes(q);
+      if (tokens.length === 0) return true;
+      const haystack = `${ind.name} ${ind.code}`.toLowerCase();
+      return tokens.every((token) => haystack.includes(token));
     });
 
     return filtered.reduce(

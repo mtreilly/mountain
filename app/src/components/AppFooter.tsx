@@ -1,36 +1,39 @@
+import { getDataSourceBaseUrl } from "../lib/dataSourceUrls";
+
 export function AppFooter({
 	comparisonMode = "countries",
 	countriesCount,
 	regionsCount,
+	dataSourceName,
 }: {
 	comparisonMode?: "countries" | "regions";
 	countriesCount: number;
 	regionsCount?: number;
+	dataSourceName?: string | null;
 }) {
 	const isRegions = comparisonMode === "regions";
+	const resolvedSourceName = isRegions
+		? "OECD"
+		: (dataSourceName?.trim() ? dataSourceName.trim() : "World Bank");
+	const resolvedSourceUrl = isRegions
+		? "https://www.oecd.org/"
+		: getDataSourceBaseUrl(resolvedSourceName) ?? null;
 
 	return (
 		<footer className="mt-10 lg:mt-12 pt-6 border-t border-surface text-center">
 			<p className="text-xs text-ink-faint">
 				Data:{" "}
-				{isRegions ? (
+				{resolvedSourceUrl ? (
 					<a
-						href="https://www.oecd.org/"
+						href={resolvedSourceUrl}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="text-[var(--color-accent)] hover:underline"
 					>
-						OECD
+						{resolvedSourceName}
 					</a>
 				) : (
-					<a
-						href="https://data.worldbank.org/"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-[var(--color-accent)] hover:underline"
-					>
-						World Bank
-					</a>
+					<span>{resolvedSourceName}</span>
 				)}
 				{" · "}
 				Inspired by{" "}

@@ -1,10 +1,10 @@
 import type { Indicator } from "../types";
 import type { ShareState } from "./shareState";
-import { toSearchString } from "./shareState";
 import {
   generateToolCitation,
   generateDataSourceCitation,
   createCitationContext,
+  buildPermalink,
   type CitationFormat,
 } from "./citations";
 import { WORLD_BANK_INDICATOR_CODES, getDataSourceLicense } from "./dataSourceUrls";
@@ -28,7 +28,7 @@ function generateCsvHeader(params: {
 }): string {
   const { state, indicator, chaserName, targetName, toolUrl = "https://convergence.example.com" } = params;
   const now = new Date();
-  const permalink = `${toolUrl}${toSearchString(state)}&v=1`;
+  const permalink = buildPermalink(toolUrl, state);
   const source = indicator?.source || "World Bank";
   const sourceCode = WORLD_BANK_INDICATOR_CODES[indicator?.code || state.indicator] || null;
   const license = getDataSourceLicense(source);
@@ -170,7 +170,7 @@ export function toReportJson(params: {
   const chaserName = countriesByIso3[state.chaser]?.name || state.chaser;
   const targetName = countriesByIso3[state.target]?.name || state.target;
   const now = new Date();
-  const permalink = `${toolUrl}${toSearchString(state)}&v=1`;
+  const permalink = buildPermalink(toolUrl, state);
 
   // Generate citations
   const citationContext = createCitationContext({
@@ -260,4 +260,3 @@ export function toReportJson(params: {
     2
   );
 }
-

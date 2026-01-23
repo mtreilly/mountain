@@ -93,7 +93,7 @@ export function ResultSummary({
 						{formatPercent(chaserGrowthRate)}
 					</span>
 					/yr
-					{targetGrowthRate > 0 ? (
+					{targetGrowthRate !== 0 ? (
 						<>
 							{" "}
 							vs{" "}

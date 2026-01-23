@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import {
   ALL_TL2_REGIONS,
   getLatestRegionData,
@@ -32,6 +32,7 @@ export function RegionalImplicationsPanel({
   horizonYears,
   onHorizonYearsChange,
 }: RegionalImplicationsPanelProps) {
+  const horizonYearsInputId = useId();
   const chaserRegion = getRegionByCode(chaserCode);
   const year = baseYear + horizonYears;
   const gdpFuture = gdpCurrent
@@ -236,10 +237,12 @@ export function RegionalImplicationsPanel({
 
       {/* Horizon year control */}
       <div className="mt-3 flex items-center justify-between">
-        <div className="text-xs text-ink-muted">Projection horizon</div>
+        <label htmlFor={horizonYearsInputId} className="text-xs text-ink-muted">
+          Projection horizon
+        </label>
         <div className="flex items-center gap-2">
           <input
-            id="reg-imp-years"
+            id={horizonYearsInputId}
             type="number"
             min={1}
             max={150}
