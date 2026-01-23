@@ -61,6 +61,11 @@ pnpm db:import    # Import World Bank data
 pnpm data:fetch   # Fetch fresh data from World Bank API
 ```
 
+## Repo Hygiene
+
+- `app/.wrangler/` is Cloudflare Wrangler local state and should not be committed.
+- If it ever gets tracked, untrack it with `git rm -r --cached app/.wrangler` (then ensure `app/.gitignore` contains `.wrangler`).
+
 ## Data
 
 The database contains:
