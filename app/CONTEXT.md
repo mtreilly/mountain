@@ -81,7 +81,16 @@ This repo already uses an offline ingestion pattern:
 - `scripts/fetch-owid-co2.ts` streams an OWID CSV and prints SQL.
 - `pnpm data:fetch` composes these into `data-import-fixed.sql` for D1 import.
 
-We should follow the same approach for energy-by-source: add a `scripts/fetch-owid-energy.ts` that streams OWID energy CSV, maps selected columns to indicator codes, and prints SQL inserts.
+We follow the same approach for energy-by-source:
+- `scripts/fetch-owid-energy.ts` streams OWID energy CSV, maps selected columns to indicator codes, and prints SQL inserts.
+
+### Future-proofing (high priority)
+- Pin external datasets to a specific version (Git commit SHA or tagged release) rather than tracking `master` by default. Record this in `data_points.source_vintage`.
+- Keep ingestion scripts strict about required columns, but tolerant of extra columns (OWID adds columns over time).
+- Prefer sources that are: (1) open and linkable, (2) stable URLs, (3) widely used in research/media, and (4) consistently country-coded (ISO3).
+
+Implementation note:
+- `scripts/fetch-owid-energy.ts` supports pinning via `OWID_ENERGY_REF=<commit-or-tag>` and records `OWID_ENERGY_VINTAGE` (defaults to `owid-energy-data@<ref>`) into `data_points.source_vintage`.
 
 ### Future-proofing (high priority)
 - Pin external datasets to a specific version (Git commit SHA or tagged release) rather than tracking `master` by default. Record this in `data_points.source_vintage`.
@@ -101,6 +110,14 @@ Use cases:
 
 Recommended choice:
 - Use OWID energy as the default “observed source mix” dataset because it is open, broad coverage, and easy to ingest as CSV like our OWID CO₂ pipeline.
+- Optional augmentation (implemented): ingest the latest available year from Ember’s `electricity-generation/yearly` and insert it as additional year-level points (default `>= 2024`) so “today” baselines can extend beyond OWID’s latest year without overwriting OWID history.
+
+Indicator mapping (OWID → D1):
+- `electricity_generation` → `ELECTRICITY_GEN_TOTAL` (TWh)
+- `solar_electricity` → `ELECTRICITY_GEN_SOLAR` (TWh)
+- `wind_electricity` → `ELECTRICITY_GEN_WIND` (TWh)
+- `coal_electricity` → `ELECTRICITY_GEN_COAL` (TWh)
+- `nuclear_electricity` → `ELECTRICITY_GEN_NUCLEAR` (TWh)
 
 ### Installed capacity by source (GW)
 Best sources:
@@ -114,6 +131,23 @@ Use cases:
 
 Recommended choice:
 - Add IRENA solar/wind capacity as the first “capacity baseline” step because it unlocks a very compelling user-facing message (“+X× today’s fleet”) while keeping scope limited to renewables.
+  - Implementation: `scripts/fetch-irena-capacity.ts` (PXWeb table `Country_ELECSTAT_2025_H2_PX.px`, installed capacity in MW → stored as GW; wind = onshore + offshore)
+
+Practical interim (implemented now):
+- Until we ingest an explicit capacity dataset, we estimate “today’s fleet GW” from observed generation (TWh) using the same capacity-factor assumptions as the buildout equivalents:
+  - estimated GW ≈ TWh / (8.76 × CF)
+  - This is explicitly labeled as an estimate and uses our CF assumptions for internal consistency.
+
+Practical next step (implemented now, requires API key):
+- Ember provides installed capacity data (GW) via `GET /v1/installed-capacity/monthly` (requires `api_key`).
+- We ingest solar/wind capacity for the latest available month and store it as a single year-level point with a `source_vintage` like `ember-installed-capacity@YYYY-MM`.
+- This enables “× today’s fleet” multipliers based on reported installed GW rather than inferred GW.
+  - Implementation: `scripts/fetch-ember-capacity.ts`
+
+Practical “newest year” step (implemented now, requires API key):
+- Ember provides electricity generation data (TWh) via `GET /v1/electricity-generation/yearly` (requires `api_key` for higher limits).
+- We ingest a single target year (default: latest available, but only if `>= 2024`) and store it as year-level points with `source_vintage` like `ember-electricity-generation@YYYY`.
+  - Implementation: `scripts/fetch-ember-generation.ts`
 
 ### Nuclear & coal plant/unit counts
 Best sources:
@@ -138,7 +172,10 @@ Use cases:
 ## APIs / Endpoints we will use (MVP)
 - World Bank API (already in use): `https://api.worldbank.org/v2/country/all/indicator/<INDICATOR>?format=json&date=1990:2023&per_page=20000`
 - OWID CO2 CSV (already in use): `https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv`
-- OWID Energy CSV (proposed): `https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv`
+- OWID Energy CSV (in use): `https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv`
+- IRENASTAT PXWeb API (capacity baselines): `https://pxweb.irena.org/api/v1/en/IRENASTAT/`
+- Ember API (optional, requires key): `https://api.ember-energy.org/v1/installed-capacity/monthly`
+- Ember API (optional, requires key): `https://api.ember-energy.org/v1/electricity-generation/yearly`
 
 ## Documentation we still need to write (or decide)
 1) **Indicator mapping table** (doc + code): OWID column → our indicator code → unit → category → source_code string.
@@ -147,6 +184,7 @@ Use cases:
 4) **Update cadence**: how often we regenerate/import `data-import-fixed.sql` and how we record `source_vintage` for reproducibility.
 5) **Assumptions registry**: a single place to define/display defaults (CFs, panel watts, turbine MW, household size), including rationale and how users can override.
 6) **Version pinning policy**: do we pin to a commit by default and bump intentionally, or always track latest and alert on schema changes?
+7) **Secrets management**: where `EMBER_API_KEY` lives in CI/local and how we avoid checking it into the repo.
 
 ## Visual Design Plan (compelling, minimal clutter)
 ### Tier 1: “Big-number” summary (within Implications card)
@@ -172,8 +210,8 @@ Make the numbers feel real by comparing to known baselines:
 - A toggle for “Capacity view (GW)” vs “Energy view (TWh/year)” for electricity.
 
 ### Most interesting UX extension (recommended)
-- Add an optional “**technology mix**” control (presets + custom sliders) that lets users allocate ΔTWh across solar/wind/nuclear/coal and converts that into build rates (GW/yr, plants/yr, turbines/yr, panels/yr).
-- Add “**pace realism**” context: compare required build rate to the country’s historical max 5-year build pace (computed from observed OWID/IRENA series where available).
+- Implemented (v1): an optional “technology mix” control (presets + inputs) that allocates ΔTWh across solar/wind/nuclear/coal and converts that into build rates (GW/yr, plants/yr, turbines/yr, panels/yr), plus “× today” multipliers.
+- Implemented (v1): “pace realism” by comparing required average annual generation build (TWh/yr) to the country’s best historical 5-year average growth in that source’s generation (computed from OWID electricity-by-source series).
 
 ## Engineering Roadmap
 ### Phase 1 (done / immediate tweaks)
@@ -208,6 +246,6 @@ Add additional macro implications (requires new datasets):
 - Avoid overstating precision; show ranges if/when we can support them.
 
 ## Open Questions
-1) Should we let users choose a “technology mix” (e.g., 50% solar, 30% wind, 20% nuclear) and compute a combined buildout plan?
-2) Should “homes needed” represent *net new dwellings* or *gross construction* (including replacement/upgrade)?
-3) Should we introduce scenario variants (“efficient growth”, “electrify everything”, “high industry”) that adjust electricity intensity and urbanization independently of GDP/cap?
+1) Technology mix control: implemented (v1) with presets + custom mix.
+2) Homes needed: default is *net new dwellings* (Δ urban residents / people-per-home). Gross construction (replacement/upgrade) is deferred.
+3) Scenario variants: implemented (v1) as explicit multipliers/presets (efficient growth / electrify everything / high industry / high growth horizon preset).
