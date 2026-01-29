@@ -1029,9 +1029,9 @@ export default function App() {
 							/>
 						)}
 
-						{/* Implications trigger button (main column) */}
+						{/* Implications trigger button (mobile only - desktop is in sidebar) */}
 						{showImplications && comparisonMode === "countries" && (
-							<div className="animate-fade-in-up stagger-4">
+							<div className="animate-fade-in-up stagger-4 lg:hidden">
 								<button
 									type="button"
 									onClick={() => setIsImplicationsOpen(true)}
@@ -1043,7 +1043,7 @@ export default function App() {
 												Development Implications
 											</h3>
 											<p className="text-sm text-ink-muted mt-1">
-												Explore what reaching {displayTargetName}'s GDP level could mean for {displayChaserName}: electricity demand, urbanization, CO2 emissions, and more.
+												Explore electricity, urbanization, emissions and more
 											</p>
 										</div>
 										<svg
@@ -1116,6 +1116,54 @@ export default function App() {
 									contextCards={contextCards}
 									showControls={false}
 								/>
+
+								{/* Implications trigger (desktop sidebar) */}
+								{showImplications && comparisonMode === "countries" && (
+									<button
+										type="button"
+										onClick={() => setIsImplicationsOpen(true)}
+										className="w-full card p-4 text-left hover:bg-surface transition-default group"
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
+												<svg
+													className="w-5 h-5 text-[var(--color-accent)]"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={1.5}
+														d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+													/>
+												</svg>
+											</div>
+											<div className="flex-1 min-w-0">
+												<h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
+													Implications
+												</h3>
+												<p className="text-xs text-ink-muted truncate">
+													Electricity, urban, CO2
+												</p>
+											</div>
+											<svg
+												className="w-4 h-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M9 5l7 7-7 7"
+												/>
+											</svg>
+										</div>
+									</button>
+								)}
 							</div>
 						)}
 					</aside>

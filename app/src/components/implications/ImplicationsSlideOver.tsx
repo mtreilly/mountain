@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { TemplateId } from "../../lib/templatePaths";
-import type { ScenarioId } from "../../lib/implicationsScenarios";
+import { TEMPLATE_PATHS } from "../../lib/templatePaths";
+import { IMPLICATION_SCENARIOS, type ScenarioId } from "../../lib/implicationsScenarios";
 import type { ImplicationCardType } from "../../lib/shareState";
 import { formatMetricValue, formatNumber } from "../../lib/convergence";
 import { SlideOver } from "../ui/SlideOver";
-import { ImplicationsControls } from "./ImplicationsControls";
 import { ImplicationsTabs } from "./ImplicationsTabs";
 import { GdpTotalsCard } from "./GdpTotalsCard";
 import { ElectricityDemandCard } from "./ElectricityDemandCard";
@@ -59,6 +59,7 @@ export function ImplicationsSlideOver({
   const [mixMode, setMixMode] = useState(false);
   const [mix, setMix] = useState<Record<PowerMixKey, number>>(MIX_PRESETS[0].mix);
   const [scenario, setScenario] = useState<ScenarioId>("baseline");
+  const [showSettings, setShowSettings] = useState(false);
 
   const {
     data,
@@ -97,7 +98,6 @@ export function ImplicationsSlideOver({
     popCurrent,
     popFuture,
     popTrendRate,
-    popLabel,
     scenarioDef,
     hasAny,
     observedElectricity,
@@ -106,6 +106,19 @@ export function ImplicationsSlideOver({
     mixBuildout,
   } = computed;
 
+  const handleScenarioChange = (id: ScenarioId) => {
+    setScenario(id);
+    const s = IMPLICATION_SCENARIOS.find((x) => x.id === id);
+    if (s?.presets?.horizonYears != null) onHorizonYearsChange(s.presets.horizonYears);
+    if (s?.presets?.gridLossPct != null || s?.presets?.netImportsPct != null) {
+      setAssumptions((a) => ({
+        ...a,
+        gridLossPct: s.presets?.gridLossPct ?? a.gridLossPct,
+        netImportsPct: s.presets?.netImportsPct ?? a.netImportsPct,
+      }));
+    }
+  };
+
   return (
     <SlideOver
       isOpen={isOpen}
@@ -113,80 +126,208 @@ export function ImplicationsSlideOver({
       title="Development Implications"
       subtitle={chaserName}
     >
-      <div className="p-5 space-y-6">
-        {/* Controls Section */}
-        <ImplicationsControls
-          template={template}
-          onTemplateChange={onTemplateChange}
-          horizonYears={horizonYears}
-          onHorizonYearsChange={onHorizonYearsChange}
-          year={year}
-          popAssumption={popAssumption}
-          onPopAssumptionChange={setPopAssumption}
-          popTrendRate={popTrendRate}
-          scenario={scenario}
-          onScenarioChange={setScenario}
-          onAssumptionsChange={setAssumptions}
-          scenarioDef={scenarioDef}
-        />
+      {/* Summary bar */}
+      <div className="px-5 py-3 bg-surface-sunken border-b border-surface">
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-ink-muted">GDP/cap:</span>
+            <span className="font-mono font-medium text-ink">
+              {formatMetricValue(gdpCurrent, "int$")}
+            </span>
+            <span className="text-ink-faint">→</span>
+            <span className="font-mono font-medium text-ink">
+              {formatMetricValue(gdpFuture, "int$")}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-ink-muted">
+            <span>{horizonYears}y</span>
+            <span className="text-ink-faint">•</span>
+            <span>{year}</span>
+          </div>
+        </div>
+      </div>
 
-        {/* Context Summary */}
-        <div className="p-4 rounded-xl border border-surface bg-surface space-y-2">
-          <p className="text-sm text-ink">
-            <span className="font-medium">{chaserName}</span> GDP/capita path:{" "}
-            <span className="font-mono">{formatMetricValue(gdpCurrent, "int$")}</span>
-            {" → "}
-            <span className="font-mono">{formatMetricValue(gdpFuture, "int$")}</span>
-          </p>
-          <p className="text-sm text-ink-muted">
-            Totals assume {popLabel}
-            {popCurrent != null && (
-              <>
-                {" · "}
-                <span className="font-mono">{formatNumber(Math.round(popCurrent))}</span>
-                {" → "}
-                <span className="font-mono">
-                  {popFuture != null ? formatNumber(Math.round(popFuture)) : "—"}
-                </span>
-              </>
-            )}
-          </p>
+      {/* Quick controls row */}
+      <div className="px-5 py-4 border-b border-surface space-y-4">
+        {/* Template + Horizon row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
+            {TEMPLATE_PATHS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onTemplateChange(t.id)}
+                className={[
+                  "px-3 py-1.5 text-sm font-medium transition-default",
+                  template === t.id
+                    ? "bg-surface-raised text-ink shadow-sm"
+                    : "text-ink-muted hover:text-ink",
+                ].join(" ")}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={150}
+              value={horizonYears}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (Number.isFinite(next)) {
+                  onHorizonYearsChange(Math.max(1, Math.min(150, Math.round(next))));
+                }
+              }}
+              className="w-16 px-2 py-1.5 rounded-lg bg-surface border border-surface text-ink text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            />
+            <span className="text-sm text-ink-muted">years</span>
+          </div>
         </div>
 
-        {/* Loading / Error / Empty states */}
+        {/* Scenario row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {IMPLICATION_SCENARIOS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => handleScenarioChange(s.id)}
+              className={[
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-default",
+                scenario === s.id
+                  ? "bg-[var(--color-accent)] text-white"
+                  : "bg-surface text-ink-muted hover:text-ink hover:bg-surface-raised",
+              ].join(" ")}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Settings toggle */}
+        <button
+          type="button"
+          onClick={() => setShowSettings(!showSettings)}
+          className="flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-default"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showSettings ? "rotate-90" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span>More options</span>
+          {popAssumption !== "trend" && (
+            <span className="px-1.5 py-0.5 rounded bg-surface text-xs">Pop: static</span>
+          )}
+        </button>
+
+        {/* Expanded settings */}
+        {showSettings && (
+          <div className="pt-3 space-y-3 border-t border-surface">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-ink-muted">Population</span>
+              <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setPopAssumption("trend")}
+                  className={[
+                    "px-3 py-1.5 text-sm transition-default",
+                    popAssumption === "trend"
+                      ? "bg-surface-raised text-ink"
+                      : "text-ink-muted hover:text-ink",
+                  ].join(" ")}
+                >
+                  Trend
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPopAssumption("static")}
+                  className={[
+                    "px-3 py-1.5 text-sm transition-default",
+                    popAssumption === "static"
+                      ? "bg-surface-raised text-ink"
+                      : "text-ink-muted hover:text-ink",
+                  ].join(" ")}
+                >
+                  Static
+                </button>
+              </div>
+            </div>
+            {popAssumption === "trend" && (
+              <p className="text-xs text-ink-faint">
+                Population growing at {popTrendRate >= 0 ? "+" : ""}
+                {(popTrendRate * 100).toFixed(2)}%/yr (10-year trend)
+              </p>
+            )}
+            <p className="text-xs text-ink-faint">
+              {popCurrent != null && (
+                <>
+                  {formatNumber(Math.round(popCurrent))} →{" "}
+                  {popFuture != null ? formatNumber(Math.round(popFuture)) : "—"} people
+                </>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Scenario description */}
+      {scenario !== "baseline" && (
+        <div className="px-5 py-2 bg-[var(--color-accent)]/5 border-b border-surface">
+          <p className="text-sm text-ink-muted">
+            <span className="font-medium text-[var(--color-accent)]">{scenarioDef.label}:</span>{" "}
+            {scenarioDef.blurb}
+          </p>
+        </div>
+      )}
+
+      {/* Main content area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3 text-ink-muted">
               <div className="w-5 h-5 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              <span>Loading implications data...</span>
+              <span>Loading data...</span>
             </div>
           </div>
         )}
 
+        {/* Error state */}
         {error && (
-          <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+          <div className="m-5 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              Could not load implications data ({error})
+              Could not load data: {error}
             </p>
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && !error && !hasAny && (
-          <div className="p-4 rounded-xl border border-surface bg-surface">
+          <div className="m-5 p-4 rounded-xl border border-surface bg-surface">
             <p className="text-sm text-ink-muted">
-              Not enough data for these metrics yet. Import more World Bank series to enable estimates.
+              Not enough data available for these metrics.
             </p>
           </div>
         )}
 
-        {/* Tabs and Content */}
+        {/* Content */}
         {!loading && !error && hasAny && (
           <>
-            <div className="border-t border-surface -mx-5 px-5 pt-4">
-              <ImplicationsTabs activeCard={activeCard} onCardChange={onActiveCardChange} />
+            {/* Tabs */}
+            <div className="sticky top-0 z-10 bg-surface-raised border-b border-surface">
+              <div className="px-5">
+                <ImplicationsTabs activeCard={activeCard} onCardChange={onActiveCardChange} />
+              </div>
             </div>
 
-            <div>
+            {/* Card content */}
+            <div className="p-5">
               {activeCard === "gdp" && (
                 <GdpTotalsCard
                   data={{
@@ -261,10 +402,12 @@ export function ImplicationsSlideOver({
             </div>
           </>
         )}
+      </div>
 
-        {/* Disclaimer */}
-        <p className="text-xs text-ink-faint text-center pt-2 border-t border-surface">
-          Estimates vary widely by policy, technology, and economic structure; treat as "what-if" context, not a forecast.
+      {/* Footer disclaimer */}
+      <div className="px-5 py-3 border-t border-surface bg-surface-sunken">
+        <p className="text-xs text-ink-faint text-center">
+          Estimates are illustrative "what-if" projections, not forecasts
         </p>
       </div>
     </SlideOver>
