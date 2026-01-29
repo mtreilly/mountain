@@ -7,13 +7,14 @@ interface SlideOverProps {
   title: string;
   subtitle?: string;
   children: ReactNode;
-  width?: "md" | "lg" | "xl";
+  width?: "md" | "lg" | "xl" | "2xl";
 }
 
 const WIDTH_CLASSES = {
   md: "max-w-md",
   lg: "max-w-lg",
-  xl: "max-w-[640px]",
+  xl: "max-w-[720px]",
+  "2xl": "max-w-[800px]",
 } as const;
 
 export function SlideOver({

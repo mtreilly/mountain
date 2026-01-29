@@ -272,7 +272,7 @@
 
   .slide-over-panel {
     @apply fixed top-0 right-0 bottom-0 z-50 flex flex-col w-full bg-surface-raised border-l border-surface shadow-2xl;
-    max-width: 640px;
+    max-width: 800px;
   }
 
   .slide-over-backdrop {

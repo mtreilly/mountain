@@ -142,75 +142,77 @@ export function ImplicationsSlideOver({
   const electricityDelta = macro.electricity.buildoutDeltaTWh;
   const urbanDelta = macro.urban.deltaPersons;
 
+  const templateFlags: Record<TemplateId, string> = {
+    china: "🇨🇳",
+    us: "🇺🇸",
+    eu: "🇪🇺",
+  };
+
   return (
     <SlideOver
       isOpen={isOpen}
       onClose={onClose}
       title="Development Implications"
       subtitle={`What ${chaserName} might need at higher income levels`}
+      width="2xl"
     >
       <div className="flex-1 overflow-y-auto">
         {/* Controls Section */}
-        <div className="p-5 border-b border-surface bg-surface-sunken/50">
-          {/* Main projection info */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <div className="text-sm text-ink-muted mb-1">Projecting over</div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={150}
-                  value={horizonYears}
-                  onChange={(e) => {
-                    const next = Number(e.target.value);
-                    if (Number.isFinite(next)) {
-                      onHorizonYearsChange(Math.max(1, Math.min(150, Math.round(next))));
-                    }
-                  }}
-                  className="w-20 px-3 py-2 rounded-lg bg-surface border border-surface text-ink text-lg font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                />
-                <span className="text-ink">years</span>
-                <span className="text-ink-muted">(to {year})</span>
-              </div>
+        <div className="px-5 py-3 border-b border-surface bg-surface-sunken/50">
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Horizon */}
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={150}
+                value={horizonYears}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  if (Number.isFinite(next)) {
+                    onHorizonYearsChange(Math.max(1, Math.min(150, Math.round(next))));
+                  }
+                }}
+                className="w-16 px-2 py-1.5 rounded-lg bg-surface border border-surface text-ink font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              />
+              <span className="text-sm text-ink-muted">years → {year}</span>
             </div>
-          </div>
 
-          {/* Template selection */}
-          <div className="mb-4">
-            <div className="text-sm text-ink-muted mb-2">Development path template</div>
-            <div className="flex gap-2">
+            <div className="w-px h-6 bg-surface" />
+
+            {/* Template flags */}
+            <div className="flex gap-1">
               {TEMPLATE_PATHS.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => onTemplateChange(t.id)}
+                  title={t.label}
                   className={[
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-default",
+                    "w-9 h-9 rounded-lg text-lg transition-default flex items-center justify-center",
                     template === t.id
-                      ? "bg-[var(--color-accent)] text-white"
-                      : "bg-surface border border-surface text-ink hover:bg-surface-raised",
+                      ? "bg-[var(--color-accent)] ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-surface-raised"
+                      : "bg-surface hover:bg-surface-raised",
                   ].join(" ")}
                 >
-                  {t.label}
+                  {templateFlags[t.id]}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Scenario selection */}
-          <div className="mb-4">
-            <div className="text-sm text-ink-muted mb-2">Scenario</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="w-px h-6 bg-surface" />
+
+            {/* Scenario pills */}
+            <div className="flex gap-1">
               {IMPLICATION_SCENARIOS.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => handleScenarioChange(s.id)}
                   className={[
-                    "px-3 py-1.5 rounded-full text-sm transition-default",
+                    "px-2.5 py-1 rounded-full text-xs font-medium transition-default",
                     scenario === s.id
-                      ? "bg-ink text-surface font-medium"
+                      ? "bg-ink text-surface"
                       : "bg-surface text-ink-muted hover:text-ink",
                   ].join(" ")}
                 >
@@ -218,63 +220,64 @@ export function ImplicationsSlideOver({
                 </button>
               ))}
             </div>
-            {scenario !== "baseline" && (
-              <p className="mt-2 text-sm text-ink-muted">{scenarioDef.blurb}</p>
-            )}
+
+            <div className="flex-1" />
+
+            {/* More options toggle */}
+            <button
+              type="button"
+              onClick={() => setShowSettings(!showSettings)}
+              className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink transition-default"
+            >
+              <svg
+                className={`w-3 h-3 transition-transform ${showSettings ? "rotate-90" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              More
+            </button>
           </div>
 
-          {/* More options toggle */}
-          <button
-            type="button"
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-2 text-sm text-ink-muted hover:text-ink transition-default"
-          >
-            <svg
-              className={`w-4 h-4 transition-transform ${showSettings ? "rotate-90" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            Population & assumptions
-          </button>
+          {scenario !== "baseline" && (
+            <p className="mt-2 text-xs text-ink-muted">{scenarioDef.blurb}</p>
+          )}
 
           {showSettings && (
-            <div className="mt-3 pt-3 border-t border-surface space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-ink">Population projection</span>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPopAssumption("trend")}
-                    className={[
-                      "px-3 py-1.5 rounded-lg text-sm transition-default",
-                      popAssumption === "trend"
-                        ? "bg-surface-raised text-ink font-medium"
-                        : "text-ink-muted hover:text-ink",
-                    ].join(" ")}
-                  >
-                    10yr trend
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPopAssumption("static")}
-                    className={[
-                      "px-3 py-1.5 rounded-lg text-sm transition-default",
-                      popAssumption === "static"
-                        ? "bg-surface-raised text-ink font-medium"
-                        : "text-ink-muted hover:text-ink",
-                    ].join(" ")}
-                  >
-                    Static
-                  </button>
-                </div>
+            <div className="mt-3 pt-3 border-t border-surface flex items-center gap-4">
+              <span className="text-sm text-ink-muted">Population</span>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPopAssumption("trend")}
+                  className={[
+                    "px-2.5 py-1 rounded text-xs transition-default",
+                    popAssumption === "trend"
+                      ? "bg-surface-raised text-ink font-medium"
+                      : "text-ink-muted hover:text-ink",
+                  ].join(" ")}
+                >
+                  Trend
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPopAssumption("static")}
+                  className={[
+                    "px-2.5 py-1 rounded text-xs transition-default",
+                    popAssumption === "static"
+                      ? "bg-surface-raised text-ink font-medium"
+                      : "text-ink-muted hover:text-ink",
+                  ].join(" ")}
+                >
+                  Static
+                </button>
               </div>
               {popAssumption === "trend" && popTrendRate !== 0 && (
-                <p className="text-sm text-ink-muted">
-                  Growing at {popTrendRate >= 0 ? "+" : ""}{(popTrendRate * 100).toFixed(2)}% per year
-                </p>
+                <span className="text-xs text-ink-faint">
+                  {popTrendRate >= 0 ? "+" : ""}{(popTrendRate * 100).toFixed(1)}%/yr
+                </span>
               )}
             </div>
           )}
@@ -306,120 +309,76 @@ export function ImplicationsSlideOver({
 
         {/* Cards */}
         {!loading && !error && hasAny && (
-          <div className="p-5 space-y-4">
+          <div className="p-4 space-y-3">
             {/* Economic Output Card */}
-            <section className="rounded-xl border border-surface bg-surface-raised overflow-hidden">
-              <div className="p-4 border-b border-surface bg-surface/50">
-                <h3 className="text-base font-semibold text-ink">Economic Output</h3>
-                <p className="text-sm text-ink-muted mt-1">
-                  Total economic output based on GDP per capita and population growth
-                </p>
+            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
+                <h3 className="font-semibold text-ink">Economic Output</h3>
+                <span className="text-xs text-ink-muted">GDP per capita × population</span>
               </div>
-              <div className="p-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="p-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">GDP per capita</div>
-                    <div className="text-lg font-semibold text-ink">
-                      {formatMetricValue(gdpCurrent, "int$")}
-                    </div>
-                    <div className="text-sm text-ink-muted">today</div>
+                    <div className="text-xs text-ink-muted mb-0.5">GDP/capita</div>
+                    <div className="font-semibold text-ink">{formatMetricValue(gdpCurrent, "int$")}</div>
+                    <div className="text-lg font-bold text-[var(--color-accent)]">{formatMetricValue(gdpFuture, "int$")}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">&nbsp;</div>
-                    <div className="text-lg font-semibold text-[var(--color-accent)]">
-                      {formatMetricValue(gdpFuture, "int$")}
-                    </div>
-                    <div className="text-sm text-ink-muted">projected</div>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-surface grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-ink-muted mb-1">Total GDP</div>
-                    <div className="text-xl font-semibold text-ink">
-                      {formatDollars(macro.gdpTotalCurrent)}
-                    </div>
+                    <div className="text-xs text-ink-muted mb-0.5">Total GDP</div>
+                    <div className="font-semibold text-ink">{formatDollars(macro.gdpTotalCurrent)}</div>
+                    <div className="text-lg font-bold text-[var(--color-accent)]">{formatDollars(macro.gdpTotalFuture)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">&nbsp;</div>
-                    <div className="text-xl font-semibold text-[var(--color-accent)]">
-                      {formatDollars(macro.gdpTotalFuture)}
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-surface grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-ink-muted mb-1">Population</div>
-                    <div className="text-lg font-medium text-ink">
-                      {formatPeople(popCurrent)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-ink-muted mb-1">&nbsp;</div>
-                    <div className="text-lg font-medium text-ink">
-                      {formatPeople(popFuture)}
-                    </div>
+                    <div className="text-xs text-ink-muted mb-0.5">Population</div>
+                    <div className="font-semibold text-ink">{formatPeople(popCurrent)}</div>
+                    <div className="text-lg font-bold text-ink">{formatPeople(popFuture)}</div>
                   </div>
                 </div>
               </div>
             </section>
 
             {/* Electricity Card */}
-            <section className="rounded-xl border border-surface bg-surface-raised overflow-hidden">
-              <div className="p-4 border-b border-surface bg-surface/50">
-                <h3 className="text-base font-semibold text-ink">Electricity</h3>
-                <p className="text-sm text-ink-muted mt-1">
-                  How much electricity the country would consume at projected income levels
-                </p>
+            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
+                <h3 className="font-semibold text-ink">Electricity</h3>
+                <span className="text-xs text-ink-muted">Annual consumption at projected income</span>
               </div>
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Current demand</div>
-                    <div className="text-xl font-semibold text-ink">
-                      {formatTWh(macro.electricity.demandCurrentTWh)}
-                    </div>
-                    <div className="text-sm text-ink-muted">per year</div>
+                    <div className="text-xs text-ink-muted mb-0.5">Current demand</div>
+                    <div className="text-xl font-bold text-ink">{formatTWh(macro.electricity.demandCurrentTWh)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Projected demand</div>
-                    <div className="text-xl font-semibold text-[var(--color-accent)]">
-                      {formatTWh(macro.electricity.demandFutureTWh)}
-                    </div>
-                    <div className="text-sm text-ink-muted">per year</div>
+                    <div className="text-xs text-ink-muted mb-0.5">Projected demand</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatTWh(macro.electricity.demandFutureTWh)}</div>
                   </div>
                 </div>
 
                 {electricityDelta != null && electricityDelta > 0 && (
-                  <div className="p-4 rounded-lg bg-surface">
-                    <div className="text-sm text-ink-muted mb-1">New generation capacity needed</div>
-                    <div className="text-2xl font-bold text-ink">
-                      +{formatTWh(electricityDelta)}
+                  <div className="p-3 rounded-lg bg-surface flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-ink-muted">New capacity needed</div>
+                      <div className="text-lg font-bold text-ink">+{formatTWh(electricityDelta)}</div>
                     </div>
-                    <p className="text-sm text-ink-muted mt-2">
-                      This is roughly equivalent to{" "}
-                      <span className="font-medium text-ink">
-                        {formatGW(macro.electricity.buildoutDeltaAvgGW)}
-                      </span>{" "}
-                      of average continuous power output
-                    </p>
+                    <div className="text-right">
+                      <div className="text-xs text-ink-muted">Avg. power</div>
+                      <div className="font-semibold text-ink">{formatGW(macro.electricity.buildoutDeltaAvgGW)}</div>
+                    </div>
                   </div>
                 )}
 
                 {observedElectricity && (
-                  <div className="pt-3 border-t border-surface">
-                    <div className="text-sm text-ink-muted mb-2">
-                      Current generation mix ({observedElectricity.year})
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="flex items-center gap-3 pt-2 border-t border-surface">
+                    <span className="text-xs text-ink-muted">Current mix ({observedElectricity.year})</span>
+                    <div className="flex gap-2">
                       {(["solar", "wind", "nuclear", "coal"] as const).map((source) => {
                         const share = observedElectricity.shares[source];
+                        if (share == null || share < 1) return null;
                         return (
-                          <div key={source} className="p-2 rounded-lg bg-surface">
-                            <div className="text-xs text-ink-muted capitalize">{source}</div>
-                            <div className="text-sm font-medium text-ink">
-                              {share != null ? `${share.toFixed(0)}%` : "—"}
-                            </div>
-                          </div>
+                          <span key={source} className="px-2 py-0.5 rounded bg-surface text-xs">
+                            <span className="capitalize">{source}</span> {share.toFixed(0)}%
+                          </span>
                         );
                       })}
                     </div>
@@ -429,43 +388,34 @@ export function ImplicationsSlideOver({
             </section>
 
             {/* Urbanization Card */}
-            <section className="rounded-xl border border-surface bg-surface-raised overflow-hidden">
-              <div className="p-4 border-b border-surface bg-surface/50">
-                <h3 className="text-base font-semibold text-ink">Urbanization</h3>
-                <p className="text-sm text-ink-muted mt-1">
-                  How many people are likely to move to cities as the economy develops
-                </p>
+            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
+                <h3 className="font-semibold text-ink">Urbanization</h3>
+                <span className="text-xs text-ink-muted">City population growth</span>
               </div>
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Urban population now</div>
-                    <div className="text-xl font-semibold text-ink">
-                      {formatPeople(macro.urban.currentPersons)}
-                    </div>
+                    <div className="text-xs text-ink-muted mb-0.5">Urban now</div>
+                    <div className="text-xl font-bold text-ink">{formatPeople(macro.urban.currentPersons)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Projected urban</div>
-                    <div className="text-xl font-semibold text-[var(--color-accent)]">
-                      {formatPeople(macro.urban.futurePersons)}
-                    </div>
+                    <div className="text-xs text-ink-muted mb-0.5">Projected urban</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatPeople(macro.urban.futurePersons)}</div>
                   </div>
                 </div>
 
                 {urbanDelta != null && urbanDelta > 0 && (
-                  <div className="p-4 rounded-lg bg-surface">
-                    <div className="text-sm text-ink-muted mb-1">New urban residents</div>
-                    <div className="text-2xl font-bold text-ink">
-                      +{formatPeople(urbanDelta)}
+                  <div className="p-3 rounded-lg bg-surface flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-ink-muted">New urban residents</div>
+                      <div className="text-lg font-bold text-ink">+{formatPeople(urbanDelta)}</div>
                     </div>
                     {macro.urban.homesNeeded != null && (
-                      <p className="text-sm text-ink-muted mt-2">
-                        Requiring approximately{" "}
-                        <span className="font-medium text-ink">
-                          {formatPeople(macro.urban.homesNeeded)}
-                        </span>{" "}
-                        new homes over {horizonYears} years
-                      </p>
+                      <div className="text-right">
+                        <div className="text-xs text-ink-muted">Homes needed</div>
+                        <div className="font-semibold text-ink">~{formatPeople(macro.urban.homesNeeded)}</div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -473,43 +423,31 @@ export function ImplicationsSlideOver({
             </section>
 
             {/* CO2 Card */}
-            <section className="rounded-xl border border-surface bg-surface-raised overflow-hidden">
-              <div className="p-4 border-b border-surface bg-surface/50">
-                <h3 className="text-base font-semibold text-ink">CO₂ Emissions</h3>
-                <p className="text-sm text-ink-muted mt-1">
-                  Territorial carbon emissions if current patterns continue
-                </p>
+            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
+                <h3 className="font-semibold text-ink">CO₂ Emissions</h3>
+                <span className="text-xs text-ink-muted">Territorial, if patterns continue</span>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Current emissions</div>
-                    <div className="text-xl font-semibold text-ink">
-                      {formatMt(macro.co2.currentMt)} CO₂
-                    </div>
-                    <div className="text-sm text-ink-muted">per year</div>
+                    <div className="text-xs text-ink-muted mb-0.5">Current</div>
+                    <div className="text-xl font-bold text-ink">{formatMt(macro.co2.currentMt)}</div>
+                    <div className="text-xs text-ink-muted">Mt CO₂/year</div>
                   </div>
                   <div>
-                    <div className="text-sm text-ink-muted mb-1">Projected emissions</div>
-                    <div className="text-xl font-semibold text-[var(--color-accent)]">
-                      {formatMt(macro.co2.futureMt)} CO₂
-                    </div>
-                    <div className="text-sm text-ink-muted">per year</div>
+                    <div className="text-xs text-ink-muted mb-0.5">Projected</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatMt(macro.co2.futureMt)}</div>
+                    <div className="text-xs text-ink-muted">Mt CO₂/year</div>
                   </div>
                 </div>
-                <p className="mt-4 text-sm text-ink-muted">
-                  Note: Actual emissions depend heavily on energy mix choices and technology adoption
-                </p>
               </div>
             </section>
 
             {/* Disclaimer */}
-            <div className="pt-4 text-center">
-              <p className="text-sm text-ink-muted">
-                These are illustrative projections based on historical development patterns, not forecasts.
-                Actual outcomes depend on policy choices, technology, and economic structure.
-              </p>
-            </div>
+            <p className="text-xs text-ink-muted text-center pt-2">
+              Illustrative projections based on historical patterns, not forecasts
+            </p>
           </div>
         )}
       </div>
