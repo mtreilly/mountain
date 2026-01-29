@@ -1,34 +1,28 @@
-import { useMemo, useState } from "react";
-import type { Indicator } from "../types";
-import { useBatchData } from "../hooks/useBatchData";
-import { formatMetricValue, formatNumber } from "../lib/convergence";
+import { useMemo } from "react";
+import type { Indicator } from "../../types";
 import {
   IMPLICATION_METRICS,
-  IMPLICATION_METRIC_CODES,
-  TEMPLATE_PATHS,
-  type TemplateId,
   buildTemplateMapping,
   estimateFromTemplate,
-} from "../lib/templatePaths";
-import { calculateCagr, computeTotals, projectValue } from "../lib/implicationsMath";
+  type TemplateId,
+} from "../../lib/templatePaths";
+
+type TemplateDef = {
+  id: TemplateId;
+  label: string;
+  iso3: string[];
+};
+import { calculateCagr, computeTotals, projectValue } from "../../lib/implicationsMath";
 import {
   applyScenarioToImpliedMetric,
   IMPLICATION_SCENARIOS,
   type ScenarioId,
-} from "../lib/implicationsScenarios";
-import type { ImplicationCardType } from "../lib/shareState";
-import { ImplicationsTabs } from "./implications/ImplicationsTabs";
-import { GdpTotalsCard } from "./implications/GdpTotalsCard";
-import { ElectricityDemandCard } from "./implications/ElectricityDemandCard";
-import { ElectricityMixCard } from "./implications/ElectricityMixCard";
-import { ElectricityAssumptionsCard } from "./implications/ElectricityAssumptionsCard";
-import { UrbanizationCard } from "./implications/UrbanizationCard";
-import { Co2EmissionsCard } from "./implications/Co2EmissionsCard";
+} from "../../lib/implicationsScenarios";
 
 type PopAssumption = "trend" | "static";
 type PowerMixKey = "solar" | "wind" | "nuclear" | "coal";
 
-type ImplicationAssumptions = {
+export type ImplicationAssumptions = {
   solarCf: number;
   windCf: number;
   nuclearCf: number;
@@ -40,7 +34,7 @@ type ImplicationAssumptions = {
   netImportsPct: number;
 };
 
-const DEFAULT_ASSUMPTIONS: ImplicationAssumptions = {
+export const DEFAULT_ASSUMPTIONS: ImplicationAssumptions = {
   solarCf: 0.2,
   windCf: 0.35,
   nuclearCf: 0.9,
@@ -52,9 +46,9 @@ const DEFAULT_ASSUMPTIONS: ImplicationAssumptions = {
   netImportsPct: 0,
 };
 
-type MixPreset = { id: string; label: string; mix: Record<PowerMixKey, number> };
+export type MixPreset = { id: string; label: string; mix: Record<PowerMixKey, number> };
 
-const MIX_PRESETS: MixPreset[] = [
+export const MIX_PRESETS: MixPreset[] = [
   { id: "clean", label: "Clean (60/30/10)", mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 } },
   { id: "renewables", label: "Solar+Wind (50/50)", mix: { solar: 50, wind: 50, nuclear: 0, coal: 0 } },
   { id: "nuclear", label: "All nuclear", mix: { solar: 0, wind: 0, nuclear: 100, coal: 0 } },
@@ -66,82 +60,42 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export function ImplicationsPanel({
-  chaserIso,
-  chaserName,
-  gdpCurrent,
-  chaserGrowthRate,
-  baseYear,
-  horizonYears,
-  onHorizonYearsChange,
-  template,
-  onTemplateChange,
-  activeCard,
-  onActiveCardChange,
-  enabled,
-}: {
+interface UseImplicationsComputedOptions {
   chaserIso: string;
-  chaserName: string;
   gdpCurrent: number;
   chaserGrowthRate: number;
-  baseYear: number;
   horizonYears: number;
-  onHorizonYearsChange: (years: number) => void;
-  template: TemplateId;
-  onTemplateChange: (id: TemplateId) => void;
-  activeCard: ImplicationCardType;
-  onActiveCardChange: (card: ImplicationCardType) => void;
-  enabled: boolean;
-}) {
-  const templateDef = TEMPLATE_PATHS.find((t) => t.id === template) ?? TEMPLATE_PATHS[0];
-  const countries = useMemo(() => {
-    const list = [chaserIso, ...templateDef.iso3];
-    const out: string[] = [];
-    const seen = new Set<string>();
-    for (const iso of list) {
-      const cleaned = iso.trim().toUpperCase();
-      if (!cleaned) continue;
-      if (seen.has(cleaned)) continue;
-      seen.add(cleaned);
-      out.push(cleaned);
-    }
-    return out;
-  }, [chaserIso, templateDef.iso3]);
-  const indicators = useMemo(
-    () => [
-      "GDP_PCAP_PPP",
-      "POPULATION",
-      ...IMPLICATION_METRIC_CODES,
-      "ELECTRICITY_GEN_TOTAL",
-      "ELECTRICITY_GEN_SOLAR",
-      "ELECTRICITY_GEN_WIND",
-      "ELECTRICITY_GEN_COAL",
-      "ELECTRICITY_GEN_NUCLEAR",
-      "INSTALLED_CAPACITY_SOLAR_GW",
-      "INSTALLED_CAPACITY_WIND_GW",
-      "INSTALLED_CAPACITY_COAL_GW",
-      "INSTALLED_CAPACITY_NUCLEAR_GW",
-    ],
-    []
-  );
+  baseYear: number;
+  templateDef: TemplateDef;
+  data: Record<string, Record<string, Array<{ year: number; value: number }>>>;
+  dataWithVintage: Record<string, Record<string, Array<{ year: number; value: number; source_vintage?: string | null }>>>;
+  indicatorByCode: Record<string, Indicator>;
+  getLatestValue: (code: string, iso: string) => number | null;
+  popAssumption: PopAssumption;
+  scenario: ScenarioId;
+  assumptions: ImplicationAssumptions;
+  mix: Record<PowerMixKey, number>;
+}
 
-  const { data, indicatorByCode, loading, error, getLatestValue } = useBatchData({
-    countries,
-    indicators,
-    startYear: 1990,
-    enabled,
-  });
-  const { data: dataWithVintage } = useBatchData({
-    countries: [chaserIso],
-    indicators: ["ELECTRICITY_GEN_TOTAL"],
-    startYear: 1990,
-    enabled,
-    includeSourceVintage: true,
-  });
-
+export function useImplicationsComputed({
+  chaserIso,
+  gdpCurrent,
+  chaserGrowthRate,
+  horizonYears,
+  baseYear,
+  templateDef,
+  data,
+  dataWithVintage,
+  indicatorByCode,
+  getLatestValue,
+  popAssumption,
+  scenario,
+  assumptions,
+  mix,
+}: UseImplicationsComputedOptions) {
   const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, horizonYears);
-
   const gdpByIso = useMemo(() => data["GDP_PCAP_PPP"] || {}, [data]);
+
   const observedBaseYear = useMemo(() => {
     const series = gdpByIso[chaserIso] || [];
     let latestYear = -Infinity;
@@ -151,29 +105,25 @@ export function ImplicationsPanel({
     }
     return Number.isFinite(latestYear) ? latestYear : baseYear;
   }, [baseYear, chaserIso, gdpByIso]);
+
   const year = observedBaseYear + horizonYears;
 
   const popSeries = useMemo(() => data["POPULATION"]?.[chaserIso] || [], [chaserIso, data]);
-
   const popCurrent = useMemo(() => getLatestValue("POPULATION", chaserIso), [chaserIso, getLatestValue]);
+
   const popTrendRate = useMemo(() => {
     const rate = calculateCagr({ series: popSeries, lookbackYears: 10 });
     if (rate == null) return 0;
     return Math.max(-0.03, Math.min(0.05, rate));
   }, [popSeries]);
-  const [popAssumption, setPopAssumption] = useState<PopAssumption>("trend");
-  const [assumptions, setAssumptions] = useState<ImplicationAssumptions>(DEFAULT_ASSUMPTIONS);
-  const [mixMode, setMixMode] = useState(false);
-  const [mix, setMix] = useState<Record<PowerMixKey, number>>(MIX_PRESETS[0].mix);
-  const [scenario, setScenario] = useState<ScenarioId>("baseline");
+
+  const popGrowthRate = popAssumption === "trend" ? popTrendRate : 0;
+  const popFuture = popCurrent != null ? projectValue(popCurrent, popGrowthRate, horizonYears) : null;
+
   const scenarioDef = useMemo(
     () => IMPLICATION_SCENARIOS.find((s) => s.id === scenario) ?? IMPLICATION_SCENARIOS[0],
     [scenario]
   );
-
-  const popGrowthRate = popAssumption === "trend" ? popTrendRate : 0;
-  const popFuture =
-    popCurrent != null ? projectValue(popCurrent, popGrowthRate, horizonYears) : null;
 
   const rows = useMemo(() => {
     const out: Array<{
@@ -252,9 +202,9 @@ export function ImplicationsPanel({
         if (outOfRange) {
           noteParts.push("Outside template GDP range; estimate is capped to endpoints.");
         }
-        } else {
-          noteParts.push("Not enough template data for this metric.");
-        }
+      } else {
+        noteParts.push("Not enough template data for this metric.");
+      }
       const note = noteParts.length ? noteParts.join(" ") : null;
 
       out.push({
@@ -285,24 +235,22 @@ export function ImplicationsPanel({
   ]);
 
   const hasAny = rows.some((r) => r.implied != null);
-
   const popLabel = popAssumption === "trend" ? "Population: 10y trend" : "Population: static";
 
   const observedElectricity = useMemo(() => {
-    const valueAtYear = (code: string, year: number) => {
+    const valueAtYear = (code: string, yr: number) => {
       const pts = data[code]?.[chaserIso];
       if (!pts || pts.length === 0) return null;
-      for (const p of pts) if (p.year === year) return p.value;
+      for (const p of pts) if (p.year === yr) return p.value;
       return null;
     };
-    const pointAtYear = (code: string, year: number) => {
+    const pointAtYear = (code: string, yr: number) => {
       const pts = dataWithVintage[code]?.[chaserIso];
       if (!pts || pts.length === 0) return null;
-      for (const p of pts) if (p.year === year) return p;
+      for (const p of pts) if (p.year === yr) return p;
       return null;
     };
 
-    // Pick the latest year where we have a consistent "total + at least one source" snapshot.
     const totalSeries = data["ELECTRICITY_GEN_TOTAL"]?.[chaserIso] || [];
     const sorted = [...totalSeries]
       .filter((p) => Number.isFinite(p.year) && Number.isFinite(p.value))
@@ -310,32 +258,32 @@ export function ImplicationsPanel({
     let snapshot: { year: number; total: number } | null = null;
     for (const p of sorted) {
       if (p.value == null || !Number.isFinite(p.value) || p.value <= 0) continue;
-      const year = p.year;
-      const solar = valueAtYear("ELECTRICITY_GEN_SOLAR", year);
-      const wind = valueAtYear("ELECTRICITY_GEN_WIND", year);
-      const coal = valueAtYear("ELECTRICITY_GEN_COAL", year);
-      const nuclear = valueAtYear("ELECTRICITY_GEN_NUCLEAR", year);
+      const yr = p.year;
+      const solar = valueAtYear("ELECTRICITY_GEN_SOLAR", yr);
+      const wind = valueAtYear("ELECTRICITY_GEN_WIND", yr);
+      const coal = valueAtYear("ELECTRICITY_GEN_COAL", yr);
+      const nuclear = valueAtYear("ELECTRICITY_GEN_NUCLEAR", yr);
       const hasAnySource = [solar, wind, coal, nuclear].some(
         (x) => x != null && Number.isFinite(x) && x >= 0
       );
       if (!hasAnySource) continue;
-      snapshot = { year, total: p.value };
+      snapshot = { year: yr, total: p.value };
       break;
     }
     if (!snapshot) return null;
 
-    const { year, total } = snapshot;
-    const totalPoint = pointAtYear("ELECTRICITY_GEN_TOTAL", year);
-    const solarTWh = valueAtYear("ELECTRICITY_GEN_SOLAR", year);
-    const windTWh = valueAtYear("ELECTRICITY_GEN_WIND", year);
-    const coalTWh = valueAtYear("ELECTRICITY_GEN_COAL", year);
-    const nuclearTWh = valueAtYear("ELECTRICITY_GEN_NUCLEAR", year);
+    const { year: snapYear, total } = snapshot;
+    const totalPoint = pointAtYear("ELECTRICITY_GEN_TOTAL", snapYear);
+    const solarTWh = valueAtYear("ELECTRICITY_GEN_SOLAR", snapYear);
+    const windTWh = valueAtYear("ELECTRICITY_GEN_WIND", snapYear);
+    const coalTWh = valueAtYear("ELECTRICITY_GEN_COAL", snapYear);
+    const nuclearTWh = valueAtYear("ELECTRICITY_GEN_NUCLEAR", snapYear);
 
     const share = (x: number | null) =>
       x != null && Number.isFinite(x) && x >= 0 ? (x / total) * 100 : null;
 
     return {
-      year,
+      year: snapYear,
       totalTWh: total,
       totalSourceVintage:
         totalPoint && "source_vintage" in totalPoint ? (totalPoint.source_vintage ?? null) : null,
@@ -390,10 +338,8 @@ export function ImplicationsPanel({
         : null;
 
     const avgGWFromTWhPerYear = (twh: number) => (twh * 1000) / 8760;
-
     const demandDeltaAvgGW = demandDeltaTWh != null ? avgGWFromTWhPerYear(demandDeltaTWh) : null;
-    const buildoutDeltaAvgGW =
-      buildoutDeltaTWh != null ? avgGWFromTWhPerYear(buildoutDeltaTWh) : null;
+    const buildoutDeltaAvgGW = buildoutDeltaTWh != null ? avgGWFromTWhPerYear(buildoutDeltaTWh) : null;
 
     const twhPerYearPerGW = (capacityFactor: number) => 8.76 * capacityFactor;
     const gwFromTWhPerYear = (twh: number, capacityFactor: number) =>
@@ -406,8 +352,7 @@ export function ImplicationsPanel({
     const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
     const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
 
-    const twhPerPanelPerYear =
-      (panelWatts / 1000) * solarCf * 8760 / 1e9; // kW * h => kWh, then -> TWh
+    const twhPerPanelPerYear = ((panelWatts / 1000) * solarCf * 8760) / 1e9;
 
     const electricityEquivalents =
       buildoutDeltaTWh != null && Number.isFinite(buildoutDeltaTWh)
@@ -461,10 +406,8 @@ export function ImplicationsPanel({
         : null;
 
     const co2Row = byCode.get("CO2_PCAP");
-    const co2CurrentMt =
-      co2Row?.currentTotal?.unit === "MtCO2" ? co2Row.currentTotal.value : null;
-    const co2FutureMt =
-      co2Row?.impliedTotal?.unit === "MtCO2" ? co2Row.impliedTotal.value : null;
+    const co2CurrentMt = co2Row?.currentTotal?.unit === "MtCO2" ? co2Row.currentTotal.value : null;
+    const co2FutureMt = co2Row?.impliedTotal?.unit === "MtCO2" ? co2Row.impliedTotal.value : null;
 
     return {
       gdpTotalCurrent,
@@ -677,7 +620,7 @@ export function ImplicationsPanel({
       nuclear: baseCap.nuclear != null && baseCap.nuclear > 0 ? baseCap.nuclear : inferredBaseCap.nuclear,
     };
 
-    const ratio = (needGw: number, baseGw: number | null) => {
+    const ratioFn = (needGw: number, baseGw: number | null) => {
       if (!Number.isFinite(needGw) || needGw <= 0) return null;
       if (baseGw == null || !Number.isFinite(baseGw) || baseGw <= 0) return null;
       return needGw / baseGw;
@@ -708,16 +651,12 @@ export function ImplicationsPanel({
         equivalents: {
           plants: key === "nuclear" || key === "coal" ? gw : null,
           panels:
-            key === "solar"
-              ? (gw * 1e9) / clamp(assumptions.panelWatts, 100, 1000)
-              : null,
+            key === "solar" ? (gw * 1e9) / clamp(assumptions.panelWatts, 100, 1000) : null,
           turbines:
-            key === "wind"
-              ? (gw * 1000) / clamp(assumptions.windTurbineMw, 0.5, 20)
-              : null,
+            key === "wind" ? (gw * 1000) / clamp(assumptions.windTurbineMw, 0.5, 20) : null,
         },
         multiplier: {
-          capacityX: ratio(gw, effectiveBaseCap[key]),
+          capacityX: ratioFn(gw, effectiveBaseCap[key]),
           generationX:
             observedElectricity?.bySourceTWh[key] != null && observedElectricity.bySourceTWh[key]! > 0
               ? twh / observedElectricity.bySourceTWh[key]!
@@ -726,9 +665,7 @@ export function ImplicationsPanel({
         pace: {
           max5yTwhPerYear: growth.max5y,
           paceX:
-            growth.max5y != null && growth.max5y > 0
-              ? (twh / horizonYears) / growth.max5y
-              : null,
+            growth.max5y != null && growth.max5y > 0 ? (twh / horizonYears) / growth.max5y : null,
         },
       };
     };
@@ -771,247 +708,19 @@ export function ImplicationsPanel({
     };
   }, [assumptions, chaserIso, data, horizonYears, macro.electricity.equivalents?.deltaTWh, mix, observedElectricity]);
 
-  return (
-    <div className="card p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
-            Implications (template path)
-          </h3>
-          <p className="text-[11px] text-ink-faint mt-1">
-            Rough estimates derived from how GDP per capita relates to each metric in the template.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-          {TEMPLATE_PATHS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onTemplateChange(t.id)}
-              aria-pressed={template === t.id}
-              className={[
-                "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-                template === t.id
-                  ? "bg-surface-raised text-ink shadow-sm"
-                  : "text-ink-muted hover:bg-surface-raised/60",
-              ].join(" ")}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-ink-muted" htmlFor="imp-years">
-            Horizon
-          </label>
-          <input
-            id="imp-years"
-            type="number"
-            min={1}
-            max={150}
-            step={1}
-            value={horizonYears}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              if (!Number.isFinite(next)) return;
-              onHorizonYearsChange(Math.max(1, Math.min(150, Math.round(next))));
-            }}
-            className="w-20 px-2 py-1 rounded-md bg-surface border border-surface text-ink text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-          />
-          <span className="text-[11px] text-ink-faint">({year})</span>
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setPopAssumption("trend")}
-            aria-pressed={popAssumption === "trend"}
-            className={[
-              "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-              popAssumption === "trend"
-                ? "bg-surface-raised text-ink shadow-sm"
-                : "text-ink-muted hover:bg-surface-raised/60",
-            ].join(" ")}
-          >
-            Pop trend
-          </button>
-          <button
-            type="button"
-            onClick={() => setPopAssumption("static")}
-            aria-pressed={popAssumption === "static"}
-            className={[
-              "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-              popAssumption === "static"
-                ? "bg-surface-raised text-ink shadow-sm"
-                : "text-ink-muted hover:bg-surface-raised/60",
-            ].join(" ")}
-          >
-            Pop static
-          </button>
-        </div>
-        {popAssumption === "trend" && (
-          <div className="text-[11px] text-ink-faint">
-            {popTrendRate >= 0 ? "+" : ""}
-            {(popTrendRate * 100).toFixed(2)}%/yr
-          </div>
-        )}
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-          {IMPLICATION_SCENARIOS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => {
-                setScenario(s.id);
-                if (s.presets?.horizonYears != null) onHorizonYearsChange(s.presets.horizonYears);
-                if (s.presets?.gridLossPct != null || s.presets?.netImportsPct != null) {
-                  setAssumptions((a) => ({
-                    ...a,
-                    gridLossPct: s.presets?.gridLossPct ?? a.gridLossPct,
-                    netImportsPct: s.presets?.netImportsPct ?? a.netImportsPct,
-                  }));
-                }
-              }}
-              aria-pressed={scenario === s.id}
-              className={[
-                "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-                scenario === s.id
-                  ? "bg-surface-raised text-ink shadow-sm"
-                  : "text-ink-muted hover:bg-surface-raised/60",
-              ].join(" ")}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <div className="text-[11px] text-ink-faint">{scenarioDef.blurb}</div>
-      </div>
-
-      <div className="mt-3 text-[11px] text-ink-faint">
-        {chaserName} GDP/cap path: {formatMetricValue(gdpCurrent, "int$")} →{" "}
-        {formatMetricValue(gdpFuture, "int$")}
-      </div>
-      <div className="mt-1 text-[11px] text-ink-faint">
-        Totals assume {popLabel}
-        {popCurrent != null && (
-          <>
-            {" · "}
-            Pop {formatNumber(Math.round(popCurrent))} →{" "}
-            {popFuture != null ? formatNumber(Math.round(popFuture)) : "—"}
-          </>
-        )}
-      </div>
-
-      {!loading && !error && hasAny && (
-        <>
-          <div className="mt-3">
-            <ImplicationsTabs activeCard={activeCard} onCardChange={onActiveCardChange} />
-          </div>
-
-          <div className="mt-3">
-            {activeCard === "gdp" && (
-              <GdpTotalsCard
-                data={{
-                  gdpTotalCurrent: macro.gdpTotalCurrent,
-                  gdpTotalFuture: macro.gdpTotalFuture,
-                  popCurrent,
-                  popFuture,
-                }}
-              />
-            )}
-
-            {activeCard === "elec-demand" && (
-              <ElectricityDemandCard
-                data={{
-                  demandCurrentTWh: macro.electricity.demandCurrentTWh,
-                  demandFutureTWh: macro.electricity.demandFutureTWh,
-                  demandDeltaTWh: macro.electricity.demandDeltaTWh,
-                  requiredDomesticGenerationFutureTWh:
-                    macro.electricity.requiredDomesticGenerationFutureTWh,
-                  buildoutDeltaTWh: macro.electricity.buildoutDeltaTWh,
-                  demandDeltaAvgGW: macro.electricity.demandDeltaAvgGW,
-                  buildoutDeltaAvgGW: macro.electricity.buildoutDeltaAvgGW,
-                  assumptions: macro.electricity.assumptions,
-                }}
-              />
-            )}
-
-            {activeCard === "elec-mix" && (
-              <ElectricityMixCard
-                observedMix={observedElectricity}
-                techEquivalents={macro.electricity.equivalents}
-                baselineMultipliers={baselineMultipliers}
-                mixMode={mixMode}
-                onMixModeChange={setMixMode}
-                mixBuildout={mixBuildout}
-                mix={mix}
-                onMixChange={setMix}
-                mixPresets={MIX_PRESETS}
-                horizonYears={horizonYears}
-              />
-            )}
-
-            {activeCard === "elec-assumptions" && (
-              <ElectricityAssumptionsCard
-                assumptions={assumptions}
-                onAssumptionsChange={setAssumptions}
-                onReset={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
-              />
-            )}
-
-            {activeCard === "urban" && (
-              <UrbanizationCard
-                data={{
-                  currentPersons: macro.urban.currentPersons,
-                  futurePersons: macro.urban.futurePersons,
-                  deltaPersons: macro.urban.deltaPersons,
-                  homesNeeded: macro.urban.homesNeeded,
-                  householdSize: assumptions.householdSize,
-                  yearsToProject: horizonYears,
-                }}
-              />
-            )}
-
-            {activeCard === "co2" && (
-              <Co2EmissionsCard
-                data={{
-                  currentMt: macro.co2.currentMt,
-                  futureMt: macro.co2.futureMt,
-                }}
-              />
-            )}
-          </div>
-        </>
-      )}
-
-      {loading && (
-        <div className="mt-3 text-sm text-ink-muted">Loading implications…</div>
-      )}
-      {error && (
-        <div className="mt-3 text-sm text-amber-700 dark:text-amber-300">
-          Could not load implications data ({error})
-        </div>
-      )}
-
-      {!loading && !error && !hasAny && (
-        <div className="mt-3 text-sm text-ink-muted">
-          Not enough data for these metrics yet. Import more World Bank series to enable estimates.
-        </div>
-      )}
-
-      <p className="mt-3 text-[11px] text-ink-faint">
-        Estimates vary widely by policy, technology, and economic structure; treat as "what-if" context, not a forecast.
-      </p>
-    </div>
-  );
+  return {
+    gdpFuture,
+    year,
+    popCurrent,
+    popFuture,
+    popTrendRate,
+    popLabel,
+    scenarioDef,
+    rows,
+    hasAny,
+    observedElectricity,
+    macro,
+    baselineMultipliers,
+    mixBuildout,
+  };
 }
-
-
