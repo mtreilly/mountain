@@ -13,7 +13,7 @@ import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
 import { ShareCardModal } from "./components/ShareCardModal";
 import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
-import { ImplicationsPanel } from "./components/ImplicationsPanel";
+import { ImplicationsSlideOver } from "./components/implications/ImplicationsSlideOver";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { ResultSummary } from "./components/ResultSummary";
@@ -156,6 +156,7 @@ export default function App() {
 	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
 	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
 	const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
+	const [isImplicationsOpen, setIsImplicationsOpen] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 
 	const {
@@ -1028,23 +1029,38 @@ export default function App() {
 							/>
 						)}
 
-						{/* Implications / context (main column) */}
+						{/* Implications trigger button (main column) */}
 						{showImplications && comparisonMode === "countries" && (
 							<div className="animate-fade-in-up stagger-4">
-								<ImplicationsPanel
-									chaserIso={chaserIso}
-									chaserName={displayChaserName}
-									gdpCurrent={chaserValue}
-									chaserGrowthRate={chaserGrowthRate}
-									baseYear={baseYear}
-									horizonYears={impHorizonYears}
-									onHorizonYearsChange={setImpHorizonYears}
-									template={impTemplate}
-									onTemplateChange={setImpTemplate}
-									activeCard={impCard}
-									onActiveCardChange={setImpCard}
-									enabled={showImplications}
-								/>
+								<button
+									type="button"
+									onClick={() => setIsImplicationsOpen(true)}
+									className="w-full card p-4 text-left hover:bg-surface transition-default group"
+								>
+									<div className="flex items-center justify-between gap-3">
+										<div>
+											<h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
+												Development Implications
+											</h3>
+											<p className="text-sm text-ink-muted mt-1">
+												Explore what reaching {displayTargetName}'s GDP level could mean for {displayChaserName}: electricity demand, urbanization, CO2 emissions, and more.
+											</p>
+										</div>
+										<svg
+											className="w-5 h-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M9 5l7 7-7 7"
+											/>
+										</svg>
+									</div>
+								</button>
 							</div>
 						)}
 						{comparisonMode === "regions" && (
@@ -1168,6 +1184,25 @@ export default function App() {
 						baseYear={baseYear}
 						horizonYears={impHorizonYears}
 						appUrl={appUrl}
+					/>
+				)}
+
+				{/* Implications Slide-Over */}
+				{comparisonMode === "countries" && (
+					<ImplicationsSlideOver
+						isOpen={isImplicationsOpen}
+						onClose={() => setIsImplicationsOpen(false)}
+						chaserIso={chaserIso}
+						chaserName={displayChaserName}
+						gdpCurrent={chaserValue}
+						chaserGrowthRate={chaserGrowthRate}
+						baseYear={baseYear}
+						horizonYears={impHorizonYears}
+						onHorizonYearsChange={setImpHorizonYears}
+						template={impTemplate}
+						onTemplateChange={setImpTemplate}
+						activeCard={impCard}
+						onActiveCardChange={setImpCard}
 					/>
 				)}
 			</div>

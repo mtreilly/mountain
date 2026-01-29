@@ -239,6 +239,52 @@
     animation: scale-in 0.2s ease-out forwards;
   }
 
+  /* Slide-over animations */
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-out-right {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-slide-out-right {
+    animation: slide-out-right 0.2s ease-in forwards;
+  }
+
+  .slide-over-panel {
+    @apply fixed top-0 right-0 bottom-0 z-50 flex flex-col w-full bg-surface-raised border-l border-surface shadow-2xl;
+    max-width: 640px;
+  }
+
+  .slide-over-backdrop {
+    @apply fixed inset-0 z-40;
+    background: rgba(26, 24, 21, 0.4);
+    backdrop-filter: blur(4px);
+  }
+
+  .dark .slide-over-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
   /* Stagger delays for children */
   .stagger-1 { animation-delay: 0.05s; opacity: 0; }
   .stagger-2 { animation-delay: 0.1s; opacity: 0; }
