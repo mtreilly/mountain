@@ -186,8 +186,13 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="24" y="140" font-family="${font}" font-size="14" fill="${palette.muted}">${escapeXml(card.subtitle)}</text>
     ` : ""}
 
-    <!-- Accent bar -->
-    <rect x="0" y="${cardHeight - 6}" width="${cardWidth}" height="6" rx="0 0 16 16" fill="${card.color}" fill-opacity="0.6"/>
+    <!-- Accent bar (bottom rounded corners via clip-path) -->
+    <defs>
+      <clipPath id="accentClip${i}">
+        <rect x="0" y="${cardHeight - 16}" width="${cardWidth}" height="32" rx="16"/>
+      </clipPath>
+    </defs>
+    <rect x="0" y="${cardHeight - 6}" width="${cardWidth}" height="6" fill="${card.color}" fill-opacity="0.6" clip-path="url(#accentClip${i})"/>
   </g>
   `).join("")}
 
