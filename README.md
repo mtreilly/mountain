@@ -2,6 +2,8 @@
 
 Interactive visualization tool for exploring economic and demographic convergence between regions. How long would it take Nigeria to match Ireland's GDP per capita?
 
+![Convergence Explorer Screenshot](app/public/screenshot.png)
+
 Inspired by [The Mountain to Climb](https://oliverwkim.com/The-Mountain-To-Climb/) by Oliver Kim.
 
 ## Quick Start
