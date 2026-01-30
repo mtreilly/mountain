@@ -14,6 +14,11 @@ import { ShareCardModal } from "./components/ShareCardModal";
 import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
 import { ImplicationsSlideOver } from "./components/implications/ImplicationsSlideOver";
+import { useImplicationsData } from "./components/implications/useImplicationsData";
+import {
+	useImplicationsComputed,
+	DEFAULT_ASSUMPTIONS,
+} from "./components/implications/useImplicationsComputed";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { ResultSummary } from "./components/ResultSummary";
@@ -318,6 +323,41 @@ export default function App() {
 		baseYear,
 	});
 
+	// Implications data for thread generator (only when GDP per capita is selected)
+	const implicationsEnabled =
+		comparisonMode === "countries" &&
+		indicatorCode === "GDP_PCAP_PPP" &&
+		chaserValueRaw != null;
+
+	const {
+		data: implicationsRawData,
+		dataWithVintage: implicationsDataWithVintage,
+		indicatorByCode: implicationsIndicatorByCode,
+		getLatestValue: implicationsGetLatestValue,
+		templateDef: implicationsTemplateDef,
+	} = useImplicationsData({
+		chaserIso,
+		template: impTemplate,
+		enabled: implicationsEnabled,
+	});
+
+	const implicationsComputed = useImplicationsComputed({
+		chaserIso,
+		gdpCurrent: chaserValue,
+		chaserGrowthRate,
+		horizonYears: impHorizonYears,
+		baseYear,
+		templateDef: implicationsTemplateDef,
+		data: implicationsRawData,
+		dataWithVintage: implicationsDataWithVintage,
+		indicatorByCode: implicationsIndicatorByCode,
+		getLatestValue: implicationsGetLatestValue,
+		popAssumption: "trend",
+		scenario: "baseline",
+		assumptions: DEFAULT_ASSUMPTIONS,
+		mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
+	});
+
 	useEffect(() => {
 		if (comparisonMode !== "regions") return;
 		if (!initialRegionToast) return;
@@ -564,7 +604,7 @@ export default function App() {
 		};
 	}, [comparisonMode, data, chaserIso, targetIso]);
 
-	// Simplified implications data for thread generator (only when GDP per capita is selected)
+	// Implications data for thread generator (only when GDP per capita is selected)
 	const implicationsData = (() => {
 		if (comparisonMode !== "countries") return null;
 		if (indicatorCode !== "GDP_PCAP_PPP") return null;
@@ -578,12 +618,23 @@ export default function App() {
 		);
 		const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, impHorizonYears);
 
+		// Extract computed values from implications hook
+		const { macro } = implicationsComputed;
+		const electricityDeltaTWh = macro.electricity.equivalents?.deltaTWh ?? null;
+		const nuclearPlants = macro.electricity.equivalents?.nuclear.plants ?? null;
+		const urbanDeltaPersons = macro.urban.deltaPersons ?? null;
+		const homesNeeded = macro.urban.homesNeeded ?? null;
+		const co2DeltaMt =
+			macro.co2.currentMt != null && macro.co2.futureMt != null
+				? macro.co2.futureMt - macro.co2.currentMt
+				: null;
+
 		return {
-			electricityDeltaTWh: null,
-			nuclearPlants: null,
-			urbanDeltaPersons: null,
-			homesNeeded: null,
-			co2DeltaMt: null,
+			electricityDeltaTWh,
+			nuclearPlants,
+			urbanDeltaPersons,
+			homesNeeded,
+			co2DeltaMt,
 			gdpCurrent,
 			gdpFuture,
 		};
