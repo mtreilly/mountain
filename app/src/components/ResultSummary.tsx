@@ -44,9 +44,15 @@ export function ResultSummary({
 		Number.isFinite(yearsToConvergence) &&
 		yearsToConvergence > 0;
 
+	// Hide milestones already exceeded at the starting values
+	const initialRatio = targetValue > 0 ? chaserValue / targetValue : 0;
+	const visibleMilestones = milestones?.filter(
+		(m) => m.percentage > initialRatio,
+	);
+
 	const milestoneText =
-		milestones && milestones.length > 0
-			? milestones
+		visibleMilestones && visibleMilestones.length > 0
+			? visibleMilestones
 					.map(
 						(m) => `${Math.round(m.percentage * 100)}% (${m.year})`,
 					)
