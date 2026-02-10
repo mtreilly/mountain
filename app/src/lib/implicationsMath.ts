@@ -70,10 +70,8 @@ export function computeTotals(params: {
   const safePopFuture =
     popFuture != null && Number.isFinite(popFuture) && popFuture > 0 ? popFuture : null;
 
-  const gdpTotalCurrent =
-    safePopCurrent != null ? gdpPcapCurrent * safePopCurrent : null;
-  const gdpTotalFuture =
-    safePopFuture != null ? gdpPcapFuture * safePopFuture : null;
+  const gdpTotalCurrent = safePopCurrent != null ? gdpPcapCurrent * safePopCurrent : null;
+  const gdpTotalFuture = safePopFuture != null ? gdpPcapFuture * safePopFuture : null;
 
   const metricCurrent =
     currentMetric != null && Number.isFinite(currentMetric) ? currentMetric : null;
@@ -101,36 +99,46 @@ export function computeTotals(params: {
     case "ENERGY_USE_PCAP": {
       if (!safePopCurrent || !safePopFuture) return { currentTotal: null, impliedTotal: null };
       return {
-        currentTotal: metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "toe") : null,
-        impliedTotal: metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "toe") : null,
+        currentTotal:
+          metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "toe") : null,
+        impliedTotal:
+          metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "toe") : null,
       };
     }
     case "ELECTRICITY_USE_PCAP": {
       if (!safePopCurrent || !safePopFuture) return { currentTotal: null, impliedTotal: null };
       return {
-        currentTotal: metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "TWh") : null,
-        impliedTotal: metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "TWh") : null,
+        currentTotal:
+          metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "TWh") : null,
+        impliedTotal:
+          metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "TWh") : null,
       };
     }
     case "CO2_PCAP": {
       if (!safePopCurrent || !safePopFuture) return { currentTotal: null, impliedTotal: null };
       return {
-        currentTotal: metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "MtCO2") : null,
-        impliedTotal: metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "MtCO2") : null,
+        currentTotal:
+          metricCurrent != null ? perCapToTotal(metricCurrent, safePopCurrent, "MtCO2") : null,
+        impliedTotal:
+          metricImplied != null ? perCapToTotal(metricImplied, safePopFuture, "MtCO2") : null,
       };
     }
     case "URBAN_POP_PCT": {
       if (!safePopCurrent || !safePopFuture) return { currentTotal: null, impliedTotal: null };
       return {
-        currentTotal: metricCurrent != null ? pctOfPopToPersons(metricCurrent, safePopCurrent) : null,
-        impliedTotal: metricImplied != null ? pctOfPopToPersons(metricImplied, safePopFuture) : null,
+        currentTotal:
+          metricCurrent != null ? pctOfPopToPersons(metricCurrent, safePopCurrent) : null,
+        impliedTotal:
+          metricImplied != null ? pctOfPopToPersons(metricImplied, safePopFuture) : null,
       };
     }
     case "INDUSTRY_VA_PCT_GDP":
     case "CAPITAL_FORMATION_PCT_GDP": {
-      if (gdpTotalCurrent == null || gdpTotalFuture == null) return { currentTotal: null, impliedTotal: null };
+      if (gdpTotalCurrent == null || gdpTotalFuture == null)
+        return { currentTotal: null, impliedTotal: null };
       return {
-        currentTotal: metricCurrent != null ? pctOfGdpToLevel(metricCurrent, gdpTotalCurrent) : null,
+        currentTotal:
+          metricCurrent != null ? pctOfGdpToLevel(metricCurrent, gdpTotalCurrent) : null,
         impliedTotal: metricImplied != null ? pctOfGdpToLevel(metricImplied, gdpTotalFuture) : null,
       };
     }
@@ -138,4 +146,3 @@ export function computeTotals(params: {
       return { currentTotal: null, impliedTotal: null };
   }
 }
-

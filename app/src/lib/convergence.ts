@@ -5,7 +5,7 @@
 export function calculateYearsToConvergence(
   chaserValue: number,
   targetValue: number,
-  growthRate: number
+  growthRate: number,
 ): number {
   if (growthRate <= 0) return Infinity;
   if (chaserValue >= targetValue) return 0;
@@ -42,7 +42,7 @@ export interface Milestone {
 
 export function calculateMilestones(
   projection: ProjectionPoint[],
-  milestonePercentages: number[] = [0.25, 0.5, 0.75]
+  milestonePercentages: number[] = [0.25, 0.5, 0.75],
 ): Milestone[] {
   if (!projection.length) return [];
 
@@ -79,7 +79,7 @@ export function generateProjection(
   targetValue: number,
   growthRate: number,
   startYear: number,
-  maxYears: number = 150
+  maxYears: number = 150,
 ): Array<{ year: number; chaser: number; target: number }> {
   const projection: Array<{ year: number; chaser: number; target: number }> = [];
 
@@ -135,7 +135,7 @@ export function formatYears(years: number): string {
 export function formatMetricValue(
   value: number,
   unit?: string | null,
-  options?: { includeUnit?: boolean }
+  options?: { includeUnit?: boolean },
 ): string {
   if (!isFinite(value)) return "—";
 
@@ -144,10 +144,15 @@ export function formatMetricValue(
 
   if (normalizedUnit.includes("percent")) return `${value.toFixed(1)}%`;
   if (normalizedUnit.includes("index")) return value.toFixed(3).replace(/\.?0+$/, "");
-  if (normalizedUnit.includes("int$") || normalizedUnit.includes("usd") || normalizedUnit.includes("$")) {
+  if (
+    normalizedUnit.includes("int$") ||
+    normalizedUnit.includes("usd") ||
+    normalizedUnit.includes("$")
+  ) {
     return `$${formatNumber(value)}`;
   }
-  if (normalizedUnit.includes("persons") || normalizedUnit.includes("people")) return formatNumber(value);
+  if (normalizedUnit.includes("persons") || normalizedUnit.includes("people"))
+    return formatNumber(value);
   if (normalizedUnit.includes("years")) return value.toFixed(1).replace(/\.0$/, "");
 
   const base = formatNumber(value);

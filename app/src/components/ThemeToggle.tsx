@@ -1,12 +1,6 @@
 import type { ThemeMode } from "../hooks/useTheme";
 
-export function ThemeToggle({
-  theme,
-  onToggle,
-}: {
-  theme: ThemeMode;
-  onToggle: () => void;
-}) {
+export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: () => void }) {
   return (
     <button
       type="button"

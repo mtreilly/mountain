@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface DataPoint {
   year: number;
@@ -62,7 +62,7 @@ export function useCountryData({
         setLoading(false);
         setHasLoaded(true);
       });
-  }, [countriesKey, countries.length, enabled, indicator, invalidIndicator]);
+  }, [countriesKey, countries.length, enabled, indicator]);
 
   const resolvedError = !enabled && invalidIndicator && indicator ? "INDICATOR_NOT_FOUND" : error;
 

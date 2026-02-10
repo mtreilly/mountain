@@ -1,15 +1,15 @@
 import { useMemo } from "react";
-import {
-  type OECDRegion,
-  ALL_TL2_REGIONS,
-  COUNTRIES_WITH_REGIONS,
-  getRegionsByCountry,
-  getRegionByCode,
-  getLatestRegionData,
-  getRegionDataSeries,
-} from "../lib/oecdRegions";
 import type { Milestone } from "../lib/convergence";
 import { calculateMilestones } from "../lib/convergence";
+import {
+  ALL_TL2_REGIONS,
+  COUNTRIES_WITH_REGIONS,
+  getLatestRegionData,
+  getRegionByCode,
+  getRegionDataSeries,
+  getRegionsByCountry,
+  type OECDRegion,
+} from "../lib/oecdRegions";
 
 interface UseOECDRegionsResult {
   /** All available TL2 regions */
@@ -191,7 +191,7 @@ export function useRegionalConvergence({
     // Generate projection
     const maxYears = Math.min(
       Number.isFinite(yearsToConvergence) ? Math.ceil(yearsToConvergence) + 20 : 100,
-      150
+      150,
     );
     const projection: ProjectionPoint[] = [];
 

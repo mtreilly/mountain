@@ -1,8 +1,8 @@
 import type { RefObject } from "react";
-import { ConvergenceChartInteractive } from "./ConvergenceChartInteractive";
-import { ProjectionTable } from "./ProjectionTable";
 import type { Milestone } from "../lib/convergence";
 import type { ShareState } from "../lib/shareState";
+import { ConvergenceChartInteractive } from "./ConvergenceChartInteractive";
+import { ProjectionTable } from "./ProjectionTable";
 
 export function ProjectionCard({
   view,
@@ -105,4 +105,3 @@ export function ProjectionCard({
     </div>
   );
 }
-

@@ -60,7 +60,12 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
             className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-ink-muted hover:text-ink rounded-md hover:bg-surface transition-default"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
             Copy text
           </button>
@@ -70,7 +75,12 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
             className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-ink-muted hover:text-ink rounded-md hover:bg-surface transition-default"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             Copy image
           </button>
@@ -81,7 +91,10 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left: Caption/Tweet */}
         <div className="flex flex-col">
-          <label htmlFor={`caption-${card.index}`} className="text-xs font-medium text-ink-muted mb-2">
+          <label
+            htmlFor={`caption-${card.index}`}
+            className="text-xs font-medium text-ink-muted mb-2"
+          >
             Tweet
           </label>
           <textarea

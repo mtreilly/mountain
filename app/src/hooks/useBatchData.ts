@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Indicator } from "../types";
 
 export interface BatchSeriesPoint {
@@ -25,12 +25,6 @@ export function useBatchData(params: {
     enabled = true,
     includeSourceVintage = false,
   } = params;
-
-  const key = useMemo(() => {
-    const c = [...countries].map((x) => x.trim().toUpperCase()).filter(Boolean).sort().join(",");
-    const i = [...indicators].map((x) => x.trim().toUpperCase()).filter(Boolean).sort().join(",");
-    return `${c}__${i}__${startYear}__${endYear ?? ""}__${includeSourceVintage ? "sv" : ""}`;
-  }, [countries, endYear, includeSourceVintage, indicators, startYear]);
 
   const [data, setData] = useState<BatchSeries>({});
   const [indicatorByCode, setIndicatorByCode] = useState<Record<string, Indicator>>({});
@@ -68,7 +62,7 @@ export function useBatchData(params: {
         setError(err.message);
         setLoading(false);
       });
-  }, [countries, endYear, enabled, includeSourceVintage, indicators, key, startYear]);
+  }, [countries, endYear, enabled, includeSourceVintage, indicators, startYear]);
 
   const getLatestValue = (indicator: string, iso: string): number | null => {
     const pts = data[indicator]?.[iso];

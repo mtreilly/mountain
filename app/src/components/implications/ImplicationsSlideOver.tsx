@@ -1,17 +1,17 @@
 import { useState } from "react";
-import type { TemplateId } from "../../lib/templatePaths";
-import { TEMPLATE_PATHS } from "../../lib/templatePaths";
+import { formatMetricValue, formatNumber } from "../../lib/convergence";
 import { IMPLICATION_SCENARIOS, type ScenarioId } from "../../lib/implicationsScenarios";
 import type { ImplicationCardType } from "../../lib/shareState";
-import { formatMetricValue, formatNumber } from "../../lib/convergence";
+import type { TemplateId } from "../../lib/templatePaths";
+import { TEMPLATE_PATHS } from "../../lib/templatePaths";
 import { SlideOver } from "../ui/SlideOver";
-import { useImplicationsData } from "./useImplicationsData";
 import {
-  useImplicationsComputed,
   DEFAULT_ASSUMPTIONS,
-  MIX_PRESETS,
   type ImplicationAssumptions,
+  MIX_PRESETS,
+  useImplicationsComputed,
 } from "./useImplicationsComputed";
+import { useImplicationsData } from "./useImplicationsData";
 
 type PopAssumption = "trend" | "static";
 type PowerMixKey = "solar" | "wind" | "nuclear" | "coal";
@@ -121,19 +121,12 @@ export function ImplicationsSlideOver({
   const [mix] = useState<Record<PowerMixKey, number>>(MIX_PRESETS[0].mix);
   const [scenario, setScenario] = useState<ScenarioId>("baseline");
 
-  const {
-    data,
-    dataWithVintage,
-    indicatorByCode,
-    loading,
-    error,
-    getLatestValue,
-    templateDef,
-  } = useImplicationsData({
-    chaserIso,
-    template,
-    enabled: isOpen,
-  });
+  const { data, dataWithVintage, indicatorByCode, loading, error, getLatestValue, templateDef } =
+    useImplicationsData({
+      chaserIso,
+      template,
+      enabled: isOpen,
+    });
 
   const computed = useImplicationsComputed({
     chaserIso,
@@ -234,7 +227,9 @@ export function ImplicationsSlideOver({
                   ].join(" ")}
                 >
                   <span className="text-base">{templateFlags[t.id]}</span>
-                  <span className="text-xs">{t.id === "china" ? "China" : t.id === "us" ? "US" : "EU"}-like</span>
+                  <span className="text-xs">
+                    {t.id === "china" ? "China" : t.id === "us" ? "US" : "EU"}-like
+                  </span>
                 </button>
               ))}
             </div>
@@ -293,7 +288,8 @@ export function ImplicationsSlideOver({
             </div>
             {popAssumption === "trend" && popTrendRate !== 0 && (
               <span className="text-xs text-ink-faint">
-                ({popTrendRate >= 0 ? "+" : ""}{(popTrendRate * 100).toFixed(1)}%/yr)
+                ({popTrendRate >= 0 ? "+" : ""}
+                {(popTrendRate * 100).toFixed(1)}%/yr)
               </span>
             )}
             {scenario !== "baseline" && (
@@ -342,13 +338,21 @@ export function ImplicationsSlideOver({
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">GDP/capita</div>
-                    <div className="font-semibold text-ink">{formatMetricValue(gdpCurrent, "int$")}</div>
-                    <div className="text-lg font-bold text-[var(--color-accent)]">{formatMetricValue(gdpFuture, "int$")}</div>
+                    <div className="font-semibold text-ink">
+                      {formatMetricValue(gdpCurrent, "int$")}
+                    </div>
+                    <div className="text-lg font-bold text-[var(--color-accent)]">
+                      {formatMetricValue(gdpFuture, "int$")}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Total GDP</div>
-                    <div className="font-semibold text-ink">{formatDollars(macro.gdpTotalCurrent)}</div>
-                    <div className="text-lg font-bold text-[var(--color-accent)]">{formatDollars(macro.gdpTotalFuture)}</div>
+                    <div className="font-semibold text-ink">
+                      {formatDollars(macro.gdpTotalCurrent)}
+                    </div>
+                    <div className="text-lg font-bold text-[var(--color-accent)]">
+                      {formatDollars(macro.gdpTotalFuture)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Population</div>
@@ -363,17 +367,23 @@ export function ImplicationsSlideOver({
             <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
               <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
                 <h3 className="font-semibold text-ink">Electricity</h3>
-                <span className="text-xs text-ink-muted">Annual generation at projected income</span>
+                <span className="text-xs text-ink-muted">
+                  Annual generation at projected income
+                </span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Current demand</div>
-                    <div className="text-xl font-bold text-ink">{formatTWh(macro.electricity.demandCurrentTWh)}</div>
+                    <div className="text-xl font-bold text-ink">
+                      {formatTWh(macro.electricity.demandCurrentTWh)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Projected demand</div>
-                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatTWh(macro.electricity.demandFutureTWh)}</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">
+                      {formatTWh(macro.electricity.demandFutureTWh)}
+                    </div>
                   </div>
                 </div>
 
@@ -382,11 +392,15 @@ export function ImplicationsSlideOver({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-xs text-ink-muted">New generation needed</div>
-                        <div className="text-lg font-bold text-ink">+{formatTWh(electricityDelta)}</div>
+                        <div className="text-lg font-bold text-ink">
+                          +{formatTWh(electricityDelta)}
+                        </div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs text-ink-muted">Avg. power</div>
-                        <div className="font-semibold text-ink">{formatGW(macro.electricity.buildoutDeltaAvgGW)}</div>
+                        <div className="font-semibold text-ink">
+                          {formatGW(macro.electricity.buildoutDeltaAvgGW)}
+                        </div>
                       </div>
                     </div>
                     <div className="text-xs text-ink-muted pt-2 border-t border-surface-sunken">
@@ -400,7 +414,9 @@ export function ImplicationsSlideOver({
 
                 {observedElectricity && (
                   <div className="flex items-center gap-3 pt-2 border-t border-surface">
-                    <span className="text-xs text-ink-muted">Current mix ({observedElectricity.year})</span>
+                    <span className="text-xs text-ink-muted">
+                      Current mix ({observedElectricity.year})
+                    </span>
                     <div className="flex gap-2 flex-wrap">
                       {(["solar", "wind", "nuclear", "coal"] as const).map((source) => {
                         const share = observedElectricity.shares[source];
@@ -427,11 +443,15 @@ export function ImplicationsSlideOver({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Urban now</div>
-                    <div className="text-xl font-bold text-ink">{formatPeople(macro.urban.currentPersons)}</div>
+                    <div className="text-xl font-bold text-ink">
+                      {formatPeople(macro.urban.currentPersons)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Projected urban</div>
-                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatPeople(macro.urban.futurePersons)}</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">
+                      {formatPeople(macro.urban.futurePersons)}
+                    </div>
                   </div>
                 </div>
 
@@ -440,19 +460,23 @@ export function ImplicationsSlideOver({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-xs text-ink-muted">New urban residents</div>
-                        <div className="text-lg font-bold text-ink">+{formatPeople(urbanDelta)}</div>
+                        <div className="text-lg font-bold text-ink">
+                          +{formatPeople(urbanDelta)}
+                        </div>
                       </div>
                       {macro.urban.homesNeeded != null && (
                         <div className="text-right">
                           <div className="text-xs text-ink-muted">Homes needed</div>
-                          <div className="font-semibold text-ink">~{formatPeople(macro.urban.homesNeeded)}</div>
+                          <div className="font-semibold text-ink">
+                            ~{formatPeople(macro.urban.homesNeeded)}
+                          </div>
                         </div>
                       )}
                     </div>
                     {citiesEquivalent(urbanDelta) && (
                       <div className="text-xs text-ink-muted pt-2 border-t border-surface-sunken">
-                        <span className="font-medium text-ink">Scale:</span>{" "}
-                        Like adding {citiesEquivalent(urbanDelta)} to the urban population
+                        <span className="font-medium text-ink">Scale:</span> Like adding{" "}
+                        {citiesEquivalent(urbanDelta)} to the urban population
                       </div>
                     )}
                   </div>
@@ -464,26 +488,32 @@ export function ImplicationsSlideOver({
             <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
               <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
                 <h3 className="font-semibold text-ink">CO₂ Emissions</h3>
-                <span className="text-xs text-ink-muted">Territorial, if current patterns continue</span>
+                <span className="text-xs text-ink-muted">
+                  Territorial, if current patterns continue
+                </span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Current</div>
-                    <div className="text-xl font-bold text-ink">{formatMt(macro.co2.currentMt)}</div>
+                    <div className="text-xl font-bold text-ink">
+                      {formatMt(macro.co2.currentMt)}
+                    </div>
                     <div className="text-xs text-ink-muted">Mt CO₂/year</div>
                   </div>
                   <div>
                     <div className="text-xs text-ink-muted mb-0.5">Projected</div>
-                    <div className="text-xl font-bold text-[var(--color-accent)]">{formatMt(macro.co2.futureMt)}</div>
+                    <div className="text-xl font-bold text-[var(--color-accent)]">
+                      {formatMt(macro.co2.futureMt)}
+                    </div>
                     <div className="text-xs text-ink-muted">Mt CO₂/year</div>
                   </div>
                 </div>
                 {macro.co2.futureMt != null && macro.co2.currentMt != null && (
                   <div className="text-xs text-ink-muted p-3 rounded-lg bg-surface">
-                    <span className="font-medium text-ink">Context:</span>{" "}
-                    The projected emissions equal ~{carsEquivalent(macro.co2.futureMt)} cars driving for a year.
-                    Actual emissions depend heavily on energy mix and efficiency improvements.
+                    <span className="font-medium text-ink">Context:</span> The projected emissions
+                    equal ~{carsEquivalent(macro.co2.futureMt)} cars driving for a year. Actual
+                    emissions depend heavily on energy mix and efficiency improvements.
                   </div>
                 )}
               </div>

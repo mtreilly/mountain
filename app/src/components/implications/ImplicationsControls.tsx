@@ -1,5 +1,9 @@
+import {
+  IMPLICATION_SCENARIOS,
+  type Scenario,
+  type ScenarioId,
+} from "../../lib/implicationsScenarios";
 import { TEMPLATE_PATHS, type TemplateId } from "../../lib/templatePaths";
-import { IMPLICATION_SCENARIOS, type ScenarioId, type Scenario } from "../../lib/implicationsScenarios";
 import type { ImplicationAssumptions } from "./useImplicationsComputed";
 
 interface ImplicationsControlsProps {
@@ -128,9 +132,7 @@ export function ImplicationsControls({
 
       {/* Scenario */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">
-          Scenario
-        </label>
+        <label className="block text-xs font-medium text-ink-muted mb-2">Scenario</label>
         <div className="inline-flex flex-wrap rounded-lg border border-surface bg-surface overflow-hidden">
           {IMPLICATION_SCENARIOS.map((s) => (
             <button

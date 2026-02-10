@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { GrowthRateControls } from "./GrowthRateControls";
 import { GrowthCalculator } from "./GrowthCalculator";
+import { GrowthRateControls } from "./GrowthRateControls";
 
 export function GrowthSidebarContent({
   compact,

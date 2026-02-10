@@ -53,11 +53,7 @@ export function ElectricityDemandCard({ data, onShare }: ElectricityDemandCardPr
         {data.demandDeltaTWh != null && (
           <>
             {" "}
-            (
-            <span className="font-medium text-ink">
-              {formatSignedTotal(data.demandDeltaTWh)}
-            </span>
-            )
+            (<span className="font-medium text-ink">{formatSignedTotal(data.demandDeltaTWh)}</span>)
           </>
         )}
       </div>
@@ -82,10 +78,7 @@ export function ElectricityDemandCard({ data, onShare }: ElectricityDemandCardPr
           Average load:{" "}
           <span className="font-medium text-ink">
             {data.buildoutDeltaAvgGW >= 0 ? "+" : "−"}
-            {Math.abs(data.buildoutDeltaAvgGW).toFixed(
-              data.buildoutDeltaAvgGW >= 10 ? 0 : 1
-            )}{" "}
-            GW
+            {Math.abs(data.buildoutDeltaAvgGW).toFixed(data.buildoutDeltaAvgGW >= 10 ? 0 : 1)} GW
           </span>{" "}
           (GWavg)
         </div>

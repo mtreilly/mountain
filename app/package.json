@@ -8,7 +8,10 @@
     "dev:full": "pnpm build && concurrently -k -n wrangler,vite -c blue,green \"pnpm pages:dev\" \"pnpm dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "tsx scripts/test.ts",
+    "lint:biome": "biome check .",
+    "lint:biome:fix": "biome check . --write",
+    "typecheck": "tsc -b --pretty false --noEmit",
+    "test": "tsx scripts/test.ts && tsx scripts/property.test.ts",
     "preview": "vite preview",
     "start": "pnpm build && wrangler pages dev dist --local --persist-to=.wrangler/state",
     "pages:dev": "wrangler pages dev dist --local --persist-to=.wrangler/state",
@@ -26,6 +29,7 @@
     "sonner": "^2.0.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.10.1",
@@ -36,6 +40,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "fast-check": "^4.5.3",
     "globals": "^16.5.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",

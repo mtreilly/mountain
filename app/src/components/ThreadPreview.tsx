@@ -19,11 +19,7 @@ export function ThreadPreview({ cards, onCaptionChange }: ThreadPreviewProps) {
     <div className="space-y-4">
       {/* Thread cards - vertical stack with two-column layout per card */}
       {cards.map((card) => (
-        <ThreadCard
-          key={card.index}
-          card={card}
-          onCaptionChange={onCaptionChange}
-        />
+        <ThreadCard key={card.index} card={card} onCaptionChange={onCaptionChange} />
       ))}
 
       {/* Thread summary */}

@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { useBatchData } from "../../hooks/useBatchData";
-import { IMPLICATION_METRIC_CODES } from "../../lib/templatePaths";
 import type { TemplateId } from "../../lib/templatePaths";
-import { TEMPLATE_PATHS } from "../../lib/templatePaths";
+import { IMPLICATION_METRIC_CODES, TEMPLATE_PATHS } from "../../lib/templatePaths";
 
 interface UseImplicationsDataOptions {
   chaserIso: string;
@@ -10,11 +9,7 @@ interface UseImplicationsDataOptions {
   enabled: boolean;
 }
 
-export function useImplicationsData({
-  chaserIso,
-  template,
-  enabled,
-}: UseImplicationsDataOptions) {
+export function useImplicationsData({ chaserIso, template, enabled }: UseImplicationsDataOptions) {
   const templateDef = TEMPLATE_PATHS.find((t) => t.id === template) ?? TEMPLATE_PATHS[0];
 
   const countries = useMemo(() => {
@@ -46,7 +41,7 @@ export function useImplicationsData({
       "INSTALLED_CAPACITY_COAL_GW",
       "INSTALLED_CAPACITY_NUCLEAR_GW",
     ],
-    []
+    [],
   );
 
   const { data, indicatorByCode, loading, error, getLatestValue } = useBatchData({

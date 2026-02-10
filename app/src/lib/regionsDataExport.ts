@@ -1,6 +1,6 @@
-import type { ShareState } from "./shareState";
-import type { OECDRegion, OECDRegionData } from "./oecdRegions";
 import { buildPermalink } from "./citations";
+import type { OECDRegion, OECDRegionData } from "./oecdRegions";
+import type { ShareState } from "./shareState";
 
 type ProjectionPoint = { year: number; chaser: number; target: number };
 type SeriesPoint = { year: number; value: number };
@@ -8,6 +8,11 @@ type SeriesPoint = { year: number; value: number };
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function sanitizeHeaderValue(value: string) {
+  // Keep comment headers single-line even if region names contain newlines.
+  return value.replace(/[\r\n]+/g, " ").trim();
 }
 
 function generateRegionalCsvHeader(params: {
@@ -18,17 +23,23 @@ function generateRegionalCsvHeader(params: {
   unit: string;
   toolUrl?: string;
 }): string {
-  const { state, chaserName, targetName, metricName, unit, toolUrl = "https://convergence.example.com" } =
-    params;
+  const {
+    state,
+    chaserName,
+    targetName,
+    metricName,
+    unit,
+    toolUrl = "https://convergence.example.com",
+  } = params;
   const now = new Date();
   const permalink = buildPermalink(toolUrl, state);
 
   const lines = [
     "# Convergence Explorer Data Export",
     `# Generated: ${now.toISOString()}`,
-    `# Comparison: ${chaserName} → ${targetName}`,
-    `# Metric: ${metricName}`,
-    `# Unit: ${unit}`,
+    `# Comparison: ${sanitizeHeaderValue(chaserName)} → ${sanitizeHeaderValue(targetName)}`,
+    `# Metric: ${sanitizeHeaderValue(metricName)}`,
+    `# Unit: ${sanitizeHeaderValue(unit)}`,
     `# URL: ${permalink}`,
     "# Data Source: OECD Regions and Cities at a Glance 2024",
     "# License: CC-BY 4.0 (visualizations)",
@@ -86,7 +97,7 @@ export function toRegionalObservedCsv(params: {
           csvEscape(metricName),
           csvEscape(unit),
           csvEscape("OECD Regions and Cities at a Glance 2024"),
-        ].join(",")
+        ].join(","),
       );
     }
   }
@@ -152,7 +163,7 @@ export function toRegionalProjectionCsv(params: {
         String(state.cg),
         String(state.tg),
         state.tmode,
-      ].join(",")
+      ].join(","),
     );
   }
 
@@ -176,8 +187,7 @@ export function toRegionalReportJson(params: {
     chaserRegion,
     targetRegion,
     toolUrl = "https://convergence.example.com",
-  } =
-    params;
+  } = params;
 
   const now = new Date();
   const permalink = buildPermalink(toolUrl, state);
@@ -228,6 +238,6 @@ export function toRegionalReportJson(params: {
       derived,
     },
     null,
-    2
+    2,
   );
 }

@@ -1,5 +1,5 @@
+import { getLatestRegionData, getRegionByCode } from "../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../src/lib/shareState";
-import { getRegionByCode, getLatestRegionData } from "../src/lib/oecdRegions";
 
 interface Env {
   DB: D1Database;
@@ -53,7 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const indicator = await DB.prepare(
       `SELECT code, name, unit, source
        FROM indicators
-       WHERE code = ?`
+       WHERE code = ?`,
     )
       .bind(state.indicator)
       .first<{
@@ -66,7 +66,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const countries = await DB.prepare(
       `SELECT iso_alpha3, name
        FROM countries
-       WHERE iso_alpha3 IN (?, ?)`
+       WHERE iso_alpha3 IN (?, ?)`,
     )
       .bind(state.chaser, state.target)
       .all<{ iso_alpha3: string; name: string }>();
@@ -89,7 +89,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
            FROM data_points
            WHERE country_id = d.country_id
              AND indicator_id = d.indicator_id
-         )`
+         )`,
     )
       .bind(state.indicator, state.chaser, state.target)
       .all<{ iso: string; year: number; value: number }>();
@@ -107,7 +107,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const outcome = (() => {
     const entityType = isRegionalMode ? "regions" : "countries";
-    if (chaserValue == null || targetValue == null) return `Data unavailable for one or both ${entityType}.`;
+    if (chaserValue == null || targetValue == null)
+      return `Data unavailable for one or both ${entityType}.`;
     if (chaserValue >= targetValue) return "Already ahead at the latest observed values.";
     const tg = state.tmode === "static" ? 0 : state.tg;
     if (state.cg <= tg) return "No convergence at these growth rates.";

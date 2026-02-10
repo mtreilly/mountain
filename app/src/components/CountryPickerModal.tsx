@@ -1,6 +1,6 @@
-import type { Country } from "../types";
-import { createPortal } from "react-dom";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import type { Country } from "../types";
 
 const EU_ISO3 = new Set([
   "AUT",
@@ -258,9 +258,11 @@ export function CountryPickerModal({
     return countries
       .filter((c) => c.iso_alpha3 !== excludeIso)
       .filter((c) => group.matches(c.iso_alpha3))
-      .filter((c) => (regionFilter === "all" ? true : (c.region?.trim() || "Other") === regionFilter))
       .filter((c) =>
-        incomeFilter === "all" ? true : (c.income_group?.trim() || "Other") === incomeFilter
+        regionFilter === "all" ? true : (c.region?.trim() || "Other") === regionFilter,
+      )
+      .filter((c) =>
+        incomeFilter === "all" ? true : (c.income_group?.trim() || "Other") === incomeFilter,
       )
       .filter((c) => {
         if (!q) return true;
@@ -295,8 +297,8 @@ export function CountryPickerModal({
       if (!root) return;
       const focusables = Array.from(
         root.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
       ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
 
       if (focusables.length === 0) return;
@@ -349,7 +351,10 @@ export function CountryPickerModal({
         <div className="p-4 sm:p-5 border-b border-surface-subtle">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 id={headingId} className={`text-lg sm:text-xl font-display font-semibold ${colorConfig.heading}`}>
+              <h2
+                id={headingId}
+                className={`text-lg sm:text-xl font-display font-semibold ${colorConfig.heading}`}
+              >
                 {title}
               </h2>
               <div className="mt-1 text-xs sm:text-sm text-ink-muted">
@@ -362,8 +367,18 @@ export function CountryPickerModal({
               className="p-2 rounded-lg hover:bg-surface transition-default focus-ring"
               aria-label="Close"
             >
-              <svg className="w-5 h-5 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5 text-ink-muted"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -377,7 +392,12 @@ export function CountryPickerModal({
                 stroke="currentColor"
                 aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 ref={searchRef}
@@ -462,8 +482,12 @@ export function CountryPickerModal({
                       ].join(" ")}
                     >
                       <span className="min-w-0">
-                        <span className="block text-sm font-medium text-ink truncate">{c.name}</span>
-                        <span className="block text-[11px] text-ink-faint font-mono">{c.iso_alpha3}</span>
+                        <span className="block text-sm font-medium text-ink truncate">
+                          {c.name}
+                        </span>
+                        <span className="block text-[11px] text-ink-faint font-mono">
+                          {c.iso_alpha3}
+                        </span>
                       </span>
                       {selected && (
                         <svg
@@ -473,7 +497,12 @@ export function CountryPickerModal({
                           stroke="currentColor"
                           aria-hidden="true"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       )}
                     </button>
@@ -485,6 +514,6 @@ export function CountryPickerModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

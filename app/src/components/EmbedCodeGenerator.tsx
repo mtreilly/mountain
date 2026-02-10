@@ -1,10 +1,10 @@
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useId,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { toast } from "sonner";
 import type { EmbedParams, EmbedTheme, ShareState } from "../lib/shareState";
@@ -95,7 +95,8 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
   }, [imageUrl]);
 
   const handleInteractivityKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
     const order: Array<"interactive" | "static"> = ["interactive", "static"];
     const current = interactive ? 0 : 1;
@@ -110,7 +111,8 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
   };
 
   const handleThemeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
     const order: EmbedTheme[] = ["auto", "light", "dark"];
     const current = order.indexOf(embedTheme);
@@ -177,7 +179,12 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
         {/* Theme */}
         <div>
           <label className="block text-xs font-medium text-ink-muted mb-2">Theme</label>
-          <div role="radiogroup" aria-label="Theme" className="flex gap-1" onKeyDown={handleThemeKeyDown}>
+          <div
+            role="radiogroup"
+            aria-label="Theme"
+            className="flex gap-1"
+            onKeyDown={handleThemeKeyDown}
+          >
             {(["auto", "light", "dark"] as const).map((t) => (
               <button
                 key={t}
@@ -247,7 +254,8 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
           <strong className="text-ink">Works on:</strong> Substack, WordPress, Ghost, Notion
         </p>
         <p className="text-xs text-ink-muted mt-1">
-          <strong className="text-ink">For Medium:</strong> Use the static image below instead (iframes not supported)
+          <strong className="text-ink">For Medium:</strong> Use the static image below instead
+          (iframes not supported)
         </p>
       </div>
 

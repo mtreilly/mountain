@@ -1,5 +1,5 @@
-import { formatPercent } from "../lib/convergence";
 import { useEffect, useId, useRef } from "react";
+import { formatPercent } from "../lib/convergence";
 
 interface GrowthRateControlsProps {
   chaserRate: number;
@@ -49,15 +49,15 @@ export function GrowthRateControls({
     return (
       <div className="card p-3 space-y-3">
         <div className="text-center">
-          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
-            Growth Rates
-          </h3>
+          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">Growth Rates</h3>
         </div>
 
         {/* Chaser */}
         <div className="rounded-lg border border-chaser bg-chaser-light p-3 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-chaser truncate max-w-[120px]">{chaserName}</span>
+            <span className="text-xs font-medium text-chaser truncate max-w-[120px]">
+              {chaserName}
+            </span>
             <span className="text-sm font-display font-bold text-chaser tabular-nums">
               {formatPercent(chaserRate)}
             </span>
@@ -95,7 +95,9 @@ export function GrowthRateControls({
         {/* Target */}
         <div className="rounded-lg border border-target bg-target-light p-3 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-target truncate max-w-[120px]">{targetName}</span>
+            <span className="text-xs font-medium text-target truncate max-w-[120px]">
+              {targetName}
+            </span>
             <span className="text-sm font-display font-bold text-target tabular-nums">
               {targetRate === 0 ? "Static" : formatPercent(targetRate)}
             </span>

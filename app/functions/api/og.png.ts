@@ -1,6 +1,6 @@
+import { formatMetricValue, formatPercent, formatYears } from "../../src/lib/convergence";
+import { getLatestRegionData, getRegionByCode } from "../../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../../src/lib/shareState";
-import { formatPercent, formatYears, formatMetricValue } from "../../src/lib/convergence";
-import { getRegionByCode, getLatestRegionData } from "../../src/lib/oecdRegions";
 
 interface Env {
   DB: D1Database;
@@ -124,7 +124,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const indicator = await DB.prepare(
       `SELECT code, name, unit, source
        FROM indicators
-       WHERE code = ?`
+       WHERE code = ?`,
     )
       .bind(state.indicator)
       .first<IndicatorRow>();
@@ -132,7 +132,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const countries = await DB.prepare(
       `SELECT iso_alpha3, name
        FROM countries
-       WHERE iso_alpha3 IN (?, ?)`
+       WHERE iso_alpha3 IN (?, ?)`,
     )
       .bind(state.chaser, state.target)
       .all<{ iso_alpha3: string; name: string }>();
@@ -155,7 +155,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
            FROM data_points
            WHERE country_id = d.country_id
              AND indicator_id = d.indicator_id
-         )`
+         )`,
     )
       .bind(state.indicator, state.chaser, state.target)
       .all<{ iso: string; year: number; value: number }>();
@@ -174,7 +174,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // Calculate convergence
   const outcome = (() => {
-    if (chaserValue == null || targetValue == null) return { headline: "Data unavailable", years: null, year: null };
+    if (chaserValue == null || targetValue == null)
+      return { headline: "Data unavailable", years: null, year: null };
     if (chaserValue >= targetValue) return { headline: "Already ahead", years: null, year: null };
     const tg = state.tmode === "static" ? 0 : state.tg;
     if (state.cg <= tg) return { headline: "No convergence", years: null, year: null };
@@ -229,7 +230,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const yMax = Math.max(...values) * 1.1;
 
     const toX = (year: number) => chartInner.x + ((year - minYear) / xRange) * chartInner.width;
-    const toY = (value: number) => chartInner.y + chartInner.height - (value / yMax) * chartInner.height;
+    const toY = (value: number) =>
+      chartInner.y + chartInner.height - (value / yMax) * chartInner.height;
 
     const chaserPts = projection.map((p) => ({ x: toX(p.year), y: toY(p.chaser) }));
     const targetPts = projection.map((p) => ({ x: toX(p.year), y: toY(p.target) }));
@@ -273,28 +275,38 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // Build SVG parts
   const gridLines = chart
-    ? chart.yTicks.map((tick) =>
-        `<line x1="${chartInner.x}" y1="${chart.toY(tick)}" x2="${chartInner.x + chartInner.width}" y2="${chart.toY(tick)}" stroke="${theme.grid}" stroke-dasharray="3,3" stroke-opacity="0.6"/>`
-      ).join("\n    ")
+    ? chart.yTicks
+        .map(
+          (tick) =>
+            `<line x1="${chartInner.x}" y1="${chart.toY(tick)}" x2="${chartInner.x + chartInner.width}" y2="${chart.toY(tick)}" stroke="${theme.grid}" stroke-dasharray="3,3" stroke-opacity="0.6"/>`,
+        )
+        .join("\n    ")
     : "";
 
   const yAxisLabels = chart
-    ? chart.yTicks.map((tick) =>
-        `<text x="${chartInner.x - 12}" y="${chart.toY(tick)}" text-anchor="end" dominant-baseline="middle" font-family="${font}" font-size="11" fill="${theme.faint}">${formatMetricValue(tick, metricUnit)}</text>`
-      ).join("\n    ")
+    ? chart.yTicks
+        .map(
+          (tick) =>
+            `<text x="${chartInner.x - 12}" y="${chart.toY(tick)}" text-anchor="end" dominant-baseline="middle" font-family="${font}" font-size="11" fill="${theme.faint}">${formatMetricValue(tick, metricUnit)}</text>`,
+        )
+        .join("\n    ")
     : "";
 
   const xAxisLabels = chart
-    ? chart.xTicks.map((year) =>
-        `<text x="${chart.toX(year)}" y="${chartInner.y + chartInner.height + 24}" text-anchor="middle" font-family="${font}" font-size="11" fill="${theme.faint}">${year}</text>`
-      ).join("\n    ")
+    ? chart.xTicks
+        .map(
+          (year) =>
+            `<text x="${chart.toX(year)}" y="${chartInner.y + chartInner.height + 24}" text-anchor="middle" font-family="${font}" font-size="11" fill="${theme.faint}">${year}</text>`,
+        )
+        .join("\n    ")
     : "";
 
-  const convergenceMarker = chart && outcome.year && outcome.year <= chart.maxYear
-    ? `<line x1="${chart.toX(outcome.year)}" y1="${chartInner.y}" x2="${chart.toX(outcome.year)}" y2="${chartInner.y + chartInner.height}" stroke="${theme.convergence}" stroke-dasharray="6,4" stroke-width="2" opacity="0.8"/>
+  const convergenceMarker =
+    chart && outcome.year && outcome.year <= chart.maxYear
+      ? `<line x1="${chart.toX(outcome.year)}" y1="${chartInner.y}" x2="${chart.toX(outcome.year)}" y2="${chartInner.y + chartInner.height}" stroke="${theme.convergence}" stroke-dasharray="6,4" stroke-width="2" opacity="0.8"/>
        <rect x="${chart.toX(outcome.year) - 28}" y="${chartInner.y - 22}" width="56" height="20" rx="4" fill="${theme.convergence}"/>
        <text x="${chart.toX(outcome.year)}" y="${chartInner.y - 8}" text-anchor="middle" font-family="${font}" font-size="12" font-weight="600" fill="#ffffff">${outcome.year}</text>`
-    : "";
+      : "";
 
   const chartPaths = chart
     ? `<path d="${chart.targetPath}" fill="none" stroke="${theme.target}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
@@ -307,18 +319,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const stats = [
     { label: "TIME TO CONVERGE", value: outcome.headline },
     { label: "CURRENT GAP", value: gap ? `${gap.toFixed(1)}×` : "—" },
-    { label: "GROWTH RATES", value: `${formatPercent(state.cg)} / ${state.tmode === "static" ? "0%" : formatPercent(state.tg)}` },
+    {
+      label: "GROWTH RATES",
+      value: `${formatPercent(state.cg)} / ${state.tmode === "static" ? "0%" : formatPercent(state.tg)}`,
+    },
   ];
 
   const statCardWidth = 340;
   const statCardsY = 510;
-  const statCards = stats.map((stat, i) => `
+  const statCards = stats
+    .map(
+      (stat, i) => `
     <g transform="translate(${48 + i * (statCardWidth + 16)}, ${statCardsY})">
       <rect width="${statCardWidth}" height="70" rx="10" fill="${theme.card}" stroke="${theme.border}"/>
       <text x="16" y="24" font-family="${font}" font-size="10" font-weight="700" fill="${theme.faint}" letter-spacing="0.8">${escapeXml(stat.label)}</text>
       <text x="16" y="52" font-family="${font}" font-size="24" font-weight="700" fill="${theme.ink}">${escapeXml(stat.value)}</text>
     </g>
-  `).join("");
+  `,
+    )
+    .join("");
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
@@ -353,7 +372,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   <!-- Chart area -->
   <rect x="${chartArea.x}" y="${chartArea.y}" width="${chartArea.width}" height="${chartArea.height}" rx="12" fill="url(#chartBg)" stroke="${theme.border}" stroke-opacity="0.5"/>
 
-  ${chart ? `
+  ${
+    chart
+      ? `
   <!-- Grid -->
   <g>
     ${gridLines}
@@ -383,10 +404,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     <circle cx="8" cy="32" r="5" fill="${theme.target}"/>
     <text x="20" y="36" font-family="${font}" font-size="11" font-weight="500" fill="${theme.muted}">${escapeXml(truncateName(targetName, 7))}</text>
   </g>
-  ` : `
+  `
+      : `
   <!-- No data placeholder -->
   <text x="600" y="${chartArea.y + chartArea.height / 2}" text-anchor="middle" font-family="${font}" font-size="18" fill="${theme.muted}">Insufficient data for projection</text>
-  `}
+  `
+  }
 
   <!-- Stat cards -->
   ${statCards}

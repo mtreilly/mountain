@@ -13,10 +13,10 @@ export function benchmarkGrowthRate(rate: number): {
 } {
   if (!Number.isFinite(rate)) return { label: "—", tone: "good" };
   if (rate <= 0) return { label: "No growth required", tone: "good" };
-  if (rate > GROWTH_BENCHMARKS.unprecedented) return { label: "Unprecedented", tone: "unprecedented" };
+  if (rate > GROWTH_BENCHMARKS.unprecedented)
+    return { label: "Unprecedented", tone: "unprecedented" };
   if (rate >= GROWTH_BENCHMARKS.exceptional) return { label: "Ambitious", tone: "ambitious" };
   if (rate >= GROWTH_BENCHMARKS.strong) return { label: "Strong", tone: "good" };
   if (rate >= GROWTH_BENCHMARKS.moderate) return { label: "Moderate", tone: "good" };
   return { label: "Slow", tone: "good" };
 }
-

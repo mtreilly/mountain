@@ -19,11 +19,7 @@ export function useTheme() {
     window.localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggleTheme = useMemo(
-    () => () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-    []
-  );
+  const toggleTheme = useMemo(() => () => setTheme((t) => (t === "dark" ? "light" : "dark")), []);
 
   return { theme, setTheme, toggleTheme };
 }
-

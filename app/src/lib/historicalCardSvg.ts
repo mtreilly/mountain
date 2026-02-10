@@ -84,12 +84,14 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
   const { chaserStart, chaserCurrent, targetStart, targetCurrent } = historicalData;
 
   // Calculate growth multipliers
-  const chaserMult = chaserStart && chaserCurrent && chaserStart.value > 0
-    ? chaserCurrent.value / chaserStart.value
-    : null;
-  const targetMult = targetStart && targetCurrent && targetStart.value > 0
-    ? targetCurrent.value / targetStart.value
-    : null;
+  const chaserMult =
+    chaserStart && chaserCurrent && chaserStart.value > 0
+      ? chaserCurrent.value / chaserStart.value
+      : null;
+  const targetMult =
+    targetStart && targetCurrent && targetStart.value > 0
+      ? targetCurrent.value / targetStart.value
+      : null;
 
   // For bar visualization: normalize to max multiplier
   const maxMult = Math.max(chaserMult || 1, targetMult || 1);
@@ -139,27 +141,43 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
     <circle cx="28" cy="24" r="10" fill="${palette.chaser}"/>
     <text x="48" y="30" font-family="${font}" font-size="18" font-weight="700" fill="${palette.ink}">${escapeXml(truncateName(chaserName, 30))}</text>
 
-    ${chaserStart ? `
+    ${
+      chaserStart
+        ? `
     <text x="28" y="85" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">${chaserStart.year}</text>
     <text x="28" y="110" font-family="${font}" font-size="28" font-weight="700" fill="${palette.ink}">${formatCurrency(chaserStart.value)}</text>
-    ` : `
+    `
+        : `
     <text x="28" y="100" font-family="${font}" font-size="16" fill="${palette.faint}">No historical data</text>
-    `}
+    `
+    }
 
-    ${chaserCurrent ? `
+    ${
+      chaserCurrent
+        ? `
     <text x="${cardWidth / 2 + 40}" y="85" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">${chaserCurrent.year}</text>
     <text x="${cardWidth / 2 + 40}" y="110" font-family="${font}" font-size="28" font-weight="700" fill="${palette.ink}">${formatCurrency(chaserCurrent.value)}</text>
-    ` : ""}
+    `
+        : ""
+    }
 
-    ${chaserMult != null ? `
+    ${
+      chaserMult != null
+        ? `
     <text x="28" y="165" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">Growth</text>
     <text x="28" y="185" font-family="${font}" font-size="24" font-weight="700" fill="${palette.chaser}">${chaserMult.toFixed(1)}×</text>
-    ` : ""}
+    `
+        : ""
+    }
 
     <!-- Arrow -->
-    ${chaserStart && chaserCurrent ? `
+    ${
+      chaserStart && chaserCurrent
+        ? `
     <path d="M ${cardWidth / 2 - 10} 95 L ${cardWidth / 2 + 20} 95" stroke="${palette.faint}" stroke-width="2" marker-end="url(#arrow)"/>
-    ` : ""}
+    `
+        : ""
+    }
   </g>
 
   <!-- Target Card -->
@@ -170,27 +188,43 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
     <circle cx="28" cy="24" r="10" fill="${palette.target}"/>
     <text x="48" y="30" font-family="${font}" font-size="18" font-weight="700" fill="${palette.ink}">${escapeXml(truncateName(targetName, 30))}</text>
 
-    ${targetStart ? `
+    ${
+      targetStart
+        ? `
     <text x="28" y="85" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">${targetStart.year}</text>
     <text x="28" y="110" font-family="${font}" font-size="28" font-weight="700" fill="${palette.ink}">${formatCurrency(targetStart.value)}</text>
-    ` : `
+    `
+        : `
     <text x="28" y="100" font-family="${font}" font-size="16" fill="${palette.faint}">No historical data</text>
-    `}
+    `
+    }
 
-    ${targetCurrent ? `
+    ${
+      targetCurrent
+        ? `
     <text x="${cardWidth / 2 + 40}" y="85" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">${targetCurrent.year}</text>
     <text x="${cardWidth / 2 + 40}" y="110" font-family="${font}" font-size="28" font-weight="700" fill="${palette.ink}">${formatCurrency(targetCurrent.value)}</text>
-    ` : ""}
+    `
+        : ""
+    }
 
-    ${targetMult != null ? `
+    ${
+      targetMult != null
+        ? `
     <text x="28" y="165" font-family="${font}" font-size="14" font-weight="500" fill="${palette.muted}">Growth</text>
     <text x="28" y="185" font-family="${font}" font-size="24" font-weight="700" fill="${palette.target}">${targetMult.toFixed(1)}×</text>
-    ` : ""}
+    `
+        : ""
+    }
 
     <!-- Arrow -->
-    ${targetStart && targetCurrent ? `
+    ${
+      targetStart && targetCurrent
+        ? `
     <path d="M ${cardWidth / 2 - 10} 95 L ${cardWidth / 2 + 20} 95" stroke="${palette.faint}" stroke-width="2"/>
-    ` : ""}
+    `
+        : ""
+    }
   </g>
 
   <!-- Growth Comparison Bars -->
@@ -200,18 +234,26 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
     <!-- Chaser bar -->
     <text x="-10" y="20" text-anchor="end" font-family="${font}" font-size="13" font-weight="500" fill="${palette.muted}">${escapeXml(truncateName(chaserName, 15))}</text>
     <rect x="0" y="8" width="${barAreaWidth}" height="${barHeight - 16}" rx="4" fill="${palette.barBg}"/>
-    ${chaserMult != null ? `
+    ${
+      chaserMult != null
+        ? `
     <rect x="0" y="8" width="${(chaserBarWidth / 400) * barAreaWidth}" height="${barHeight - 16}" rx="4" fill="${palette.chaser}"/>
     <text x="${(chaserBarWidth / 400) * barAreaWidth + 10}" y="26" font-family="${font}" font-size="16" font-weight="700" fill="${palette.ink}">${chaserMult.toFixed(1)}×</text>
-    ` : ""}
+    `
+        : ""
+    }
 
     <!-- Target bar -->
     <text x="-10" y="${barHeight + 30}" text-anchor="end" font-family="${font}" font-size="13" font-weight="500" fill="${palette.muted}">${escapeXml(truncateName(targetName, 15))}</text>
     <rect x="0" y="${barHeight + 18}" width="${barAreaWidth}" height="${barHeight - 16}" rx="4" fill="${palette.barBg}"/>
-    ${targetMult != null ? `
+    ${
+      targetMult != null
+        ? `
     <rect x="0" y="${barHeight + 18}" width="${(targetBarWidth / 400) * barAreaWidth}" height="${barHeight - 16}" rx="4" fill="${palette.target}"/>
     <text x="${(targetBarWidth / 400) * barAreaWidth + 10}" y="${barHeight + 36}" font-family="${font}" font-size="16" font-weight="700" fill="${palette.ink}">${targetMult.toFixed(1)}×</text>
-    ` : ""}
+    `
+        : ""
+    }
   </g>
 
   <!-- Footer -->

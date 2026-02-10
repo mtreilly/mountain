@@ -32,4 +32,3 @@ export function loadDotEnv(cwd: string = process.cwd()) {
     process.env[key] = value;
   }
 }
-

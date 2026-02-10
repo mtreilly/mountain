@@ -32,19 +32,13 @@ export function RegionSelector({
   }, [countryCode, excludeCode, getRegionsByCountry, regions]);
 
   const colorClasses =
-    color === "chaser"
-      ? "border-l-[var(--color-chaser)]"
-      : "border-l-[var(--color-target)]";
+    color === "chaser" ? "border-l-[var(--color-chaser)]" : "border-l-[var(--color-target)]";
   const labelPill =
-    color === "chaser"
-      ? "bg-chaser-light text-chaser"
-      : "bg-target-light text-target";
+    color === "chaser" ? "bg-chaser-light text-chaser" : "bg-target-light text-target";
 
   return (
     <div className={dense ? "" : "space-y-1"}>
-      {!dense && (
-        <label className="block text-xs font-medium text-ink-muted">{label}</label>
-      )}
+      {!dense && <label className="block text-xs font-medium text-ink-muted">{label}</label>}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -88,12 +82,7 @@ export function RegionSelector({
           stroke="currentColor"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
@@ -114,4 +103,3 @@ export function RegionSelector({
     </div>
   );
 }
-

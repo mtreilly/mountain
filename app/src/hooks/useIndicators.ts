@@ -24,4 +24,3 @@ export function useIndicators() {
 
   return { indicators, loading, error };
 }
-

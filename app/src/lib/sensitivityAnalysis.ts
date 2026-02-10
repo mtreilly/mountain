@@ -25,7 +25,7 @@ function calculateYearsToConverge(
   chaserValue: number,
   targetValue: number,
   chaserGrowthRate: number,
-  targetGrowthRate: number
+  targetGrowthRate: number,
 ): number | null {
   if (chaserValue >= targetValue) return 0;
   if (chaserGrowthRate <= targetGrowthRate) return null; // Never converges
@@ -63,7 +63,7 @@ export function calculateSensitivityScenarios(params: {
     chaserValue,
     targetValue,
     chaserGrowthRate,
-    targetGrowthRate
+    targetGrowthRate,
   );
 
   const optimisticGrowth = chaserGrowthRate + delta;
@@ -71,7 +71,7 @@ export function calculateSensitivityScenarios(params: {
     chaserValue,
     targetValue,
     optimisticGrowth,
-    targetGrowthRate
+    targetGrowthRate,
   );
 
   const pessimisticGrowth = Math.max(0, chaserGrowthRate - delta);
@@ -79,7 +79,7 @@ export function calculateSensitivityScenarios(params: {
     chaserValue,
     targetValue,
     pessimisticGrowth,
-    targetGrowthRate
+    targetGrowthRate,
   );
 
   return {
@@ -116,7 +116,7 @@ export function generateSensitivityProjection(
   chaserGrowthRate: number,
   targetGrowthRate: number,
   startYear: number,
-  maxYears: number = 150
+  maxYears: number = 150,
 ): Array<{ year: number; chaser: number; target: number }> {
   const projection: Array<{ year: number; chaser: number; target: number }> = [];
 

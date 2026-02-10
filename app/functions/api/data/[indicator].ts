@@ -9,28 +9,24 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const countries = url.searchParams.get("countries")?.split(",") || [];
   const startYear = parseInt(url.searchParams.get("start_year") || "1960");
-  const endYear = parseInt(
-    url.searchParams.get("end_year") || new Date().getFullYear().toString()
-  );
+  const endYear = parseInt(url.searchParams.get("end_year") || new Date().getFullYear().toString());
 
   if (countries.length === 0) {
     return Response.json(
       { error: { code: "MISSING_COUNTRIES", message: "countries parameter is required" } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   // Get indicator info
-  const indicator = await DB.prepare(
-    `SELECT code, name, unit FROM indicators WHERE code = ?`
-  )
+  const indicator = await DB.prepare(`SELECT code, name, unit FROM indicators WHERE code = ?`)
     .bind(indicatorCode)
     .first();
 
   if (!indicator) {
     return Response.json(
       { error: { code: "INDICATOR_NOT_FOUND", message: `Indicator ${indicatorCode} not found` } },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -45,7 +41,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
      WHERE i.code = ?
        AND c.iso_alpha3 IN (${placeholders})
        AND d.year BETWEEN ? AND ?
-     ORDER BY c.iso_alpha3, d.year`
+     ORDER BY c.iso_alpha3, d.year`,
   )
     .bind(indicatorCode, ...countries, startYear, endYear)
     .all();

@@ -141,14 +141,18 @@ async function main() {
       const asStrings = tryExtractOptionValues(payload);
       const fromExtracted = maxDateYYYYMM(asStrings);
       const fromRegex = maxDateYYYYMM(
-        (JSON.stringify(payload).match(/\\d{4}-\\d{2}(?!-)/g) || []).filter((x) => /^\\d{4}-\\d{2}$/.test(x))
+        (JSON.stringify(payload).match(/\\d{4}-\\d{2}(?!-)/g) || []).filter((x) =>
+          /^\\d{4}-\\d{2}$/.test(x),
+        ),
       );
       const latest = fromExtracted || fromRegex;
 
       // Newer Ember options responses include ISO timestamps; derive YYYY-MM from the max range.
       const userMax = (() => {
         if (!payload || typeof payload !== "object") return null;
-        const stats = (payload as Record<string, unknown>).stats as Record<string, unknown> | undefined;
+        const stats = (payload as Record<string, unknown>).stats as
+          | Record<string, unknown>
+          | undefined;
         const range = stats?.user_data_range as Record<string, unknown> | undefined;
         const max = typeof range?.max === "string" ? range.max : null;
         return max ? toYYYYMM(max) : null;
@@ -158,18 +162,20 @@ async function main() {
       if (month) targetMonth = month;
       if (!month) {
         console.error(
-          `Could not determine latest Ember capacity month from options; using ${DEFAULT_START_DATE}.`
+          `Could not determine latest Ember capacity month from options; using ${DEFAULT_START_DATE}.`,
         );
       }
     } catch {
       console.error(
-        `Could not load Ember capacity dates; using ${DEFAULT_START_DATE} (set EMBER_CAPACITY_DATE=YYYY-MM to pin).`
+        `Could not load Ember capacity dates; using ${DEFAULT_START_DATE} (set EMBER_CAPACITY_DATE=YYYY-MM to pin).`,
       );
       targetMonth = toYYYYMM(DEFAULT_START_DATE) || "2016-01";
     }
   }
   if (!/^\d{4}-\d{2}$/.test(targetMonth)) {
-    throw new Error(`Invalid EMBER_CAPACITY_DATE: "${PINNED_DATE}" (expected YYYY-MM or YYYY-MM-01...)`);
+    throw new Error(
+      `Invalid EMBER_CAPACITY_DATE: "${PINNED_DATE}" (expected YYYY-MM or YYYY-MM-01...)`,
+    );
   }
 
   console.log("\n-- Installed capacity (Ember API)");
@@ -177,7 +183,7 @@ async function main() {
     console.log(
       `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
         `VALUES ('${escapeSQL(s.code)}', '${escapeSQL(s.name)}', 'GW', 'Ember', ` +
-        `'ember-api:installed-capacity/monthly', 'energy');`
+        `'ember-api:installed-capacity/monthly', 'energy');`,
     );
   }
 
@@ -217,7 +223,9 @@ async function main() {
     console.error(`Fetching Ember installed capacity for ${activeMonth}…`);
     const result = await fetchRows(activeMonth);
     if (!result) return;
-    allRows = (result.data || []).filter((r) => typeof r.date === "string" && r.date.startsWith(monthToStartDate(activeMonth)));
+    allRows = (result.data || []).filter(
+      (r) => typeof r.date === "string" && r.date.startsWith(monthToStartDate(activeMonth)),
+    );
     if (allRows.length > 0) break;
     const prev = prevYYYYMM(activeMonth);
     if (!prev) break;
@@ -264,7 +272,7 @@ async function main() {
       `INSERT OR REPLACE INTO data_points (country_id, indicator_id, year, value, source_vintage) ` +
         `SELECT c.id, i.id, ${year}, ${cap}, '${escapeSQL(vintage)}' ` +
         `FROM countries c, indicators i ` +
-        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(mapped.code)}';`
+        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(mapped.code)}';`,
     );
     emitted += 1;
   }

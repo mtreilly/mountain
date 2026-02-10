@@ -12,4 +12,3 @@ export function downloadBlob(filename: string, blob: Blob) {
 export function downloadText(filename: string, text: string, mime: string) {
   downloadBlob(filename, new Blob([text], { type: mime }));
 }
-

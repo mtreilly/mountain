@@ -44,72 +44,270 @@ export interface OECDRegionData {
 
 // UK TL2 Regions (ITL1 equivalent)
 export const UK_TL2_REGIONS: OECDRegion[] = [
-  { code: "UKC", name: "North East England", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKD", name: "North West England", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKE", name: "Yorkshire and The Humber", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKF", name: "East Midlands", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKG", name: "West Midlands", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKH", name: "East of England", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
+  {
+    code: "UKC",
+    name: "North East England",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKD",
+    name: "North West England",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKE",
+    name: "Yorkshire and The Humber",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKF",
+    name: "East Midlands",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKG",
+    name: "West Midlands",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKH",
+    name: "East of England",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
   { code: "UKI", name: "London", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKJ", name: "South East England", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKK", name: "South West England", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
+  {
+    code: "UKJ",
+    name: "South East England",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKK",
+    name: "South West England",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
   { code: "UKL", name: "Wales", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKM", name: "Scotland", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
-  { code: "UKN", name: "Northern Ireland", countryCode: "GBR", countryName: "United Kingdom", level: "TL2" },
+  {
+    code: "UKM",
+    name: "Scotland",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
+  {
+    code: "UKN",
+    name: "Northern Ireland",
+    countryCode: "GBR",
+    countryName: "United Kingdom",
+    level: "TL2",
+  },
 ];
 
 // US TL2 Regions (States - selected major ones)
 export const US_TL2_REGIONS: OECDRegion[] = [
-  { code: "US-CA", name: "California", countryCode: "USA", countryName: "United States", level: "TL2" },
+  {
+    code: "US-CA",
+    name: "California",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
   { code: "US-TX", name: "Texas", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-NY", name: "New York", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-FL", name: "Florida", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-IL", name: "Illinois", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-PA", name: "Pennsylvania", countryCode: "USA", countryName: "United States", level: "TL2" },
+  {
+    code: "US-NY",
+    name: "New York",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-FL",
+    name: "Florida",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-IL",
+    name: "Illinois",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-PA",
+    name: "Pennsylvania",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
   { code: "US-OH", name: "Ohio", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-GA", name: "Georgia", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-NC", name: "North Carolina", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-MI", name: "Michigan", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-WA", name: "Washington", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-MA", name: "Massachusetts", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-MS", name: "Mississippi", countryCode: "USA", countryName: "United States", level: "TL2" },
-  { code: "US-WV", name: "West Virginia", countryCode: "USA", countryName: "United States", level: "TL2" },
+  {
+    code: "US-GA",
+    name: "Georgia",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-NC",
+    name: "North Carolina",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-MI",
+    name: "Michigan",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-WA",
+    name: "Washington",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-MA",
+    name: "Massachusetts",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-MS",
+    name: "Mississippi",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
+  {
+    code: "US-WV",
+    name: "West Virginia",
+    countryCode: "USA",
+    countryName: "United States",
+    level: "TL2",
+  },
 ];
 
 // Germany TL2 Regions (Länder)
 export const DE_TL2_REGIONS: OECDRegion[] = [
-  { code: "DE1", name: "Baden-Württemberg", countryCode: "DEU", countryName: "Germany", level: "TL2" },
+  {
+    code: "DE1",
+    name: "Baden-Württemberg",
+    countryCode: "DEU",
+    countryName: "Germany",
+    level: "TL2",
+  },
   { code: "DE2", name: "Bayern", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DE3", name: "Berlin", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DE4", name: "Brandenburg", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DE5", name: "Bremen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DE6", name: "Hamburg", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DE7", name: "Hessen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
-  { code: "DE8", name: "Mecklenburg-Vorpommern", countryCode: "DEU", countryName: "Germany", level: "TL2" },
+  {
+    code: "DE8",
+    name: "Mecklenburg-Vorpommern",
+    countryCode: "DEU",
+    countryName: "Germany",
+    level: "TL2",
+  },
   { code: "DE9", name: "Niedersachsen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
-  { code: "DEA", name: "Nordrhein-Westfalen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
-  { code: "DEB", name: "Rheinland-Pfalz", countryCode: "DEU", countryName: "Germany", level: "TL2" },
+  {
+    code: "DEA",
+    name: "Nordrhein-Westfalen",
+    countryCode: "DEU",
+    countryName: "Germany",
+    level: "TL2",
+  },
+  {
+    code: "DEB",
+    name: "Rheinland-Pfalz",
+    countryCode: "DEU",
+    countryName: "Germany",
+    level: "TL2",
+  },
   { code: "DEC", name: "Saarland", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DED", name: "Sachsen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
   { code: "DEE", name: "Sachsen-Anhalt", countryCode: "DEU", countryName: "Germany", level: "TL2" },
-  { code: "DEF", name: "Schleswig-Holstein", countryCode: "DEU", countryName: "Germany", level: "TL2" },
+  {
+    code: "DEF",
+    name: "Schleswig-Holstein",
+    countryCode: "DEU",
+    countryName: "Germany",
+    level: "TL2",
+  },
   { code: "DEG", name: "Thüringen", countryCode: "DEU", countryName: "Germany", level: "TL2" },
 ];
 
 // France TL2 Regions
 export const FR_TL2_REGIONS: OECDRegion[] = [
   { code: "FR1", name: "Île-de-France", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRB", name: "Centre-Val de Loire", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRC", name: "Bourgogne-Franche-Comté", countryCode: "FRA", countryName: "France", level: "TL2" },
+  {
+    code: "FRB",
+    name: "Centre-Val de Loire",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
+  {
+    code: "FRC",
+    name: "Bourgogne-Franche-Comté",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
   { code: "FRD", name: "Normandie", countryCode: "FRA", countryName: "France", level: "TL2" },
   { code: "FRE", name: "Hauts-de-France", countryCode: "FRA", countryName: "France", level: "TL2" },
   { code: "FRF", name: "Grand Est", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRG", name: "Pays de la Loire", countryCode: "FRA", countryName: "France", level: "TL2" },
+  {
+    code: "FRG",
+    name: "Pays de la Loire",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
   { code: "FRH", name: "Bretagne", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRI", name: "Nouvelle-Aquitaine", countryCode: "FRA", countryName: "France", level: "TL2" },
+  {
+    code: "FRI",
+    name: "Nouvelle-Aquitaine",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
   { code: "FRJ", name: "Occitanie", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRK", name: "Auvergne-Rhône-Alpes", countryCode: "FRA", countryName: "France", level: "TL2" },
-  { code: "FRL", name: "Provence-Alpes-Côte d'Azur", countryCode: "FRA", countryName: "France", level: "TL2" },
+  {
+    code: "FRK",
+    name: "Auvergne-Rhône-Alpes",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
+  {
+    code: "FRL",
+    name: "Provence-Alpes-Côte d'Azur",
+    countryCode: "FRA",
+    countryName: "France",
+    level: "TL2",
+  },
 ];
 
 // All TL2 regions combined
@@ -313,9 +511,7 @@ export function getRegionByCode(code: string): OECDRegion | undefined {
 export function getLatestRegionData(code: string): OECDRegionData | null {
   const data = STATIC_REGION_DATA[code];
   if (!data || data.length === 0) return null;
-  return data.reduce((latest, current) =>
-    current.year > latest.year ? current : latest
-  );
+  return data.reduce((latest, current) => (current.year > latest.year ? current : latest));
 }
 
 /**
@@ -336,16 +532,10 @@ export function buildOECDApiUrl(params: {
   startYear?: number;
   endYear?: number;
 }): string {
-  const {
-    regions,
-    level = "TL2",
-    measure = "GDP_PC",
-    startYear = 2015,
-    endYear = 2023,
-  } = params;
+  const { regions, level = "TL2", measure = "GDP_PC", startYear = 2015, endYear = 2023 } = params;
 
   const regionFilter = regions.join("+");
-  const measureCode = measure === "GDP_PC" ? "GDP" : "GDP";
+  const measureCode = measure === "GDP_PC" ? "GDP_PC" : "GDP";
   const unitMeasure = measure === "GDP_PC" ? "USD_PPP_PS" : "USD_PPP";
 
   // Dimension order: FREQ.TERRITORIAL_LEVEL.REF_AREA.TERRITORIAL_TYPE.MEASURE.ACTIVITY.PRICES.UNIT_MEASURE
@@ -361,7 +551,7 @@ export function calculateRegionalConvergence(
   chaserCode: string,
   targetCode: string,
   chaserGrowthRate: number,
-  targetGrowthRate: number
+  targetGrowthRate: number,
 ): {
   chaserValue: number | null;
   targetValue: number | null;
@@ -386,9 +576,7 @@ export function calculateRegionalConvergence(
   }
 
   const ratio = targetValue / chaserValue;
-  const yearsToConverge = Math.ceil(
-    Math.log(ratio) / Math.log(1 + growthDifferential / 100)
-  );
+  const yearsToConverge = Math.ceil(Math.log(ratio) / Math.log(1 + growthDifferential / 100));
 
   return { chaserValue, targetValue, gap, yearsToConverge };
 }

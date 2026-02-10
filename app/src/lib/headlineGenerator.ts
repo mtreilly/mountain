@@ -43,10 +43,7 @@ const SHORT_TEMPLATES = {
     "{chaser} falls further behind {target} at current rates",
     "The gap widens: {chaser} can't catch {target}",
   ],
-  already_ahead: [
-    "{chaser} is already ahead of {target}!",
-    "{chaser} leads {target} in {metric}",
-  ],
+  already_ahead: ["{chaser} is already ahead of {target}!", "{chaser} leads {target} in {metric}"],
 } as const;
 
 const LONG_TEMPLATES = {
@@ -85,10 +82,7 @@ function fillTemplate(template: string, data: HeadlineData): string {
   return result;
 }
 
-function selectTemplate<T extends readonly string[]>(
-  templates: T,
-  data: HeadlineData
-): string {
+function selectTemplate<T extends readonly string[]>(templates: T, data: HeadlineData): string {
   // Use a deterministic selection based on country codes for consistency
   const hash = (data.chaserIso + data.targetIso)
     .split("")
@@ -124,12 +118,8 @@ export function generateAllHeadlines(data: HeadlineData): {
 } {
   const scenario = getScenario(data);
 
-  const shortHeadlines = SHORT_TEMPLATES[scenario].map((template) =>
-    fillTemplate(template, data)
-  );
-  const longHeadlines = LONG_TEMPLATES[scenario].map((template) =>
-    fillTemplate(template, data)
-  );
+  const shortHeadlines = SHORT_TEMPLATES[scenario].map((template) => fillTemplate(template, data));
+  const longHeadlines = LONG_TEMPLATES[scenario].map((template) => fillTemplate(template, data));
 
   return {
     scenario,
@@ -143,7 +133,7 @@ export function generateAllHeadlines(data: HeadlineData): {
 export function getShareUrl(
   platform: "twitter" | "linkedin" | "facebook",
   text: string,
-  url?: string
+  url?: string,
 ): string {
   const encodedText = encodeURIComponent(text);
   const encodedUrl = url ? encodeURIComponent(url) : "";

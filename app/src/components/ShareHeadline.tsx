@@ -1,11 +1,7 @@
-import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { copyTextToClipboard } from "../lib/clipboard";
-import {
-  generateHeadline,
-  getShareUrl,
-  type HeadlineData,
-} from "../lib/headlineGenerator";
+import { generateHeadline, getShareUrl, type HeadlineData } from "../lib/headlineGenerator";
 
 interface ShareHeadlineProps {
   data: HeadlineData;
@@ -39,13 +35,14 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
     const url = getShareUrl(
       platform,
       platform === "linkedin" ? textWithoutUrl : shareText,
-      platform === "linkedin" ? data.appUrl : undefined
+      platform === "linkedin" ? data.appUrl : undefined,
     );
     window.open(url, "_blank", "noopener,noreferrer,width=600,height=400");
   };
 
   const handleModeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
 
     const order: Array<"short" | "long"> = ["short", "long"];
@@ -65,7 +62,12 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-ink-muted">Share text</span>
-          <div role="radiogroup" aria-label="Share text length" className="flex gap-1" onKeyDown={handleModeKeyDown}>
+          <div
+            role="radiogroup"
+            aria-label="Share text length"
+            className="flex gap-1"
+            onKeyDown={handleModeKeyDown}
+          >
             <button
               type="button"
               onClick={() => setMode("short")}
@@ -111,7 +113,12 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
             className="flex-1 px-2 py-1.5 rounded-lg border border-surface bg-surface text-ink text-xs font-medium hover:bg-surface-raised transition-default inline-flex items-center justify-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
             Copy
           </button>
@@ -144,7 +151,12 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-ink-muted">Share text</span>
-        <div role="radiogroup" aria-label="Share text length" className="flex gap-1" onKeyDown={handleModeKeyDown}>
+        <div
+          role="radiogroup"
+          aria-label="Share text length"
+          className="flex gap-1"
+          onKeyDown={handleModeKeyDown}
+        >
           <button
             type="button"
             onClick={() => setMode("short")}
@@ -196,12 +208,7 @@ export function ShareHeadline({ data, compact, onCopied }: ShareHeadlineProps) {
           onClick={handleCopy}
           className="flex-1 px-3 py-1.5 rounded-lg border border-surface bg-surface text-ink text-xs font-medium hover:bg-surface-raised transition-default inline-flex items-center justify-center gap-1.5"
         >
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

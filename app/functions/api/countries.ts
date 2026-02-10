@@ -8,7 +8,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const result = await DB.prepare(
     `SELECT iso_alpha3, iso_alpha2, name, region, income_group
      FROM countries
-     ORDER BY name`
+     ORDER BY name`,
   ).all();
 
   return Response.json({ data: result.results });

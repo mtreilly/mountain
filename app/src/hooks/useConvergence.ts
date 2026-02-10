@@ -59,7 +59,7 @@ export function useConvergence({
     const points: Array<{ year: number; chaser: number; target: number }> = [];
     const maxYears = Math.min(
       isFinite(yearsToConvergence) ? Math.ceil(yearsToConvergence) + 20 : 100,
-      150
+      150,
     );
 
     for (let i = 0; i <= maxYears; i += 1) {
@@ -85,7 +85,7 @@ export function useConvergence({
       const keepYears = new Set(milestones.map((m) => m.year));
       return {
         projection: points.filter(
-          (p, i) => i % step === 0 || i === points.length - 1 || keepYears.has(p.year)
+          (p, i) => i % step === 0 || i === points.length - 1 || keepYears.has(p.year),
         ),
         milestones,
       };

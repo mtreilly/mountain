@@ -24,25 +24,25 @@ export function CountrySelector({
   const [open, setOpen] = useState(false);
   const selectedCountry = useMemo(
     () => countries.find((c) => c.iso_alpha3 === value) || null,
-    [countries, value]
+    [countries, value],
   );
 
   const colorConfig = {
     chaser: {
-      border: "border-chaser hover:border-[var(--color-chaser)] focus-visible:ring-[var(--color-chaser-muted)]",
+      border:
+        "border-chaser hover:border-[var(--color-chaser)] focus-visible:ring-[var(--color-chaser-muted)]",
       badge: "bg-chaser-light text-chaser",
     },
     target: {
-      border: "border-target hover:border-[var(--color-target)] focus-visible:ring-[var(--color-target-muted)]",
+      border:
+        "border-target hover:border-[var(--color-target)] focus-visible:ring-[var(--color-target-muted)]",
       badge: "bg-target-light text-target",
     },
   };
 
   const colors = colorConfig[color];
   const labelPill =
-    color === "chaser"
-      ? "bg-chaser-light text-chaser"
-      : "bg-target-light text-target";
+    color === "chaser" ? "bg-chaser-light text-chaser" : "bg-target-light text-target";
 
   return (
     <div className={dense ? "" : "space-y-1"}>
@@ -101,12 +101,7 @@ export function CountrySelector({
           stroke="currentColor"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 

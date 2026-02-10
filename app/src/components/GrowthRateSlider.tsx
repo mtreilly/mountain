@@ -26,12 +26,8 @@ export function GrowthRateSlider({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">
-          Annual growth rate
-        </label>
-        <span className="text-lg font-bold text-primary">
-          {formatPercent(value)}
-        </span>
+        <label className="text-sm font-medium text-gray-700">Annual growth rate</label>
+        <span className="text-lg font-bold text-primary">{formatPercent(value)}</span>
       </div>
 
       <input

@@ -80,7 +80,8 @@ export function applyScenarioToImpliedMetric(params: {
   const { scenarioId, metricCode, implied } = params;
   if (implied == null || !Number.isFinite(implied)) return null;
 
-  const scenario = IMPLICATION_SCENARIOS.find((s) => s.id === scenarioId) || IMPLICATION_SCENARIOS[0];
+  const scenario =
+    IMPLICATION_SCENARIOS.find((s) => s.id === scenarioId) || IMPLICATION_SCENARIOS[0];
   const adj = scenario.adjustments;
 
   if (metricCode === "ELECTRICITY_USE_PCAP" && adj.electricityUseMultiplier != null) {

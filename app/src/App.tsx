@@ -9,20 +9,20 @@ import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
 import { EmbedView } from "./components/EmbedView";
 import { ExportModal } from "./components/ExportModal";
-import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
-import { ShareCardModal } from "./components/ShareCardModal";
-import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
+import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
 import { ImplicationsSlideOver } from "./components/implications/ImplicationsSlideOver";
-import { useImplicationsData } from "./components/implications/useImplicationsData";
 import {
-	useImplicationsComputed,
-	DEFAULT_ASSUMPTIONS,
+  DEFAULT_ASSUMPTIONS,
+  useImplicationsComputed,
 } from "./components/implications/useImplicationsComputed";
+import { useImplicationsData } from "./components/implications/useImplicationsData";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { ResultSummary } from "./components/ResultSummary";
 import { SelectorsPanel } from "./components/SelectorsPanel";
+import { ShareCardModal } from "./components/ShareCardModal";
+import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { useConvergence } from "./hooks/useConvergence";
 import { useCountries } from "./hooks/useCountries";
 import { useCountryData } from "./hooks/useCountryData";
@@ -32,25 +32,21 @@ import { useTheme } from "./hooks/useTheme";
 import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
-import {
-	ALL_TL2_REGIONS,
-	getRegionByCode,
-	getRegionDataSeries,
-} from "./lib/oecdRegions";
-import {
-	toRegionalObservedCsv,
-	toRegionalProjectionCsv,
-	toRegionalReportJson,
-} from "./lib/regionsDataExport";
 import type { HeadlineData } from "./lib/headlineGenerator";
+import { ALL_TL2_REGIONS, getRegionByCode, getRegionDataSeries } from "./lib/oecdRegions";
+import {
+  toRegionalObservedCsv,
+  toRegionalProjectionCsv,
+  toRegionalReportJson,
+} from "./lib/regionsDataExport";
 import type { ShareCardParams } from "./lib/shareCardSvg";
 import {
-	DEFAULT_SHARE_STATE,
-	parseEmbedParams,
-	parseShareStateFromSearch,
-	type ShareState,
-	toSyncedSearchString,
-	toSearchString,
+  DEFAULT_SHARE_STATE,
+  parseEmbedParams,
+  parseShareStateFromSearch,
+  type ShareState,
+  toSearchString,
+  toSyncedSearchString,
 } from "./lib/shareState";
 
 let lastInvalidRegionToastKey: string | null = null;
@@ -58,1253 +54,1171 @@ let lastInvalidIndicatorToastKey: string | null = null;
 let lastInvalidCountryToastKey: string | null = null;
 
 export default function App() {
-	const [{ initialShareState, initialRegionToast }] = useState(() => {
-		const state =
-			typeof window === "undefined"
-				? DEFAULT_SHARE_STATE
-				: parseShareStateFromSearch(window.location.search, DEFAULT_SHARE_STATE);
-
-		const defaultChaserCode = DEFAULT_SHARE_STATE.cr ?? "UKC";
-		const defaultTargetCode = DEFAULT_SHARE_STATE.tr ?? "UKI";
-
-		if (state.mode !== "regions") {
-			return { initialShareState: state, initialRegionToast: null as null };
-		}
-
-		const rawChaserCode = state.cr ?? defaultChaserCode;
-		const rawTargetCode = state.tr ?? defaultTargetCode;
-
-		const chaserInvalid = getRegionByCode(rawChaserCode) == null;
-		const targetInvalid = getRegionByCode(rawTargetCode) == null;
-
-		const normalizedState: ShareState = {
-			...state,
-			cr: chaserInvalid ? defaultChaserCode : rawChaserCode,
-			tr: targetInvalid ? defaultTargetCode : rawTargetCode,
-		};
-
-		if (!chaserInvalid && !targetInvalid) {
-			return { initialShareState: normalizedState, initialRegionToast: null };
-		}
-
-		const parts: string[] = [];
-		if (chaserInvalid) parts.push(`chaser region "${rawChaserCode}"`);
-		if (targetInvalid) parts.push(`target region "${rawTargetCode}"`);
-
-		const resolvedChaserName = getRegionByCode(defaultChaserCode)?.name;
-		const resolvedTargetName = getRegionByCode(defaultTargetCode)?.name;
-		const toastKey = `${parts.join("|")}=>${defaultChaserCode}|${defaultTargetCode}`;
-
-		return {
-			initialShareState: normalizedState,
-			initialRegionToast: {
-				toastKey,
-				message: `Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName ?? defaultChaserCode} and ${resolvedTargetName ?? defaultTargetCode}.`,
-			},
-		};
-	});
-
-	// Parse embed parameters (separate from share state)
-	const embedParams = useMemo(() => {
-		if (typeof window === "undefined")
-			return {
-				embed: false,
-				interactive: true,
-				embedTheme: "auto" as const,
-				height: 400,
-			};
-		return parseEmbedParams(window.location.search);
-	}, []);
-
-	const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">(
-		initialShareState.mode ?? "countries"
-	);
-	const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
-	const [targetIso, setTargetIso] = useState(initialShareState.target);
-	const [chaserRegionCode, setChaserRegionCode] = useState(initialShareState.cr ?? "UKC");
-	const [targetRegionCode, setTargetRegionCode] = useState(initialShareState.tr ?? "UKI");
-	const [indicatorCode, setIndicatorCode] = useState(
-		initialShareState.indicator,
-	);
-	const [chaserGrowthRate, setChaserGrowthRate] = useState(
-		initialShareState.cg,
-	);
-	const [targetGrowthRate, setTargetGrowthRate] = useState(
-		initialShareState.tmode === "static" ? 0 : initialShareState.tg,
-	);
-	const [baseYear, setBaseYear] = useState(initialShareState.baseYear);
-	const [view, setView] = useState<ShareState["view"]>(
-		initialShareState.view || "chart",
-	);
-	const [useChaserAdjusted, setUseChaserAdjusted] = useState(
-		initialShareState.adjC ?? true,
-	);
-	const [useTargetAdjusted, setUseTargetAdjusted] = useState(
-		initialShareState.adjT ?? true,
-	);
-	const [catchUpYears, setCatchUpYears] = useState(
-		initialShareState.goal ?? 25,
-	);
-	const [showMilestones, setShowMilestones] = useState(
-		initialShareState.ms ?? true,
-	);
-	const [impTemplate, setImpTemplate] = useState<
-		"china" | "us" | "eu"
-	>((initialShareState.tpl as "china" | "us" | "eu" | undefined) ?? "china");
-	const [impHorizonYears, setImpHorizonYears] = useState(
-		initialShareState.ih ?? 25,
-	);
-	const [impCard, setImpCard] = useState(
-		initialShareState.impCard ?? "gdp",
-	);
-	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-	const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
-	const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
-	const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
-	const [isImplicationsOpen, setIsImplicationsOpen] = useState(false);
-	const { theme, toggleTheme } = useTheme();
-
-	const {
-		countries,
-		loading: countriesLoading,
-		error: countriesError,
-	} = useCountries();
-	const { indicators, loading: indicatorsLoading } = useIndicators();
-
-	const indicatorExists = useMemo(() => {
-		if (indicatorsLoading) return null;
-		return indicators.some((i) => i.code === indicatorCode);
-	}, [indicatorCode, indicators, indicatorsLoading]);
-
-	useEffect(() => {
-		if (comparisonMode !== "countries") return;
-		if (indicatorsLoading) return;
-		if (indicatorExists !== false) return;
-
-		const unknownIndicator = indicatorCode;
-		const fallback = DEFAULT_SHARE_STATE.indicator;
-		if (unknownIndicator === fallback) return;
-
-		// In non-interactive embed mode, normalize quietly (no toasts).
-		if (embedParams.embed && embedParams.interactive === false) {
-			setIndicatorCode(fallback);
-			return;
-		}
-
-		const toastKey = `${unknownIndicator}=>${fallback}`;
-		if (lastInvalidIndicatorToastKey === toastKey) return;
-		lastInvalidIndicatorToastKey = toastKey;
-
-		setIndicatorCode(fallback);
-		const fallbackName =
-			indicators.find((i) => i.code === fallback)?.name ?? fallback;
-		toast.error(
-			`Unknown metric "${unknownIndicator}" in URL. Reset to ${fallbackName}.`,
-		);
-	}, [
-		comparisonMode,
-		embedParams.embed,
-		embedParams.interactive,
-		indicatorCode,
-		indicatorExists,
-		indicators,
-		indicatorsLoading,
-	]);
-
-	const {
-		data,
-		getLatestValue,
-		indicator: indicatorInfo,
-		loading: dataLoading,
-		error: dataError,
-		hasLoaded: dataHasLoaded,
-	} = useCountryData({
-		countries:
-			comparisonMode === "countries" && indicatorExists === true
-				? [chaserIso, targetIso]
-				: [],
-		indicator: indicatorCode,
-		enabled: comparisonMode === "countries" && indicatorExists === true,
-		invalidIndicator: comparisonMode === "countries" && indicatorExists === false,
-	});
-
-	const chaserCountry = countries.find((c) => c.iso_alpha3 === chaserIso);
-	const targetCountry = countries.find((c) => c.iso_alpha3 === targetIso);
-
-	useEffect(() => {
-		if (comparisonMode !== "countries") return;
-		if (countriesLoading) return;
-
-		const defaultChaser = DEFAULT_SHARE_STATE.chaser;
-		const defaultTarget = DEFAULT_SHARE_STATE.target;
-
-		const rawChaserIso = chaserIso;
-		const rawTargetIso = targetIso;
-
-		const chaserValid = countries.some((c) => c.iso_alpha3 === rawChaserIso);
-		const targetValid = countries.some((c) => c.iso_alpha3 === rawTargetIso);
-
-		if (chaserValid && targetValid) return;
-
-		const nextChaserIso = chaserValid ? rawChaserIso : defaultChaser;
-		const nextTargetIso = targetValid ? rawTargetIso : defaultTarget;
-
-		// In non-interactive embed mode, normalize quietly (no toasts).
-		if (embedParams.embed && embedParams.interactive === false) {
-			if (!chaserValid) setChaserIso(nextChaserIso);
-			if (!targetValid) setTargetIso(nextTargetIso);
-			return;
-		}
-
-		const parts: string[] = [];
-		if (!chaserValid) parts.push(`chaser country "${rawChaserIso}"`);
-		if (!targetValid) parts.push(`target country "${rawTargetIso}"`);
-
-		const toastKey = `${parts.join("|")}=>${nextChaserIso}|${nextTargetIso}`;
-		if (lastInvalidCountryToastKey === toastKey) return;
-		lastInvalidCountryToastKey = toastKey;
-
-		if (!chaserValid) setChaserIso(nextChaserIso);
-		if (!targetValid) setTargetIso(nextTargetIso);
-
-		const resolvedChaserName =
-			countries.find((c) => c.iso_alpha3 === nextChaserIso)?.name ?? nextChaserIso;
-		const resolvedTargetName =
-			countries.find((c) => c.iso_alpha3 === nextTargetIso)?.name ?? nextTargetIso;
-
-		toast.error(
-			`Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName} and ${resolvedTargetName}.`,
-		);
-	}, [
-		chaserIso,
-		comparisonMode,
-		countries,
-		countriesLoading,
-		embedParams.embed,
-		embedParams.interactive,
-		targetIso,
-	]);
-
-	const selectedIndicator =
-		indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
-	const metricName = selectedIndicator?.name || indicatorCode;
-	const metricUnit = selectedIndicator?.unit || null;
-
-	const chaserValueRaw = getLatestValue(chaserIso);
-	const targetValueRaw = getLatestValue(targetIso);
-
-	const chaserAdjustment = getAdjustment(chaserIso, indicatorCode);
-	const targetAdjustment = getAdjustment(targetIso, indicatorCode);
-
-	const chaserValue =
-		chaserValueRaw != null
-			? applyAdjustment(chaserValueRaw, chaserAdjustment, useChaserAdjusted)
-			: 1;
-	const targetValue =
-		targetValueRaw != null
-			? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
-			: 2;
-
-	const countryConvergence = useConvergence({
-		chaserValue,
-		targetValue,
-		chaserGrowthRate,
-		targetGrowthRate,
-		unit: metricUnit,
-		baseYear,
-	});
-
-	// Regional convergence (OECD data)
-	const regionalConvergence = useRegionalConvergence({
-		chaserCode: chaserRegionCode,
-		targetCode: targetRegionCode,
-		chaserGrowthRate,
-		targetGrowthRate,
-		baseYear,
-	});
-
-	// Implications data for thread generator (only when GDP per capita is selected)
-	const implicationsEnabled =
-		comparisonMode === "countries" &&
-		indicatorCode === "GDP_PCAP_PPP" &&
-		chaserValueRaw != null;
-
-	const {
-		data: implicationsRawData,
-		dataWithVintage: implicationsDataWithVintage,
-		indicatorByCode: implicationsIndicatorByCode,
-		getLatestValue: implicationsGetLatestValue,
-		templateDef: implicationsTemplateDef,
-	} = useImplicationsData({
-		chaserIso,
-		template: impTemplate,
-		enabled: implicationsEnabled,
-	});
-
-	const implicationsComputed = useImplicationsComputed({
-		chaserIso,
-		gdpCurrent: chaserValue,
-		chaserGrowthRate,
-		horizonYears: impHorizonYears,
-		baseYear,
-		templateDef: implicationsTemplateDef,
-		data: implicationsRawData,
-		dataWithVintage: implicationsDataWithVintage,
-		indicatorByCode: implicationsIndicatorByCode,
-		getLatestValue: implicationsGetLatestValue,
-		popAssumption: "trend",
-		scenario: "baseline",
-		assumptions: DEFAULT_ASSUMPTIONS,
-		mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
-	});
-
-	useEffect(() => {
-		if (comparisonMode !== "regions") return;
-		if (!initialRegionToast) return;
-		if (embedParams.embed && embedParams.interactive === false) return;
-		if (lastInvalidRegionToastKey === initialRegionToast.toastKey) return;
-		lastInvalidRegionToastKey = initialRegionToast.toastKey;
-		toast.error(initialRegionToast.message);
-	}, [
-		comparisonMode,
-		embedParams.embed,
-		embedParams.interactive,
-		initialRegionToast,
-	]);
-
-	// Use the appropriate convergence data based on mode
-	const { yearsToConvergence, convergenceYear, projection, gap, milestones } =
-		comparisonMode === "regions"
-			? {
-					yearsToConvergence: regionalConvergence.yearsToConvergence,
-					convergenceYear: regionalConvergence.convergenceYear,
-					projection: regionalConvergence.projection,
-					gap: regionalConvergence.gap,
-					milestones: regionalConvergence.milestones,
-				}
-			: countryConvergence;
-
-	// Computed display values based on mode
-	const displayChaserName =
-		comparisonMode === "regions"
-			? regionalConvergence.chaserRegion?.name || chaserRegionCode
-			: chaserCountry?.name || chaserIso;
-	const displayTargetName =
-		comparisonMode === "regions"
-			? regionalConvergence.targetRegion?.name || targetRegionCode
-			: targetCountry?.name || targetIso;
-	const displayChaserValue =
-		comparisonMode === "regions"
-			? regionalConvergence.chaserValue
-			: chaserValue;
-	const displayTargetValue =
-		comparisonMode === "regions"
-			? regionalConvergence.targetValue
-			: targetValue;
-	const displayMetricName =
-		comparisonMode === "regions" ? "GDP per capita (USD PPP)" : metricName;
-	const displayMetricUnit =
-		comparisonMode === "regions" ? "USD PPP" : metricUnit;
-
-	const shareState: ShareState = useMemo(() => {
-		return {
-			chaser: chaserIso,
-			target: targetIso,
-			indicator: indicatorCode,
-			cg: chaserGrowthRate,
-			tg: targetGrowthRate,
-			tmode: targetGrowthRate === 0 ? "static" : "growing",
-			baseYear,
-			view,
-			adjC: useChaserAdjusted,
-			adjT: useTargetAdjusted,
-			goal: catchUpYears,
-			ms: showMilestones,
-			tpl: impTemplate,
-			ih: impHorizonYears,
-			impCard,
-			mode: comparisonMode,
-			cr: chaserRegionCode,
-			tr: targetRegionCode,
-		};
-	}, [
-		baseYear,
-		catchUpYears,
-		chaserGrowthRate,
-		chaserIso,
-		chaserRegionCode,
-		comparisonMode,
-		impCard,
-		indicatorCode,
-		impHorizonYears,
-		impTemplate,
-		showMilestones,
-		targetGrowthRate,
-		targetIso,
-		targetRegionCode,
-		view,
-		useChaserAdjusted,
-		useTargetAdjusted,
-	]);
-
-	const hasCountryData =
-		chaserCountry &&
-		targetCountry &&
-		!dataLoading &&
-		!dataError &&
-		chaserValueRaw != null &&
-		targetValueRaw != null;
-
-	const hasRegionalData = regionalConvergence.hasData;
-
-	const hasData =
-		comparisonMode === "regions" ? hasRegionalData : hasCountryData;
-
-	const showImplications = hasData && indicatorCode === "GDP_PCAP_PPP";
-
-	const chartSvgRef = useRef<SVGSVGElement>(null);
-	const lastSyncedSearchRef = useRef<string | null>(null);
-	useEffect(() => {
-		// Preserve embed-mode parameters in the URL so embed links remain stable.
-		const nextSearch = toSyncedSearchString(shareState, embedParams);
-		const currentSearch =
-			typeof window === "undefined" ? "" : window.location.search;
-		if (nextSearch === currentSearch) return;
-
-		const handle = window.setTimeout(() => {
-			if (lastSyncedSearchRef.current === nextSearch) return;
-			const url = new URL(window.location.href);
-			url.search = nextSearch;
-			window.history.replaceState(null, "", url);
-			lastSyncedSearchRef.current = nextSearch;
-		}, 200);
-
-		return () => window.clearTimeout(handle);
-	}, [embedParams, shareState]);
-
-	// Keyboard shortcut: Cmd/Ctrl+Shift+C opens citation panel
-	useEffect(() => {
-		const onKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "c") {
-				e.preventDefault();
-				setIsCitationPanelOpen(true);
-			}
-		};
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
-	}, []);
-
-	const shareUrl = useMemo(() => {
-		if (typeof window === "undefined") return "";
-		return `${window.location.origin}/share${toSearchString(shareState)}`;
-	}, [shareState]);
-
-	const appUrl = useMemo(() => {
-		if (typeof window === "undefined") return "";
-		return `${window.location.origin}${window.location.pathname}${toSearchString(shareState)}`;
-	}, [shareState]);
-
-	const citationIndicator =
-		comparisonMode !== "regions"
-			? selectedIndicator
-			: {
-					code: "GDP_PCAP_PPP",
-					name: "GDP per capita (USD PPP)",
-					unit: "USD PPP",
-					source: "OECD",
-				};
-
-	const exportBasename = useMemo(() => {
-		const safe = (s: string) =>
-			s
-				.replace(/[^a-z0-9_-]+/gi, "-")
-				.replace(/-+/g, "-")
-				.replace(/^-|-$/g, "");
-		return safe(
-			comparisonMode === "regions"
-				? `mountain-${chaserRegionCode}-${targetRegionCode}-GDP_PCAP_PPP-${baseYear}`
-				: `mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
-		);
-	}, [
-		baseYear,
-		chaserIso,
-		chaserRegionCode,
-		comparisonMode,
-		indicatorCode,
-		targetIso,
-		targetRegionCode,
-	]);
-
-	const headlineData: HeadlineData | undefined =
-		comparisonMode !== "countries" || !chaserCountry || !targetCountry
-			? undefined
-			: {
-					chaserName: chaserCountry.name,
-					chaserIso,
-					targetName: targetCountry.name,
-					targetIso,
-					metricName,
-					chaserGrowthRate,
-					targetGrowthRate,
-					yearsToConvergence: countryConvergence.yearsToConvergence,
-					convergenceYear: countryConvergence.convergenceYear,
-					gap: countryConvergence.gap,
-					appUrl,
-				};
-
-	const shareCardParams: ShareCardParams | null = !hasData
-		? null
-		: {
-				chaserName: displayChaserName,
-				targetName: displayTargetName,
-				chaserCode: comparisonMode === "regions" ? chaserRegionCode : chaserIso,
-				targetCode: comparisonMode === "regions" ? targetRegionCode : targetIso,
-				metricLabel: displayMetricName,
-				metricUnit: displayMetricUnit,
-				projection,
-				convergenceYear,
-				yearsToConvergence,
-				currentGap: gap ?? 1,
-				chaserGrowth: chaserGrowthRate,
-				targetGrowth: targetGrowthRate,
-				targetMode: targetGrowthRate === 0 ? "static" : "growing",
-				theme,
-				siteUrl:
-					typeof window !== "undefined" ? window.location.origin : undefined,
-				dataSource:
-					comparisonMode === "regions"
-						? "OECD"
-						: selectedIndicator?.source ?? "World Bank",
-			};
-
-	// Historical data for thread generator
-	const historicalData = useMemo(() => {
-		if (comparisonMode !== "countries" || !data) return null;
-
-		const chaserSeries = data[chaserIso] || [];
-		const targetSeries = data[targetIso] || [];
-
-		const getEarliest = (series: Array<{ year: number; value: number }>) => {
-			if (!series.length) return null;
-			const sorted = [...series].sort((a, b) => a.year - b.year);
-			return { year: sorted[0].year, value: sorted[0].value };
-		};
-
-		const getLatest = (series: Array<{ year: number; value: number }>) => {
-			if (!series.length) return null;
-			const sorted = [...series].sort((a, b) => b.year - a.year);
-			return { year: sorted[0].year, value: sorted[0].value };
-		};
-
-		return {
-			chaserStart: getEarliest(chaserSeries),
-			chaserCurrent: getLatest(chaserSeries),
-			targetStart: getEarliest(targetSeries),
-			targetCurrent: getLatest(targetSeries),
-		};
-	}, [comparisonMode, data, chaserIso, targetIso]);
-
-	// Implications data for thread generator (only when GDP per capita is selected)
-	const implicationsData = (() => {
-		if (comparisonMode !== "countries") return null;
-		if (indicatorCode !== "GDP_PCAP_PPP") return null;
-		if (!yearsToConvergence) return null;
-		if (chaserValueRaw == null) return null;
-
-		const gdpCurrent = applyAdjustment(
-			chaserValueRaw,
-			chaserAdjustment,
-			useChaserAdjusted,
-		);
-		const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, impHorizonYears);
-
-		// Extract computed values from implications hook
-		const { macro } = implicationsComputed;
-		const electricityDeltaTWh = macro.electricity.equivalents?.deltaTWh ?? null;
-		const nuclearPlants = macro.electricity.equivalents?.nuclear.plants ?? null;
-		const urbanDeltaPersons = macro.urban.deltaPersons ?? null;
-		const homesNeeded = macro.urban.homesNeeded ?? null;
-		const co2DeltaMt =
-			macro.co2.currentMt != null && macro.co2.futureMt != null
-				? macro.co2.futureMt - macro.co2.currentMt
-				: null;
-
-		return {
-			electricityDeltaTWh,
-			nuclearPlants,
-			urbanDeltaPersons,
-			homesNeeded,
-			co2DeltaMt,
-			gdpCurrent,
-			gdpFuture,
-		};
-	})();
-
-	const countriesByIso3 = useMemo(() => {
-		const map: Record<string, { name: string }> = {};
-		for (const c of countries) map[c.iso_alpha3] = { name: c.name };
-		return map;
-	}, [countries]);
-
-	const exportIndicator = useMemo(() => {
-		return indicators.find((i) => i.code === indicatorCode) || null;
-	}, [indicatorCode, indicators]);
-
-	const onDownloadObservedCsv = !hasData
-		? undefined
-		: comparisonMode === "regions"
-			? (() => {
-					const chaserRegion = regionalConvergence.chaserRegion;
-					const targetRegion = regionalConvergence.targetRegion;
-					if (!chaserRegion || !targetRegion) return undefined;
-
-					return () => {
-						const csv = toRegionalObservedCsv({
-							state: shareState,
-							observed: {
-								[chaserRegion.code]: getRegionDataSeries(chaserRegion.code).map((p) => ({
-									year: p.year,
-									value: p.gdpPerCapita,
-								})),
-								[targetRegion.code]: getRegionDataSeries(targetRegion.code).map((p) => ({
-									year: p.year,
-									value: p.gdpPerCapita,
-								})),
-							},
-							chaserRegion,
-							targetRegion,
-						});
-						const filename = `${exportBasename}-observed.csv`;
-						downloadText(filename, csv, "text/csv;charset=utf-8");
-						return filename;
-					};
-				})()
-			: () => {
-					const csv = toObservedCsv({
-						state: shareState,
-						indicator: exportIndicator,
-						countriesByIso3,
-						data,
-					});
-					const filename = `${exportBasename}-observed.csv`;
-					downloadText(filename, csv, "text/csv;charset=utf-8");
-					return filename;
-				};
-
-	const onDownloadProjectionCsv = !hasData
-		? undefined
-		: comparisonMode === "regions"
-			? (() => {
-					const chaserRegion = regionalConvergence.chaserRegion;
-					const targetRegion = regionalConvergence.targetRegion;
-					if (!chaserRegion || !targetRegion) return undefined;
-
-					return () => {
-						const csv = toRegionalProjectionCsv({
-							state: shareState,
-							projection,
-							chaserRegion,
-							targetRegion,
-						});
-						const filename = `${exportBasename}-projection.csv`;
-						downloadText(filename, csv, "text/csv;charset=utf-8");
-						return filename;
-					};
-				})()
-			: () => {
-					const csv = toProjectionCsv({
-						state: shareState,
-						indicator: exportIndicator,
-						projection,
-					});
-					const filename = `${exportBasename}-projection.csv`;
-					downloadText(filename, csv, "text/csv;charset=utf-8");
-					return filename;
-				};
-
-	const onDownloadReportJson = !hasData
-		? undefined
-		: comparisonMode === "regions"
-			? (() => {
-					const chaserRegion = regionalConvergence.chaserRegion;
-					const targetRegion = regionalConvergence.targetRegion;
-					if (!chaserRegion || !targetRegion) return undefined;
-
-					return () => {
-						const json = toRegionalReportJson({
-							state: shareState,
-							observed: {
-								[chaserRegion.code]: getRegionDataSeries(chaserRegion.code),
-								[targetRegion.code]: getRegionDataSeries(targetRegion.code),
-							},
-							projection,
-							derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
-							chaserRegion,
-							targetRegion,
-						});
-						const filename = `${exportBasename}-report.json`;
-						downloadText(filename, json, "application/json;charset=utf-8");
-						return filename;
-					};
-				})()
-			: () => {
-					const json = toReportJson({
-						state: shareState,
-						indicator: exportIndicator,
-						countriesByIso3,
-						observed: data,
-						projection,
-						derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
-					});
-					const filename = `${exportBasename}-report.json`;
-					downloadText(filename, json, "application/json;charset=utf-8");
-					return filename;
-				};
-
-	const resetToDefaults = useCallback(() => {
-		setChaserIso(DEFAULT_SHARE_STATE.chaser);
-		setTargetIso(DEFAULT_SHARE_STATE.target);
-		setIndicatorCode(DEFAULT_SHARE_STATE.indicator);
-		setChaserGrowthRate(DEFAULT_SHARE_STATE.cg);
-		setTargetGrowthRate(
-			DEFAULT_SHARE_STATE.tmode === "static" ? 0 : DEFAULT_SHARE_STATE.tg,
-		);
-		setBaseYear(DEFAULT_SHARE_STATE.baseYear);
-		setView(DEFAULT_SHARE_STATE.view || "chart");
-		setUseChaserAdjusted(true);
-		setUseTargetAdjusted(true);
-		setComparisonMode(DEFAULT_SHARE_STATE.mode ?? "countries");
-		setChaserRegionCode(DEFAULT_SHARE_STATE.cr ?? "UKC");
-		setTargetRegionCode(DEFAULT_SHARE_STATE.tr ?? "UKI");
-	}, []);
-
-	const swapCountries = useCallback(() => {
-		setChaserIso(targetIso);
-		setTargetIso(chaserIso);
-		setChaserGrowthRate(targetGrowthRate);
-		setTargetGrowthRate(chaserGrowthRate);
-		setUseChaserAdjusted(useTargetAdjusted);
-		setUseTargetAdjusted(useChaserAdjusted);
-	}, [
-		chaserIso,
-		targetIso,
-		chaserGrowthRate,
-		targetGrowthRate,
-		useChaserAdjusted,
-		useTargetAdjusted,
-	]);
-
-	const swapRegions = useCallback(() => {
-		const temp = chaserRegionCode;
-		setChaserRegionCode(targetRegionCode);
-		setTargetRegionCode(temp);
-	}, [chaserRegionCode, targetRegionCode]);
-
-	const contextCards =
-		comparisonMode === "countries" &&
-		chaserCountry != null &&
-		targetCountry != null &&
-		(chaserAdjustment || targetAdjustment) ? (
-			<div className="space-y-3">
-				{chaserAdjustment && chaserValueRaw != null && (
-					<CountryContextCard
-						adjustment={chaserAdjustment}
-						countryName={chaserCountry.name}
-						originalValue={chaserValueRaw}
-						adjustedValue={applyAdjustment(
-							chaserValueRaw,
-							chaserAdjustment,
-							true,
-						)}
-						useAdjusted={useChaserAdjusted}
-						onToggleAdjusted={setUseChaserAdjusted}
-						unit={metricUnit}
-						color="chaser"
-					/>
-				)}
-				{targetAdjustment && targetValueRaw != null && (
-					<CountryContextCard
-						adjustment={targetAdjustment}
-						countryName={targetCountry.name}
-						originalValue={targetValueRaw}
-						adjustedValue={applyAdjustment(
-							targetValueRaw,
-							targetAdjustment,
-							true,
-						)}
-						useAdjusted={useTargetAdjusted}
-						onToggleAdjusted={setUseTargetAdjusted}
-						unit={metricUnit}
-						color="target"
-					/>
-				)}
-			</div>
-		) : null;
-
-	const toaster =
-		embedParams.embed && embedParams.interactive === false ? null : (
-			<Toaster
-				theme={theme}
-				position="bottom-right"
-				closeButton
-				richColors
-			/>
-		);
-
-	if (countriesLoading) {
-		if (embedParams.embed) {
-			return (
-				<>
-					{toaster}
-					<EmbedView
-						shareState={shareState}
-						embedParams={embedParams}
-						chaserName={displayChaserName}
-						targetName={displayTargetName}
-						status="loading"
-						resolvedTheme={theme}
-					/>
-				</>
-			);
-		}
-		return (
-			<>
-				{toaster}
-				<AppLoadingScreen />
-			</>
-		);
-	}
-
-	if (countriesError) {
-		if (embedParams.embed) {
-			return (
-				<>
-					{toaster}
-					<EmbedView
-						shareState={shareState}
-						embedParams={embedParams}
-						chaserName={displayChaserName}
-						targetName={displayTargetName}
-						status="no-data"
-						message={countriesError}
-						resolvedTheme={theme}
-					/>
-				</>
-			);
-		}
-		return (
-			<>
-				{toaster}
-				<AppErrorScreen
-					message={countriesError}
-					onRetry={() => window.location.reload()}
-				/>
-			</>
-		);
-	}
-
-	// Embed mode: render minimal chart-only view
-	if (embedParams.embed) {
-		const hasInvalidCountryIso =
-			comparisonMode === "countries" &&
-			(chaserCountry == null || targetCountry == null);
-
-		const status =
-			comparisonMode === "countries"
-				? indicatorsLoading ||
-					indicatorExists === null ||
-					indicatorExists === false ||
-					hasInvalidCountryIso ||
-					dataLoading
-					? "loading"
-					: dataError
-						? "no-data"
-						: hasData
-							? "ready"
-							: "no-data"
-				: hasData
-					? "ready"
-					: "no-data";
-
-		return (
-			<>
-				{toaster}
-				<EmbedView
-					shareState={shareState}
-					embedParams={embedParams}
-					chaserName={displayChaserName}
-					targetName={displayTargetName}
-					status={status}
-					message={
-						status === "no-data" && typeof dataError === "string"
-							? dataError
-							: undefined
-					}
-					projection={status === "ready" ? projection : undefined}
-					convergenceYear={status === "ready" ? convergenceYear : undefined}
-					yearsToConvergence={status === "ready" ? yearsToConvergence : undefined}
-					milestones={status === "ready" ? milestones : undefined}
-					unit={status === "ready" ? displayMetricUnit : undefined}
-					resolvedTheme={theme}
-				/>
-			</>
-		);
-	}
-
-	return (
-		<>
-			{toaster}
-			<div className="min-h-screen bg-surface grain">
-				<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
-				{/* Header - Compact */}
-				<AppHeader
-					comparisonMode={comparisonMode}
-					shareUrl={shareUrl}
-					headlineData={headlineData}
-					onOpenExportModal={() => setIsExportModalOpen(true)}
-					onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
-					onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
-					onOpenThreadGenerator={() => setIsThreadGeneratorOpen(true)}
-					shareCardAvailable={shareCardParams !== null}
-					theme={theme}
-					onToggleTheme={toggleTheme}
-					printChaser={displayChaserName}
-					printTarget={displayTargetName}
-					printMetric={displayMetricName}
-					disableShareActions={countriesLoading}
-				/>
-
-				{/* Main two-column layout for large screens */}
-				<div className="layout-two-col">
-					{/* Left column - Main content */}
-					<div className="min-w-0 space-y-2.5 sm:space-y-3">
-						{/* Mode toggle and Selectors */}
-						<SelectorsPanel
-							comparisonMode={comparisonMode}
-							onComparisonModeChange={setComparisonMode}
-							countries={countries}
-							indicators={indicators}
-							indicatorsLoading={indicatorsLoading}
-							chaserIso={chaserIso}
-							targetIso={targetIso}
-							onChaserIsoChange={setChaserIso}
-							onTargetIsoChange={setTargetIso}
-							onSwapCountries={swapCountries}
-							indicatorCode={indicatorCode}
-							onIndicatorCodeChange={setIndicatorCode}
-							chaserRegionCode={chaserRegionCode}
-							targetRegionCode={targetRegionCode}
-							onChaserRegionCodeChange={setChaserRegionCode}
-							onTargetRegionCodeChange={setTargetRegionCode}
-							onSwapRegions={swapRegions}
-						/>
-						<div className="hidden lg:block no-print">
-							<GrowthRateBar
-								chaserName={displayChaserName}
-								targetName={displayTargetName}
-								chaserRate={chaserGrowthRate}
-								targetRate={targetGrowthRate}
-								onChaserRateChange={setChaserGrowthRate}
-								onTargetRateChange={setTargetGrowthRate}
-							/>
-						</div>
-						<DataStates
-							loading={dataLoading || indicatorsLoading}
-							error={dataError}
-							metricName={metricName}
-							showMissingData={
-								comparisonMode === "countries" &&
-								dataHasLoaded &&
-								!indicatorsLoading &&
-								chaserCountry != null &&
-								targetCountry != null &&
-								(chaserValueRaw == null || targetValueRaw == null)
-							}
-						/>
-
-						{/* Result summary - compact */}
-						{hasData && (
-							<div className="animate-fade-in-up stagger-2">
-								<ResultSummary
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									metricName={displayMetricName}
-									metricUnit={displayMetricUnit}
-									chaserValue={displayChaserValue ?? 0}
-									targetValue={displayTargetValue ?? 0}
-									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									yearsToConvergence={yearsToConvergence}
-									convergenceYear={convergenceYear}
-									gap={gap ?? 0}
-									chaserIsAdjusted={
-										comparisonMode === "countries" &&
-										chaserAdjustment != null &&
-										useChaserAdjusted
-									}
-									targetIsAdjusted={
-										comparisonMode === "countries" &&
-										targetAdjustment != null &&
-										useTargetAdjusted
-									}
-									milestones={showMilestones ? milestones : []}
-								/>
-							</div>
-						)}
-
-						{/* Chart */}
-						{hasData && (
-							<ProjectionCard
-								view={view}
-								onViewChange={setView}
-								showMilestones={showMilestones}
-								onShowMilestonesChange={setShowMilestones}
-								projection={projection}
-								chaserName={displayChaserName}
-								targetName={displayTargetName}
-								convergenceYear={convergenceYear}
-								milestones={milestones}
-								unit={displayMetricUnit}
-								theme={theme}
-								svgRef={chartSvgRef}
-								chaserHasNote={
-									comparisonMode === "countries" &&
-									chaserAdjustment != null &&
-									useChaserAdjusted
-								}
-								targetHasNote={
-									comparisonMode === "countries" &&
-									targetAdjustment != null &&
-									useTargetAdjusted
-								}
-							/>
-						)}
-
-						{/* Implications trigger button (mobile only - desktop is in sidebar) */}
-						{showImplications && comparisonMode === "countries" && (
-							<div className="animate-fade-in-up stagger-4 lg:hidden">
-								<button
-									type="button"
-									onClick={() => setIsImplicationsOpen(true)}
-									className="w-full card p-4 text-left hover:bg-surface transition-default group"
-								>
-									<div className="flex items-center justify-between gap-3">
-										<div>
-											<h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
-												Development Implications
-											</h3>
-											<p className="text-sm text-ink-muted mt-1">
-												Explore electricity, urbanization, emissions and more
-											</p>
-										</div>
-										<svg
-											className="w-5 h-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M9 5l7 7-7 7"
-											/>
-										</svg>
-									</div>
-								</button>
-							</div>
-						)}
-						{comparisonMode === "regions" && (
-							<div className="animate-fade-in-up stagger-4">
-								<RegionalImplicationsPanel
-									chaserCode={chaserRegionCode}
-									chaserName={displayChaserName}
-									gdpCurrent={displayChaserValue}
-									chaserGrowthRate={chaserGrowthRate}
-									baseYear={baseYear}
-									horizonYears={impHorizonYears}
-									onHorizonYearsChange={setImpHorizonYears}
-								/>
-							</div>
-						)}
-
-						{/* Growth controls and context cards - shown below chart on mobile/tablet */}
-						{hasData && (
-							<div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
-								<GrowthSidebarContent
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									chaserValue={displayChaserValue ?? 0}
-									targetValue={displayTargetValue ?? 0}
-									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									onChaserGrowthRateChange={setChaserGrowthRate}
-									onTargetGrowthRateChange={setTargetGrowthRate}
-									catchUpYears={catchUpYears}
-									onCatchUpYearsChange={setCatchUpYears}
-									contextCards={contextCards}
-								/>
-							</div>
-						)}
-					</div>
-
-					{/* Right column - Growth controls and context cards sidebar (desktop only) */}
-					<aside className="sidebar-desktop">
-						{hasData && (
-							<div className="sticky top-6 space-y-4 animate-fade-in-up stagger-2 no-print">
-								<GrowthSidebarContent
-									compact
-									chaserName={displayChaserName}
-									targetName={displayTargetName}
-									chaserValue={displayChaserValue ?? 0}
-									targetValue={displayTargetValue ?? 0}
-									chaserGrowthRate={chaserGrowthRate}
-									targetGrowthRate={targetGrowthRate}
-									onChaserGrowthRateChange={setChaserGrowthRate}
-									onTargetGrowthRateChange={setTargetGrowthRate}
-									catchUpYears={catchUpYears}
-									onCatchUpYearsChange={setCatchUpYears}
-									contextCards={contextCards}
-									showControls={false}
-								/>
-
-								{/* Implications trigger (desktop sidebar) */}
-								{showImplications && comparisonMode === "countries" && (
-									<button
-										type="button"
-										onClick={() => setIsImplicationsOpen(true)}
-										className="w-full card p-4 text-left hover:bg-surface transition-default group"
-									>
-										<div className="flex items-center gap-3">
-											<div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
-												<svg
-													className="w-5 h-5 text-[var(--color-accent)]"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={1.5}
-														d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-													/>
-												</svg>
-											</div>
-											<div className="flex-1 min-w-0">
-												<h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
-													Implications
-												</h3>
-												<p className="text-xs text-ink-muted truncate">
-													Electricity, urban, CO2
-												</p>
-											</div>
-											<svg
-												className="w-4 h-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M9 5l7 7-7 7"
-												/>
-											</svg>
-										</div>
-									</button>
-								)}
-							</div>
-						)}
-					</aside>
-				</div>
-
-				<AppFooter
-					comparisonMode={comparisonMode}
-					dataSourceName={
-						comparisonMode === "regions"
-							? "OECD"
-							: selectedIndicator?.source ?? "World Bank"
-					}
-					countriesCount={countries.length}
-					regionsCount={ALL_TL2_REGIONS.length}
-				/>
-			</div>
-
-			{/* Export Modal */}
-			<ExportModal
-				isOpen={isExportModalOpen}
-				onClose={() => setIsExportModalOpen(false)}
-				baseYear={baseYear}
-				onBaseYearChange={(year) => {
-					if (!Number.isFinite(year)) return;
-					setBaseYear(Math.max(1950, Math.min(2100, year)));
-				}}
-				onReset={resetToDefaults}
-				comparisonMode={comparisonMode}
-				dataSourceName={
-					comparisonMode === "regions"
-						? "OECD"
-						: selectedIndicator?.source ?? "World Bank"
-				}
-				onDownloadObservedCsv={onDownloadObservedCsv}
-				onDownloadProjectionCsv={onDownloadProjectionCsv}
-				onDownloadReportJson={onDownloadReportJson}
-				shareState={shareState}
-				onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
-			/>
-
-			{/* Share Card Modal */}
-			<ShareCardModal
-				isOpen={isShareCardModalOpen}
-				onClose={() => setIsShareCardModalOpen(false)}
-				shareCardParams={shareCardParams}
-			/>
-
-			{/* Citation Panel */}
-			<CitationPanel
-				isOpen={isCitationPanelOpen}
-				onClose={() => setIsCitationPanelOpen(false)}
-				shareState={shareState}
-				indicator={citationIndicator}
-				chaserName={displayChaserName}
-				targetName={displayTargetName}
-				/>
-
-				{/* Thread Generator Modal */}
-				{isThreadGeneratorOpen && shareCardParams && (
-					<ThreadGeneratorModal
-						isOpen
-						onClose={() => setIsThreadGeneratorOpen(false)}
-						shareCardParams={shareCardParams}
-						historicalData={historicalData}
-						implicationsData={implicationsData}
-						baseYear={baseYear}
-						horizonYears={impHorizonYears}
-						appUrl={appUrl}
-					/>
-				)}
-
-				{/* Implications Slide-Over */}
-				{comparisonMode === "countries" && (
-					<ImplicationsSlideOver
-						isOpen={isImplicationsOpen}
-						onClose={() => setIsImplicationsOpen(false)}
-						chaserIso={chaserIso}
-						chaserName={displayChaserName}
-						gdpCurrent={chaserValue}
-						chaserGrowthRate={chaserGrowthRate}
-						baseYear={baseYear}
-						horizonYears={impHorizonYears}
-						onHorizonYearsChange={setImpHorizonYears}
-						template={impTemplate}
-						onTemplateChange={setImpTemplate}
-						activeCard={impCard}
-						onActiveCardChange={setImpCard}
-					/>
-				)}
-			</div>
-		</>
-	);
-	}
+  const [{ initialShareState, initialRegionToast }] = useState(() => {
+    const state =
+      typeof window === "undefined"
+        ? DEFAULT_SHARE_STATE
+        : parseShareStateFromSearch(window.location.search, DEFAULT_SHARE_STATE);
+
+    const defaultChaserCode = DEFAULT_SHARE_STATE.cr ?? "UKC";
+    const defaultTargetCode = DEFAULT_SHARE_STATE.tr ?? "UKI";
+
+    if (state.mode !== "regions") {
+      return { initialShareState: state, initialRegionToast: null as null };
+    }
+
+    const rawChaserCode = state.cr ?? defaultChaserCode;
+    const rawTargetCode = state.tr ?? defaultTargetCode;
+
+    const chaserInvalid = getRegionByCode(rawChaserCode) == null;
+    const targetInvalid = getRegionByCode(rawTargetCode) == null;
+
+    const normalizedState: ShareState = {
+      ...state,
+      cr: chaserInvalid ? defaultChaserCode : rawChaserCode,
+      tr: targetInvalid ? defaultTargetCode : rawTargetCode,
+    };
+
+    if (!chaserInvalid && !targetInvalid) {
+      return { initialShareState: normalizedState, initialRegionToast: null };
+    }
+
+    const parts: string[] = [];
+    if (chaserInvalid) parts.push(`chaser region "${rawChaserCode}"`);
+    if (targetInvalid) parts.push(`target region "${rawTargetCode}"`);
+
+    const resolvedChaserName = getRegionByCode(defaultChaserCode)?.name;
+    const resolvedTargetName = getRegionByCode(defaultTargetCode)?.name;
+    const toastKey = `${parts.join("|")}=>${defaultChaserCode}|${defaultTargetCode}`;
+
+    return {
+      initialShareState: normalizedState,
+      initialRegionToast: {
+        toastKey,
+        message: `Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName ?? defaultChaserCode} and ${resolvedTargetName ?? defaultTargetCode}.`,
+      },
+    };
+  });
+
+  // Parse embed parameters (separate from share state)
+  const embedParams = useMemo(() => {
+    if (typeof window === "undefined")
+      return {
+        embed: false,
+        interactive: true,
+        embedTheme: "auto" as const,
+        height: 400,
+      };
+    return parseEmbedParams(window.location.search);
+  }, []);
+
+  const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">(
+    initialShareState.mode ?? "countries",
+  );
+  const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
+  const [targetIso, setTargetIso] = useState(initialShareState.target);
+  const [chaserRegionCode, setChaserRegionCode] = useState(initialShareState.cr ?? "UKC");
+  const [targetRegionCode, setTargetRegionCode] = useState(initialShareState.tr ?? "UKI");
+  const [indicatorCode, setIndicatorCode] = useState(initialShareState.indicator);
+  const [chaserGrowthRate, setChaserGrowthRate] = useState(initialShareState.cg);
+  const [targetGrowthRate, setTargetGrowthRate] = useState(
+    initialShareState.tmode === "static" ? 0 : initialShareState.tg,
+  );
+  const [baseYear, setBaseYear] = useState(initialShareState.baseYear);
+  const [view, setView] = useState<ShareState["view"]>(initialShareState.view || "chart");
+  const [useChaserAdjusted, setUseChaserAdjusted] = useState(initialShareState.adjC ?? true);
+  const [useTargetAdjusted, setUseTargetAdjusted] = useState(initialShareState.adjT ?? true);
+  const [catchUpYears, setCatchUpYears] = useState(initialShareState.goal ?? 25);
+  const [showMilestones, setShowMilestones] = useState(initialShareState.ms ?? true);
+  const [impTemplate, setImpTemplate] = useState<"china" | "us" | "eu">(
+    (initialShareState.tpl as "china" | "us" | "eu" | undefined) ?? "china",
+  );
+  const [impHorizonYears, setImpHorizonYears] = useState(initialShareState.ih ?? 25);
+  const [impCard, setImpCard] = useState(initialShareState.impCard ?? "gdp");
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
+  const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
+  const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
+  const [isImplicationsOpen, setIsImplicationsOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+
+  const { countries, loading: countriesLoading, error: countriesError } = useCountries();
+  const { indicators, loading: indicatorsLoading } = useIndicators();
+
+  const indicatorExists = useMemo(() => {
+    if (indicatorsLoading) return null;
+    return indicators.some((i) => i.code === indicatorCode);
+  }, [indicatorCode, indicators, indicatorsLoading]);
+
+  useEffect(() => {
+    if (comparisonMode !== "countries") return;
+    if (indicatorsLoading) return;
+    if (indicatorExists !== false) return;
+
+    const unknownIndicator = indicatorCode;
+    const fallback = DEFAULT_SHARE_STATE.indicator;
+    if (unknownIndicator === fallback) return;
+
+    // In non-interactive embed mode, normalize quietly (no toasts).
+    if (embedParams.embed && embedParams.interactive === false) {
+      setIndicatorCode(fallback);
+      return;
+    }
+
+    const toastKey = `${unknownIndicator}=>${fallback}`;
+    if (lastInvalidIndicatorToastKey === toastKey) return;
+    lastInvalidIndicatorToastKey = toastKey;
+
+    setIndicatorCode(fallback);
+    const fallbackName = indicators.find((i) => i.code === fallback)?.name ?? fallback;
+    toast.error(`Unknown metric "${unknownIndicator}" in URL. Reset to ${fallbackName}.`);
+  }, [
+    comparisonMode,
+    embedParams.embed,
+    embedParams.interactive,
+    indicatorCode,
+    indicatorExists,
+    indicators,
+    indicatorsLoading,
+  ]);
+
+  const {
+    data,
+    getLatestValue,
+    indicator: indicatorInfo,
+    loading: dataLoading,
+    error: dataError,
+    hasLoaded: dataHasLoaded,
+  } = useCountryData({
+    countries:
+      comparisonMode === "countries" && indicatorExists === true ? [chaserIso, targetIso] : [],
+    indicator: indicatorCode,
+    enabled: comparisonMode === "countries" && indicatorExists === true,
+    invalidIndicator: comparisonMode === "countries" && indicatorExists === false,
+  });
+
+  const chaserCountry = countries.find((c) => c.iso_alpha3 === chaserIso);
+  const targetCountry = countries.find((c) => c.iso_alpha3 === targetIso);
+
+  useEffect(() => {
+    if (comparisonMode !== "countries") return;
+    if (countriesLoading) return;
+
+    const defaultChaser = DEFAULT_SHARE_STATE.chaser;
+    const defaultTarget = DEFAULT_SHARE_STATE.target;
+
+    const rawChaserIso = chaserIso;
+    const rawTargetIso = targetIso;
+
+    const chaserValid = countries.some((c) => c.iso_alpha3 === rawChaserIso);
+    const targetValid = countries.some((c) => c.iso_alpha3 === rawTargetIso);
+
+    if (chaserValid && targetValid) return;
+
+    const nextChaserIso = chaserValid ? rawChaserIso : defaultChaser;
+    const nextTargetIso = targetValid ? rawTargetIso : defaultTarget;
+
+    // In non-interactive embed mode, normalize quietly (no toasts).
+    if (embedParams.embed && embedParams.interactive === false) {
+      if (!chaserValid) setChaserIso(nextChaserIso);
+      if (!targetValid) setTargetIso(nextTargetIso);
+      return;
+    }
+
+    const parts: string[] = [];
+    if (!chaserValid) parts.push(`chaser country "${rawChaserIso}"`);
+    if (!targetValid) parts.push(`target country "${rawTargetIso}"`);
+
+    const toastKey = `${parts.join("|")}=>${nextChaserIso}|${nextTargetIso}`;
+    if (lastInvalidCountryToastKey === toastKey) return;
+    lastInvalidCountryToastKey = toastKey;
+
+    if (!chaserValid) setChaserIso(nextChaserIso);
+    if (!targetValid) setTargetIso(nextTargetIso);
+
+    const resolvedChaserName =
+      countries.find((c) => c.iso_alpha3 === nextChaserIso)?.name ?? nextChaserIso;
+    const resolvedTargetName =
+      countries.find((c) => c.iso_alpha3 === nextTargetIso)?.name ?? nextTargetIso;
+
+    toast.error(
+      `Unknown ${parts.join(" and ")} in URL. Reset to ${resolvedChaserName} and ${resolvedTargetName}.`,
+    );
+  }, [
+    chaserIso,
+    comparisonMode,
+    countries,
+    countriesLoading,
+    embedParams.embed,
+    embedParams.interactive,
+    targetIso,
+  ]);
+
+  const selectedIndicator =
+    indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
+  const metricName = selectedIndicator?.name || indicatorCode;
+  const metricUnit = selectedIndicator?.unit || null;
+
+  const chaserValueRaw = getLatestValue(chaserIso);
+  const targetValueRaw = getLatestValue(targetIso);
+
+  const chaserAdjustment = getAdjustment(chaserIso, indicatorCode);
+  const targetAdjustment = getAdjustment(targetIso, indicatorCode);
+
+  const chaserValue =
+    chaserValueRaw != null
+      ? applyAdjustment(chaserValueRaw, chaserAdjustment, useChaserAdjusted)
+      : 1;
+  const targetValue =
+    targetValueRaw != null
+      ? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
+      : 2;
+
+  const countryConvergence = useConvergence({
+    chaserValue,
+    targetValue,
+    chaserGrowthRate,
+    targetGrowthRate,
+    unit: metricUnit,
+    baseYear,
+  });
+
+  // Regional convergence (OECD data)
+  const regionalConvergence = useRegionalConvergence({
+    chaserCode: chaserRegionCode,
+    targetCode: targetRegionCode,
+    chaserGrowthRate,
+    targetGrowthRate,
+    baseYear,
+  });
+
+  // Implications data for thread generator (only when GDP per capita is selected)
+  const implicationsEnabled =
+    comparisonMode === "countries" && indicatorCode === "GDP_PCAP_PPP" && chaserValueRaw != null;
+
+  const {
+    data: implicationsRawData,
+    dataWithVintage: implicationsDataWithVintage,
+    indicatorByCode: implicationsIndicatorByCode,
+    getLatestValue: implicationsGetLatestValue,
+    templateDef: implicationsTemplateDef,
+  } = useImplicationsData({
+    chaserIso,
+    template: impTemplate,
+    enabled: implicationsEnabled,
+  });
+
+  const implicationsComputed = useImplicationsComputed({
+    chaserIso,
+    gdpCurrent: chaserValue,
+    chaserGrowthRate,
+    horizonYears: impHorizonYears,
+    baseYear,
+    templateDef: implicationsTemplateDef,
+    data: implicationsRawData,
+    dataWithVintage: implicationsDataWithVintage,
+    indicatorByCode: implicationsIndicatorByCode,
+    getLatestValue: implicationsGetLatestValue,
+    popAssumption: "trend",
+    scenario: "baseline",
+    assumptions: DEFAULT_ASSUMPTIONS,
+    mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
+  });
+
+  useEffect(() => {
+    if (comparisonMode !== "regions") return;
+    if (!initialRegionToast) return;
+    if (embedParams.embed && embedParams.interactive === false) return;
+    if (lastInvalidRegionToastKey === initialRegionToast.toastKey) return;
+    lastInvalidRegionToastKey = initialRegionToast.toastKey;
+    toast.error(initialRegionToast.message);
+  }, [comparisonMode, embedParams.embed, embedParams.interactive, initialRegionToast]);
+
+  // Use the appropriate convergence data based on mode
+  const { yearsToConvergence, convergenceYear, projection, gap, milestones } =
+    comparisonMode === "regions"
+      ? {
+          yearsToConvergence: regionalConvergence.yearsToConvergence,
+          convergenceYear: regionalConvergence.convergenceYear,
+          projection: regionalConvergence.projection,
+          gap: regionalConvergence.gap,
+          milestones: regionalConvergence.milestones,
+        }
+      : countryConvergence;
+
+  // Computed display values based on mode
+  const displayChaserName =
+    comparisonMode === "regions"
+      ? regionalConvergence.chaserRegion?.name || chaserRegionCode
+      : chaserCountry?.name || chaserIso;
+  const displayTargetName =
+    comparisonMode === "regions"
+      ? regionalConvergence.targetRegion?.name || targetRegionCode
+      : targetCountry?.name || targetIso;
+  const displayChaserValue =
+    comparisonMode === "regions" ? regionalConvergence.chaserValue : chaserValue;
+  const displayTargetValue =
+    comparisonMode === "regions" ? regionalConvergence.targetValue : targetValue;
+  const displayMetricName = comparisonMode === "regions" ? "GDP per capita (USD PPP)" : metricName;
+  const displayMetricUnit = comparisonMode === "regions" ? "USD PPP" : metricUnit;
+
+  const shareState: ShareState = useMemo(() => {
+    return {
+      chaser: chaserIso,
+      target: targetIso,
+      indicator: indicatorCode,
+      cg: chaserGrowthRate,
+      tg: targetGrowthRate,
+      tmode: targetGrowthRate === 0 ? "static" : "growing",
+      baseYear,
+      view,
+      adjC: useChaserAdjusted,
+      adjT: useTargetAdjusted,
+      goal: catchUpYears,
+      ms: showMilestones,
+      tpl: impTemplate,
+      ih: impHorizonYears,
+      impCard,
+      mode: comparisonMode,
+      cr: chaserRegionCode,
+      tr: targetRegionCode,
+    };
+  }, [
+    baseYear,
+    catchUpYears,
+    chaserGrowthRate,
+    chaserIso,
+    chaserRegionCode,
+    comparisonMode,
+    impCard,
+    indicatorCode,
+    impHorizonYears,
+    impTemplate,
+    showMilestones,
+    targetGrowthRate,
+    targetIso,
+    targetRegionCode,
+    view,
+    useChaserAdjusted,
+    useTargetAdjusted,
+  ]);
+
+  const hasCountryData =
+    chaserCountry &&
+    targetCountry &&
+    !dataLoading &&
+    !dataError &&
+    chaserValueRaw != null &&
+    targetValueRaw != null;
+
+  const hasRegionalData = regionalConvergence.hasData;
+
+  const hasData = comparisonMode === "regions" ? hasRegionalData : hasCountryData;
+
+  const showImplications = hasData && indicatorCode === "GDP_PCAP_PPP";
+
+  const chartSvgRef = useRef<SVGSVGElement>(null);
+  const lastSyncedSearchRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Preserve embed-mode parameters in the URL so embed links remain stable.
+    const nextSearch = toSyncedSearchString(shareState, embedParams);
+    const currentSearch = typeof window === "undefined" ? "" : window.location.search;
+    if (nextSearch === currentSearch) return;
+
+    const handle = window.setTimeout(() => {
+      if (lastSyncedSearchRef.current === nextSearch) return;
+      const url = new URL(window.location.href);
+      url.search = nextSearch;
+      window.history.replaceState(null, "", url);
+      lastSyncedSearchRef.current = nextSearch;
+    }, 200);
+
+    return () => window.clearTimeout(handle);
+  }, [embedParams, shareState]);
+
+  // Keyboard shortcut: Cmd/Ctrl+Shift+C opens citation panel
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        setIsCitationPanelOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/share${toSearchString(shareState)}`;
+  }, [shareState]);
+
+  const appUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}${window.location.pathname}${toSearchString(shareState)}`;
+  }, [shareState]);
+
+  const citationIndicator =
+    comparisonMode !== "regions"
+      ? selectedIndicator
+      : {
+          code: "GDP_PCAP_PPP",
+          name: "GDP per capita (USD PPP)",
+          unit: "USD PPP",
+          source: "OECD",
+        };
+
+  const exportBasename = useMemo(() => {
+    const safe = (s: string) =>
+      s
+        .replace(/[^a-z0-9_-]+/gi, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    return safe(
+      comparisonMode === "regions"
+        ? `mountain-${chaserRegionCode}-${targetRegionCode}-GDP_PCAP_PPP-${baseYear}`
+        : `mountain-${chaserIso}-${targetIso}-${indicatorCode}-${baseYear}`,
+    );
+  }, [
+    baseYear,
+    chaserIso,
+    chaserRegionCode,
+    comparisonMode,
+    indicatorCode,
+    targetIso,
+    targetRegionCode,
+  ]);
+
+  const headlineData: HeadlineData | undefined =
+    comparisonMode !== "countries" || !chaserCountry || !targetCountry
+      ? undefined
+      : {
+          chaserName: chaserCountry.name,
+          chaserIso,
+          targetName: targetCountry.name,
+          targetIso,
+          metricName,
+          chaserGrowthRate,
+          targetGrowthRate,
+          yearsToConvergence: countryConvergence.yearsToConvergence,
+          convergenceYear: countryConvergence.convergenceYear,
+          gap: countryConvergence.gap,
+          appUrl,
+        };
+
+  const shareCardParams: ShareCardParams | null = !hasData
+    ? null
+    : {
+        chaserName: displayChaserName,
+        targetName: displayTargetName,
+        chaserCode: comparisonMode === "regions" ? chaserRegionCode : chaserIso,
+        targetCode: comparisonMode === "regions" ? targetRegionCode : targetIso,
+        metricLabel: displayMetricName,
+        metricUnit: displayMetricUnit,
+        projection,
+        convergenceYear,
+        yearsToConvergence,
+        currentGap: gap ?? 1,
+        chaserGrowth: chaserGrowthRate,
+        targetGrowth: targetGrowthRate,
+        targetMode: targetGrowthRate === 0 ? "static" : "growing",
+        theme,
+        siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
+        dataSource:
+          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank"),
+      };
+
+  // Historical data for thread generator
+  const historicalData = useMemo(() => {
+    if (comparisonMode !== "countries" || !data) return null;
+
+    const chaserSeries = data[chaserIso] || [];
+    const targetSeries = data[targetIso] || [];
+
+    const getEarliest = (series: Array<{ year: number; value: number }>) => {
+      if (!series.length) return null;
+      const sorted = [...series].sort((a, b) => a.year - b.year);
+      return { year: sorted[0].year, value: sorted[0].value };
+    };
+
+    const getLatest = (series: Array<{ year: number; value: number }>) => {
+      if (!series.length) return null;
+      const sorted = [...series].sort((a, b) => b.year - a.year);
+      return { year: sorted[0].year, value: sorted[0].value };
+    };
+
+    return {
+      chaserStart: getEarliest(chaserSeries),
+      chaserCurrent: getLatest(chaserSeries),
+      targetStart: getEarliest(targetSeries),
+      targetCurrent: getLatest(targetSeries),
+    };
+  }, [comparisonMode, data, chaserIso, targetIso]);
+
+  // Implications data for thread generator (only when GDP per capita is selected)
+  const implicationsData = (() => {
+    if (comparisonMode !== "countries") return null;
+    if (indicatorCode !== "GDP_PCAP_PPP") return null;
+    if (!yearsToConvergence) return null;
+    if (chaserValueRaw == null) return null;
+
+    const gdpCurrent = applyAdjustment(chaserValueRaw, chaserAdjustment, useChaserAdjusted);
+    const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, impHorizonYears);
+
+    // Extract computed values from implications hook
+    const { macro } = implicationsComputed;
+    const electricityDeltaTWh = macro.electricity.equivalents?.deltaTWh ?? null;
+    const nuclearPlants = macro.electricity.equivalents?.nuclear.plants ?? null;
+    const urbanDeltaPersons = macro.urban.deltaPersons ?? null;
+    const homesNeeded = macro.urban.homesNeeded ?? null;
+    const co2DeltaMt =
+      macro.co2.currentMt != null && macro.co2.futureMt != null
+        ? macro.co2.futureMt - macro.co2.currentMt
+        : null;
+
+    return {
+      electricityDeltaTWh,
+      nuclearPlants,
+      urbanDeltaPersons,
+      homesNeeded,
+      co2DeltaMt,
+      gdpCurrent,
+      gdpFuture,
+    };
+  })();
+
+  const countriesByIso3 = useMemo(() => {
+    const map: Record<string, { name: string }> = {};
+    for (const c of countries) map[c.iso_alpha3] = { name: c.name };
+    return map;
+  }, [countries]);
+
+  const exportIndicator = useMemo(() => {
+    return indicators.find((i) => i.code === indicatorCode) || null;
+  }, [indicatorCode, indicators]);
+
+  const onDownloadObservedCsv = !hasData
+    ? undefined
+    : comparisonMode === "regions"
+      ? (() => {
+          const chaserRegion = regionalConvergence.chaserRegion;
+          const targetRegion = regionalConvergence.targetRegion;
+          if (!chaserRegion || !targetRegion) return undefined;
+
+          return () => {
+            const csv = toRegionalObservedCsv({
+              state: shareState,
+              observed: {
+                [chaserRegion.code]: getRegionDataSeries(chaserRegion.code).map((p) => ({
+                  year: p.year,
+                  value: p.gdpPerCapita,
+                })),
+                [targetRegion.code]: getRegionDataSeries(targetRegion.code).map((p) => ({
+                  year: p.year,
+                  value: p.gdpPerCapita,
+                })),
+              },
+              chaserRegion,
+              targetRegion,
+            });
+            const filename = `${exportBasename}-observed.csv`;
+            downloadText(filename, csv, "text/csv;charset=utf-8");
+            return filename;
+          };
+        })()
+      : () => {
+          const csv = toObservedCsv({
+            state: shareState,
+            indicator: exportIndicator,
+            countriesByIso3,
+            data,
+          });
+          const filename = `${exportBasename}-observed.csv`;
+          downloadText(filename, csv, "text/csv;charset=utf-8");
+          return filename;
+        };
+
+  const onDownloadProjectionCsv = !hasData
+    ? undefined
+    : comparisonMode === "regions"
+      ? (() => {
+          const chaserRegion = regionalConvergence.chaserRegion;
+          const targetRegion = regionalConvergence.targetRegion;
+          if (!chaserRegion || !targetRegion) return undefined;
+
+          return () => {
+            const csv = toRegionalProjectionCsv({
+              state: shareState,
+              projection,
+              chaserRegion,
+              targetRegion,
+            });
+            const filename = `${exportBasename}-projection.csv`;
+            downloadText(filename, csv, "text/csv;charset=utf-8");
+            return filename;
+          };
+        })()
+      : () => {
+          const csv = toProjectionCsv({
+            state: shareState,
+            indicator: exportIndicator,
+            projection,
+          });
+          const filename = `${exportBasename}-projection.csv`;
+          downloadText(filename, csv, "text/csv;charset=utf-8");
+          return filename;
+        };
+
+  const onDownloadReportJson = !hasData
+    ? undefined
+    : comparisonMode === "regions"
+      ? (() => {
+          const chaserRegion = regionalConvergence.chaserRegion;
+          const targetRegion = regionalConvergence.targetRegion;
+          if (!chaserRegion || !targetRegion) return undefined;
+
+          return () => {
+            const json = toRegionalReportJson({
+              state: shareState,
+              observed: {
+                [chaserRegion.code]: getRegionDataSeries(chaserRegion.code),
+                [targetRegion.code]: getRegionDataSeries(targetRegion.code),
+              },
+              projection,
+              derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+              chaserRegion,
+              targetRegion,
+            });
+            const filename = `${exportBasename}-report.json`;
+            downloadText(filename, json, "application/json;charset=utf-8");
+            return filename;
+          };
+        })()
+      : () => {
+          const json = toReportJson({
+            state: shareState,
+            indicator: exportIndicator,
+            countriesByIso3,
+            observed: data,
+            projection,
+            derived: { yearsToConvergence, convergenceYear, gap: gap ?? 0 },
+          });
+          const filename = `${exportBasename}-report.json`;
+          downloadText(filename, json, "application/json;charset=utf-8");
+          return filename;
+        };
+
+  const resetToDefaults = useCallback(() => {
+    setChaserIso(DEFAULT_SHARE_STATE.chaser);
+    setTargetIso(DEFAULT_SHARE_STATE.target);
+    setIndicatorCode(DEFAULT_SHARE_STATE.indicator);
+    setChaserGrowthRate(DEFAULT_SHARE_STATE.cg);
+    setTargetGrowthRate(DEFAULT_SHARE_STATE.tmode === "static" ? 0 : DEFAULT_SHARE_STATE.tg);
+    setBaseYear(DEFAULT_SHARE_STATE.baseYear);
+    setView(DEFAULT_SHARE_STATE.view || "chart");
+    setUseChaserAdjusted(true);
+    setUseTargetAdjusted(true);
+    setComparisonMode(DEFAULT_SHARE_STATE.mode ?? "countries");
+    setChaserRegionCode(DEFAULT_SHARE_STATE.cr ?? "UKC");
+    setTargetRegionCode(DEFAULT_SHARE_STATE.tr ?? "UKI");
+  }, []);
+
+  const swapCountries = useCallback(() => {
+    setChaserIso(targetIso);
+    setTargetIso(chaserIso);
+    setChaserGrowthRate(targetGrowthRate);
+    setTargetGrowthRate(chaserGrowthRate);
+    setUseChaserAdjusted(useTargetAdjusted);
+    setUseTargetAdjusted(useChaserAdjusted);
+  }, [
+    chaserIso,
+    targetIso,
+    chaserGrowthRate,
+    targetGrowthRate,
+    useChaserAdjusted,
+    useTargetAdjusted,
+  ]);
+
+  const swapRegions = useCallback(() => {
+    const temp = chaserRegionCode;
+    setChaserRegionCode(targetRegionCode);
+    setTargetRegionCode(temp);
+  }, [chaserRegionCode, targetRegionCode]);
+
+  const contextCards =
+    comparisonMode === "countries" &&
+    chaserCountry != null &&
+    targetCountry != null &&
+    (chaserAdjustment || targetAdjustment) ? (
+      <div className="space-y-3">
+        {chaserAdjustment && chaserValueRaw != null && (
+          <CountryContextCard
+            adjustment={chaserAdjustment}
+            countryName={chaserCountry.name}
+            originalValue={chaserValueRaw}
+            adjustedValue={applyAdjustment(chaserValueRaw, chaserAdjustment, true)}
+            useAdjusted={useChaserAdjusted}
+            onToggleAdjusted={setUseChaserAdjusted}
+            unit={metricUnit}
+            color="chaser"
+          />
+        )}
+        {targetAdjustment && targetValueRaw != null && (
+          <CountryContextCard
+            adjustment={targetAdjustment}
+            countryName={targetCountry.name}
+            originalValue={targetValueRaw}
+            adjustedValue={applyAdjustment(targetValueRaw, targetAdjustment, true)}
+            useAdjusted={useTargetAdjusted}
+            onToggleAdjusted={setUseTargetAdjusted}
+            unit={metricUnit}
+            color="target"
+          />
+        )}
+      </div>
+    ) : null;
+
+  const toaster =
+    embedParams.embed && embedParams.interactive === false ? null : (
+      <Toaster theme={theme} position="bottom-right" closeButton richColors />
+    );
+
+  if (countriesLoading) {
+    if (embedParams.embed) {
+      return (
+        <>
+          {toaster}
+          <EmbedView
+            shareState={shareState}
+            embedParams={embedParams}
+            chaserName={displayChaserName}
+            targetName={displayTargetName}
+            status="loading"
+            resolvedTheme={theme}
+          />
+        </>
+      );
+    }
+    return (
+      <>
+        {toaster}
+        <AppLoadingScreen />
+      </>
+    );
+  }
+
+  if (countriesError) {
+    if (embedParams.embed) {
+      return (
+        <>
+          {toaster}
+          <EmbedView
+            shareState={shareState}
+            embedParams={embedParams}
+            chaserName={displayChaserName}
+            targetName={displayTargetName}
+            status="no-data"
+            message={countriesError}
+            resolvedTheme={theme}
+          />
+        </>
+      );
+    }
+    return (
+      <>
+        {toaster}
+        <AppErrorScreen message={countriesError} onRetry={() => window.location.reload()} />
+      </>
+    );
+  }
+
+  // Embed mode: render minimal chart-only view
+  if (embedParams.embed) {
+    const hasInvalidCountryIso =
+      comparisonMode === "countries" && (chaserCountry == null || targetCountry == null);
+
+    const status =
+      comparisonMode === "countries"
+        ? indicatorsLoading ||
+          indicatorExists === null ||
+          indicatorExists === false ||
+          hasInvalidCountryIso ||
+          dataLoading
+          ? "loading"
+          : dataError
+            ? "no-data"
+            : hasData
+              ? "ready"
+              : "no-data"
+        : hasData
+          ? "ready"
+          : "no-data";
+
+    return (
+      <>
+        {toaster}
+        <EmbedView
+          shareState={shareState}
+          embedParams={embedParams}
+          chaserName={displayChaserName}
+          targetName={displayTargetName}
+          status={status}
+          message={status === "no-data" && typeof dataError === "string" ? dataError : undefined}
+          projection={status === "ready" ? projection : undefined}
+          convergenceYear={status === "ready" ? convergenceYear : undefined}
+          yearsToConvergence={status === "ready" ? yearsToConvergence : undefined}
+          milestones={status === "ready" ? milestones : undefined}
+          unit={status === "ready" ? displayMetricUnit : undefined}
+          resolvedTheme={theme}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {toaster}
+      <div className="min-h-screen bg-surface grain">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+          {/* Header - Compact */}
+          <AppHeader
+            comparisonMode={comparisonMode}
+            shareUrl={shareUrl}
+            headlineData={headlineData}
+            onOpenExportModal={() => setIsExportModalOpen(true)}
+            onOpenShareCardModal={() => setIsShareCardModalOpen(true)}
+            onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
+            onOpenThreadGenerator={() => setIsThreadGeneratorOpen(true)}
+            shareCardAvailable={shareCardParams !== null}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            printChaser={displayChaserName}
+            printTarget={displayTargetName}
+            printMetric={displayMetricName}
+            disableShareActions={countriesLoading}
+          />
+
+          {/* Main two-column layout for large screens */}
+          <div className="layout-two-col">
+            {/* Left column - Main content */}
+            <div className="min-w-0 space-y-2.5 sm:space-y-3">
+              {/* Mode toggle and Selectors */}
+              <SelectorsPanel
+                comparisonMode={comparisonMode}
+                onComparisonModeChange={setComparisonMode}
+                countries={countries}
+                indicators={indicators}
+                indicatorsLoading={indicatorsLoading}
+                chaserIso={chaserIso}
+                targetIso={targetIso}
+                onChaserIsoChange={setChaserIso}
+                onTargetIsoChange={setTargetIso}
+                onSwapCountries={swapCountries}
+                indicatorCode={indicatorCode}
+                onIndicatorCodeChange={setIndicatorCode}
+                chaserRegionCode={chaserRegionCode}
+                targetRegionCode={targetRegionCode}
+                onChaserRegionCodeChange={setChaserRegionCode}
+                onTargetRegionCodeChange={setTargetRegionCode}
+                onSwapRegions={swapRegions}
+              />
+              <div className="hidden lg:block no-print">
+                <GrowthRateBar
+                  chaserName={displayChaserName}
+                  targetName={displayTargetName}
+                  chaserRate={chaserGrowthRate}
+                  targetRate={targetGrowthRate}
+                  onChaserRateChange={setChaserGrowthRate}
+                  onTargetRateChange={setTargetGrowthRate}
+                />
+              </div>
+              <DataStates
+                loading={dataLoading || indicatorsLoading}
+                error={dataError}
+                metricName={metricName}
+                showMissingData={
+                  comparisonMode === "countries" &&
+                  dataHasLoaded &&
+                  !indicatorsLoading &&
+                  chaserCountry != null &&
+                  targetCountry != null &&
+                  (chaserValueRaw == null || targetValueRaw == null)
+                }
+              />
+
+              {/* Result summary - compact */}
+              {hasData && (
+                <div className="animate-fade-in-up stagger-2">
+                  <ResultSummary
+                    chaserName={displayChaserName}
+                    targetName={displayTargetName}
+                    metricName={displayMetricName}
+                    metricUnit={displayMetricUnit}
+                    chaserValue={displayChaserValue ?? 0}
+                    targetValue={displayTargetValue ?? 0}
+                    chaserGrowthRate={chaserGrowthRate}
+                    targetGrowthRate={targetGrowthRate}
+                    yearsToConvergence={yearsToConvergence}
+                    convergenceYear={convergenceYear}
+                    gap={gap ?? 0}
+                    chaserIsAdjusted={
+                      comparisonMode === "countries" &&
+                      chaserAdjustment != null &&
+                      useChaserAdjusted
+                    }
+                    targetIsAdjusted={
+                      comparisonMode === "countries" &&
+                      targetAdjustment != null &&
+                      useTargetAdjusted
+                    }
+                    milestones={showMilestones ? milestones : []}
+                  />
+                </div>
+              )}
+
+              {/* Chart */}
+              {hasData && (
+                <ProjectionCard
+                  view={view}
+                  onViewChange={setView}
+                  showMilestones={showMilestones}
+                  onShowMilestonesChange={setShowMilestones}
+                  projection={projection}
+                  chaserName={displayChaserName}
+                  targetName={displayTargetName}
+                  convergenceYear={convergenceYear}
+                  milestones={milestones}
+                  unit={displayMetricUnit}
+                  theme={theme}
+                  svgRef={chartSvgRef}
+                  chaserHasNote={
+                    comparisonMode === "countries" && chaserAdjustment != null && useChaserAdjusted
+                  }
+                  targetHasNote={
+                    comparisonMode === "countries" && targetAdjustment != null && useTargetAdjusted
+                  }
+                />
+              )}
+
+              {/* Implications trigger button (mobile only - desktop is in sidebar) */}
+              {showImplications && comparisonMode === "countries" && (
+                <div className="animate-fade-in-up stagger-4 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setIsImplicationsOpen(true)}
+                    className="w-full card p-4 text-left hover:bg-surface transition-default group"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
+                          Development Implications
+                        </h3>
+                        <p className="text-sm text-ink-muted mt-1">
+                          Explore electricity, urbanization, emissions and more
+                        </p>
+                      </div>
+                      <svg
+                        className="w-5 h-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              )}
+              {comparisonMode === "regions" && (
+                <div className="animate-fade-in-up stagger-4">
+                  <RegionalImplicationsPanel
+                    chaserCode={chaserRegionCode}
+                    chaserName={displayChaserName}
+                    gdpCurrent={displayChaserValue}
+                    chaserGrowthRate={chaserGrowthRate}
+                    baseYear={baseYear}
+                    horizonYears={impHorizonYears}
+                    onHorizonYearsChange={setImpHorizonYears}
+                  />
+                </div>
+              )}
+
+              {/* Growth controls and context cards - shown below chart on mobile/tablet */}
+              {hasData && (
+                <div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
+                  <GrowthSidebarContent
+                    chaserName={displayChaserName}
+                    targetName={displayTargetName}
+                    chaserValue={displayChaserValue ?? 0}
+                    targetValue={displayTargetValue ?? 0}
+                    chaserGrowthRate={chaserGrowthRate}
+                    targetGrowthRate={targetGrowthRate}
+                    onChaserGrowthRateChange={setChaserGrowthRate}
+                    onTargetGrowthRateChange={setTargetGrowthRate}
+                    catchUpYears={catchUpYears}
+                    onCatchUpYearsChange={setCatchUpYears}
+                    contextCards={contextCards}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right column - Growth controls and context cards sidebar (desktop only) */}
+            <aside className="sidebar-desktop">
+              {hasData && (
+                <div className="sticky top-6 space-y-4 animate-fade-in-up stagger-2 no-print">
+                  <GrowthSidebarContent
+                    compact
+                    chaserName={displayChaserName}
+                    targetName={displayTargetName}
+                    chaserValue={displayChaserValue ?? 0}
+                    targetValue={displayTargetValue ?? 0}
+                    chaserGrowthRate={chaserGrowthRate}
+                    targetGrowthRate={targetGrowthRate}
+                    onChaserGrowthRateChange={setChaserGrowthRate}
+                    onTargetGrowthRateChange={setTargetGrowthRate}
+                    catchUpYears={catchUpYears}
+                    onCatchUpYearsChange={setCatchUpYears}
+                    contextCards={contextCards}
+                    showControls={false}
+                  />
+
+                  {/* Implications trigger (desktop sidebar) */}
+                  {showImplications && comparisonMode === "countries" && (
+                    <button
+                      type="button"
+                      onClick={() => setIsImplicationsOpen(true)}
+                      className="w-full card p-4 text-left hover:bg-surface transition-default group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-[var(--color-accent)]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
+                            Implications
+                          </h3>
+                          <p className="text-xs text-ink-muted truncate">Electricity, urban, CO2</p>
+                        </div>
+                        <svg
+                          className="w-4 h-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </aside>
+          </div>
+
+          <AppFooter
+            comparisonMode={comparisonMode}
+            dataSourceName={
+              comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
+            }
+            countriesCount={countries.length}
+            regionsCount={ALL_TL2_REGIONS.length}
+          />
+        </div>
+
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          baseYear={baseYear}
+          onBaseYearChange={(year) => {
+            if (!Number.isFinite(year)) return;
+            setBaseYear(Math.max(1950, Math.min(2100, year)));
+          }}
+          onReset={resetToDefaults}
+          comparisonMode={comparisonMode}
+          dataSourceName={
+            comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
+          }
+          onDownloadObservedCsv={onDownloadObservedCsv}
+          onDownloadProjectionCsv={onDownloadProjectionCsv}
+          onDownloadReportJson={onDownloadReportJson}
+          shareState={shareState}
+          onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
+        />
+
+        {/* Share Card Modal */}
+        <ShareCardModal
+          isOpen={isShareCardModalOpen}
+          onClose={() => setIsShareCardModalOpen(false)}
+          shareCardParams={shareCardParams}
+        />
+
+        {/* Citation Panel */}
+        <CitationPanel
+          isOpen={isCitationPanelOpen}
+          onClose={() => setIsCitationPanelOpen(false)}
+          shareState={shareState}
+          indicator={citationIndicator}
+          chaserName={displayChaserName}
+          targetName={displayTargetName}
+        />
+
+        {/* Thread Generator Modal */}
+        {isThreadGeneratorOpen && shareCardParams && (
+          <ThreadGeneratorModal
+            isOpen
+            onClose={() => setIsThreadGeneratorOpen(false)}
+            shareCardParams={shareCardParams}
+            historicalData={historicalData}
+            implicationsData={implicationsData}
+            baseYear={baseYear}
+            horizonYears={impHorizonYears}
+            appUrl={appUrl}
+          />
+        )}
+
+        {/* Implications Slide-Over */}
+        {comparisonMode === "countries" && (
+          <ImplicationsSlideOver
+            isOpen={isImplicationsOpen}
+            onClose={() => setIsImplicationsOpen(false)}
+            chaserIso={chaserIso}
+            chaserName={displayChaserName}
+            gdpCurrent={chaserValue}
+            chaserGrowthRate={chaserGrowthRate}
+            baseYear={baseYear}
+            horizonYears={impHorizonYears}
+            onHorizonYearsChange={setImpHorizonYears}
+            template={impTemplate}
+            onTemplateChange={setImpTemplate}
+            activeCard={impCard}
+            onActiveCardChange={setImpCard}
+          />
+        )}
+      </div>
+    </>
+  );
+}

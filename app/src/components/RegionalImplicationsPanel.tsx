@@ -1,11 +1,11 @@
 import { useId, useMemo } from "react";
+import { formatMetricValue } from "../lib/convergence";
 import {
   ALL_TL2_REGIONS,
   getLatestRegionData,
   getRegionByCode,
   type OECDRegion,
 } from "../lib/oecdRegions";
-import { formatMetricValue } from "../lib/convergence";
 
 interface ComparableRegion {
   region: OECDRegion;
@@ -35,9 +35,7 @@ export function RegionalImplicationsPanel({
   const horizonYearsInputId = useId();
   const chaserRegion = getRegionByCode(chaserCode);
   const year = baseYear + horizonYears;
-  const gdpFuture = gdpCurrent
-    ? gdpCurrent * Math.pow(1 + chaserGrowthRate, horizonYears)
-    : null;
+  const gdpFuture = gdpCurrent ? gdpCurrent * Math.pow(1 + chaserGrowthRate, horizonYears) : null;
 
   // Find regions with similar GDP per capita (within ±20%)
   const comparableRegions = useMemo((): ComparableRegion[] => {
@@ -62,9 +60,7 @@ export function RegionalImplicationsPanel({
     }
 
     // Sort by closest to chaser
-    comparable.sort(
-      (a, b) => Math.abs(a.difference) - Math.abs(b.difference)
-    );
+    comparable.sort((a, b) => Math.abs(a.difference) - Math.abs(b.difference));
 
     return comparable.slice(0, 5);
   }, [chaserCode, gdpCurrent]);
@@ -91,9 +87,7 @@ export function RegionalImplicationsPanel({
       }
     }
 
-    comparable.sort(
-      (a, b) => Math.abs(a.difference) - Math.abs(b.difference)
-    );
+    comparable.sort((a, b) => Math.abs(a.difference) - Math.abs(b.difference));
 
     return comparable.slice(0, 5);
   }, [chaserCode, gdpFuture]);
@@ -104,7 +98,7 @@ export function RegionalImplicationsPanel({
 
     // Find all regions from the same country
     const sameCountryRegions = ALL_TL2_REGIONS.filter(
-      (r) => r.countryCode === chaserRegion.countryCode
+      (r) => r.countryCode === chaserRegion.countryCode,
     );
 
     let totalGdp = 0;
@@ -154,9 +148,7 @@ export function RegionalImplicationsPanel({
         <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
           Regional Context
         </h3>
-        <p className="mt-2 text-sm text-ink-muted">
-          No data available for this region.
-        </p>
+        <p className="mt-2 text-sm text-ink-muted">No data available for this region.</p>
       </div>
     );
   }
@@ -185,8 +177,8 @@ export function RegionalImplicationsPanel({
             <span className="font-medium text-ink">
               {nationalComparison.percentOfNational.toFixed(0)}%
             </span>{" "}
-            of the national average (
-            {formatMetricValue(nationalComparison.nationalAverage, "int$")})
+            of the national average ({formatMetricValue(nationalComparison.nationalAverage, "int$")}
+            )
           </div>
           {nationalComparison.highest && nationalComparison.lowest && (
             <div className="mt-1 text-[11px] text-ink-faint">
@@ -202,12 +194,8 @@ export function RegionalImplicationsPanel({
       {/* Comparable regions now */}
       {comparableRegions.length > 0 && (
         <div className="mt-3">
-          <div className="text-xs font-medium text-ink">
-            Similar regions today
-          </div>
-          <p className="text-[11px] text-ink-faint">
-            Regions with similar GDP per capita (±20%)
-          </p>
+          <div className="text-xs font-medium text-ink">Similar regions today</div>
+          <p className="text-[11px] text-ink-faint">Regions with similar GDP per capita (±20%)</p>
           <div className="mt-2 space-y-1">
             {comparableRegions.map((item) => (
               <div
@@ -216,9 +204,7 @@ export function RegionalImplicationsPanel({
               >
                 <span className="text-ink truncate">
                   {item.region.name}
-                  <span className="text-ink-faint ml-1">
-                    ({item.region.countryName})
-                  </span>
+                  <span className="text-ink-faint ml-1">({item.region.countryName})</span>
                 </span>
                 <span className="text-ink-muted shrink-0 ml-2">
                   {formatMetricValue(item.gdpPerCapita, "int$")}
@@ -270,9 +256,7 @@ export function RegionalImplicationsPanel({
       {/* Comparable regions at future GDP */}
       {futureComparableRegions.length > 0 && gdpFuture && (
         <div className="mt-3">
-          <div className="text-xs font-medium text-ink">
-            Regions at projected level ({year})
-          </div>
+          <div className="text-xs font-medium text-ink">Regions at projected level ({year})</div>
           <p className="text-[11px] text-ink-faint">
             Regions currently at ~{formatMetricValue(gdpFuture, "int$")} GDP/cap
           </p>
@@ -284,9 +268,7 @@ export function RegionalImplicationsPanel({
               >
                 <span className="text-ink truncate">
                   {item.region.name}
-                  <span className="text-ink-faint ml-1">
-                    ({item.region.countryName})
-                  </span>
+                  <span className="text-ink-faint ml-1">({item.region.countryName})</span>
                 </span>
                 <span className="text-ink-muted shrink-0 ml-2">
                   {formatMetricValue(item.gdpPerCapita, "int$")}
@@ -299,9 +281,7 @@ export function RegionalImplicationsPanel({
 
       {futureComparableRegions.length === 0 && gdpFuture && (
         <div className="mt-3">
-          <div className="text-xs font-medium text-ink">
-            Regions at projected level ({year})
-          </div>
+          <div className="text-xs font-medium text-ink">Regions at projected level ({year})</div>
           <p className="mt-1 text-[11px] text-ink-muted">
             {gdpFuture > 80000
               ? "Projected GDP exceeds all regions in database."
@@ -311,8 +291,8 @@ export function RegionalImplicationsPanel({
       )}
 
       <p className="mt-3 text-[11px] text-ink-faint">
-        Data: OECD Regions and Cities at a Glance 2024. GDP per capita in USD
-        PPP (constant 2015 prices).
+        Data: OECD Regions and Cities at a Glance 2024. GDP per capita in USD PPP (constant 2015
+        prices).
       </p>
     </div>
   );

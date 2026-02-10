@@ -5,4 +5,3 @@ export async function copyTextToClipboard(text: string) {
   }
   window.prompt("Copy to clipboard:", text);
 }
-

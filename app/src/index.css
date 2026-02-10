@@ -1,5 +1,5 @@
 /* Import distinctive fonts - Fraunces for editorial headlines, Instrument Sans for clean data */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
 
@@ -8,9 +8,9 @@
 @source "../src/**/*.{js,ts,jsx,tsx}";
 
 @theme {
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Instrument Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Light mode - warm parchment aesthetic */
   --color-surface: #faf8f5;
@@ -127,7 +127,7 @@
     position: relative;
   }
   .grain::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
@@ -141,48 +141,112 @@
   }
 
   /* Surface colors */
-  .bg-surface { background-color: var(--color-surface); }
-  .bg-surface-raised { background-color: var(--color-surface-raised); }
-  .bg-surface-sunken { background-color: var(--color-surface-sunken); }
-  .dark .bg-surface { background-color: var(--color-surface-dark); }
-  .dark .bg-surface-raised { background-color: var(--color-surface-raised-dark); }
-  .dark .bg-surface-sunken { background-color: var(--color-surface-sunken-dark); }
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+  .bg-surface-raised {
+    background-color: var(--color-surface-raised);
+  }
+  .bg-surface-sunken {
+    background-color: var(--color-surface-sunken);
+  }
+  .dark .bg-surface {
+    background-color: var(--color-surface-dark);
+  }
+  .dark .bg-surface-raised {
+    background-color: var(--color-surface-raised-dark);
+  }
+  .dark .bg-surface-sunken {
+    background-color: var(--color-surface-sunken-dark);
+  }
 
   /* Ink colors */
-  .text-ink { color: var(--color-ink); }
-  .text-ink-muted { color: var(--color-ink-muted); }
-  .text-ink-faint { color: var(--color-ink-faint); }
-  .dark .text-ink { color: var(--color-ink-dark); }
-  .dark .text-ink-muted { color: var(--color-ink-muted-dark); }
-  .dark .text-ink-faint { color: var(--color-ink-faint-dark); }
+  .text-ink {
+    color: var(--color-ink);
+  }
+  .text-ink-muted {
+    color: var(--color-ink-muted);
+  }
+  .text-ink-faint {
+    color: var(--color-ink-faint);
+  }
+  .dark .text-ink {
+    color: var(--color-ink-dark);
+  }
+  .dark .text-ink-muted {
+    color: var(--color-ink-muted-dark);
+  }
+  .dark .text-ink-faint {
+    color: var(--color-ink-faint-dark);
+  }
 
   /* Border colors */
-  .border-surface { border-color: var(--color-border); }
-  .border-surface-subtle { border-color: var(--color-border-subtle); }
-  .dark .border-surface { border-color: var(--color-border-dark); }
-  .dark .border-surface-subtle { border-color: var(--color-border-subtle-dark); }
+  .border-surface {
+    border-color: var(--color-border);
+  }
+  .border-surface-subtle {
+    border-color: var(--color-border-subtle);
+  }
+  .dark .border-surface {
+    border-color: var(--color-border-dark);
+  }
+  .dark .border-surface-subtle {
+    border-color: var(--color-border-subtle-dark);
+  }
 
   /* Chaser colors */
-  .text-chaser { color: var(--color-chaser); }
-  .text-chaser-light { color: var(--color-chaser-light); }
-  .bg-chaser { background-color: var(--color-chaser); }
-  .bg-chaser-light { background-color: var(--color-chaser-bg); }
-  .border-chaser { border-color: var(--color-chaser-muted); }
-  .dark .bg-chaser-light { background-color: var(--color-chaser-bg-dark); }
-  .dark .border-chaser { border-color: rgba(194, 65, 12, 0.4); }
+  .text-chaser {
+    color: var(--color-chaser);
+  }
+  .text-chaser-light {
+    color: var(--color-chaser-light);
+  }
+  .bg-chaser {
+    background-color: var(--color-chaser);
+  }
+  .bg-chaser-light {
+    background-color: var(--color-chaser-bg);
+  }
+  .border-chaser {
+    border-color: var(--color-chaser-muted);
+  }
+  .dark .bg-chaser-light {
+    background-color: var(--color-chaser-bg-dark);
+  }
+  .dark .border-chaser {
+    border-color: rgba(194, 65, 12, 0.4);
+  }
 
   /* Target colors */
-  .text-target { color: var(--color-target); }
-  .text-target-light { color: var(--color-target-light); }
-  .bg-target { background-color: var(--color-target); }
-  .bg-target-light { background-color: var(--color-target-bg); }
-  .border-target { border-color: var(--color-target-muted); }
-  .dark .bg-target-light { background-color: var(--color-target-bg-dark); }
-  .dark .border-target { border-color: rgba(4, 120, 87, 0.4); }
+  .text-target {
+    color: var(--color-target);
+  }
+  .text-target-light {
+    color: var(--color-target-light);
+  }
+  .bg-target {
+    background-color: var(--color-target);
+  }
+  .bg-target-light {
+    background-color: var(--color-target-bg);
+  }
+  .border-target {
+    border-color: var(--color-target-muted);
+  }
+  .dark .bg-target-light {
+    background-color: var(--color-target-bg-dark);
+  }
+  .dark .border-target {
+    border-color: rgba(4, 120, 87, 0.4);
+  }
 
   /* Convergence/accent */
-  .text-convergence { color: var(--color-convergence); }
-  .dark .text-convergence { color: var(--color-convergence-light); }
+  .text-convergence {
+    color: var(--color-convergence);
+  }
+  .dark .text-convergence {
+    color: var(--color-convergence-light);
+  }
 
   /* Entrance animations */
   @keyframes fade-in-up {
@@ -197,8 +261,12 @@
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slide-up {
@@ -286,11 +354,26 @@
   }
 
   /* Stagger delays for children */
-  .stagger-1 { animation-delay: 0.05s; opacity: 0; }
-  .stagger-2 { animation-delay: 0.1s; opacity: 0; }
-  .stagger-3 { animation-delay: 0.15s; opacity: 0; }
-  .stagger-4 { animation-delay: 0.2s; opacity: 0; }
-  .stagger-5 { animation-delay: 0.25s; opacity: 0; }
+  .stagger-1 {
+    animation-delay: 0.05s;
+    opacity: 0;
+  }
+  .stagger-2 {
+    animation-delay: 0.1s;
+    opacity: 0;
+  }
+  .stagger-3 {
+    animation-delay: 0.15s;
+    opacity: 0;
+  }
+  .stagger-4 {
+    animation-delay: 0.2s;
+    opacity: 0;
+  }
+  .stagger-5 {
+    animation-delay: 0.25s;
+    opacity: 0;
+  }
 
   /* Card styling */
   .card {
@@ -335,7 +418,9 @@
     border-radius: 50%;
     margin-top: -6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   input[type="range"]::-webkit-slider-thumb:hover {

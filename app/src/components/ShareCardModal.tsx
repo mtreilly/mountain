@@ -1,22 +1,15 @@
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import {
-  copyShareCardToClipboard,
-  downloadShareCardPng,
-} from "../lib/chartExport";
-import {
-  SHARE_CARD_SIZES,
-  type ShareCardParams,
-  type ShareCardSize,
-} from "../lib/shareCardSvg";
+import { copyShareCardToClipboard, downloadShareCardPng } from "../lib/chartExport";
+import { SHARE_CARD_SIZES, type ShareCardParams, type ShareCardSize } from "../lib/shareCardSvg";
 import { ShareCardPreview } from "./ShareCardPreview";
 
 interface ShareCardModalProps {
@@ -31,11 +24,7 @@ const SIZE_OPTIONS: Array<{ value: ShareCardSize; label: string; description: st
   { value: "square", label: "Square", description: "1080×1080" },
 ];
 
-export function ShareCardModal({
-  isOpen,
-  onClose,
-  shareCardParams,
-}: ShareCardModalProps) {
+export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const themeButtonRefs = useRef<Record<"light" | "dark", HTMLButtonElement | null>>({
@@ -48,7 +37,7 @@ export function ShareCardModal({
     square: null,
   });
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(
-    shareCardParams?.theme ?? "light"
+    shareCardParams?.theme ?? "light",
   );
   const [selectedSize, setSelectedSize] = useState<ShareCardSize>("twitter");
   const [isCopying, setIsCopying] = useState(false);
@@ -180,7 +169,8 @@ export function ShareCardModal({
 
   const previewScale = selectedSize === "square" ? 0.35 : 0.4;
   const handleThemeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
     const order: Array<"light" | "dark"> = ["light", "dark"];
     const current = order.indexOf(selectedTheme);
@@ -195,7 +185,8 @@ export function ShareCardModal({
   };
 
   const handleSizeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
     const order = SIZE_OPTIONS.map((o) => o.value);
     const current = order.indexOf(selectedSize);
@@ -222,9 +213,7 @@ export function ShareCardModal({
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
             <h2 className="text-lg font-semibold text-ink">Create Share Card</h2>
-            <p className="text-sm text-ink-muted">
-              Generate an image optimized for social media
-            </p>
+            <p className="text-sm text-ink-muted">Generate an image optimized for social media</p>
           </div>
           <button
             type="button"
@@ -274,9 +263,7 @@ export function ShareCardModal({
             <div className="space-y-4 p-4 rounded-xl border border-surface bg-surface">
               {/* Theme toggle */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">
-                  Theme
-                </label>
+                <label className="block text-sm font-medium text-ink mb-2">Theme</label>
                 <div
                   role="radiogroup"
                   aria-label="Theme"
@@ -299,8 +286,18 @@ export function ShareCardModal({
                     }`}
                   >
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
                       </svg>
                       Light
                     </span>
@@ -321,8 +318,18 @@ export function ShareCardModal({
                     }`}
                   >
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                        />
                       </svg>
                       Dark
                     </span>
@@ -332,9 +339,7 @@ export function ShareCardModal({
 
               {/* Size selector */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">
-                  Size
-                </label>
+                <label className="block text-sm font-medium text-ink mb-2">Size</label>
                 <div
                   role="radiogroup"
                   aria-label="Share card size"
@@ -384,7 +389,12 @@ export function ShareCardModal({
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                      />
                     </svg>
                     Copy to Clipboard
                   </>
@@ -404,7 +414,12 @@ export function ShareCardModal({
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
                     </svg>
                     Download PNG
                   </>
@@ -420,6 +435,6 @@ export function ShareCardModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

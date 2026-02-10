@@ -1,8 +1,8 @@
 import type { RefObject } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { useResizeObserver } from "../hooks/useResizeObserver";
 import { formatMetricValue, type Milestone } from "../lib/convergence";
 import { CHART_GEOMETRY, ConvergenceChart } from "./ConvergenceChart";
-import { useResizeObserver } from "../hooks/useResizeObserver";
 
 const GEOMETRY = CHART_GEOMETRY;
 
@@ -81,7 +81,7 @@ export function ConvergenceChartInteractive({
       }
       return bestIndex;
     },
-    [chartWidth, projection, svgRef, xMin, xRange]
+    [chartWidth, projection, svgRef, xMin, xRange],
   );
 
   const onPointerMove = useCallback(
@@ -93,7 +93,7 @@ export function ConvergenceChartInteractive({
       }
       setActiveIndex(next);
     },
-    [getNearestIndexFromClientPoint]
+    [getNearestIndexFromClientPoint],
   );
 
   const onPointerLeave = useCallback(() => setActiveIndex(null), []);
@@ -117,14 +117,12 @@ export function ConvergenceChartInteractive({
         return next;
       });
     },
-    [projection.length]
+    [projection.length],
   );
 
   const active = activeIndex == null ? null : projection[activeIndex];
   const activeX =
-    active == null
-      ? null
-      : GEOMETRY.padding.left + ((active.year - xMin) / xRange) * chartWidth;
+    active == null ? null : GEOMETRY.padding.left + ((active.year - xMin) / xRange) * chartWidth;
   const activeYChaser =
     active == null
       ? null
@@ -138,7 +136,11 @@ export function ConvergenceChartInteractive({
     if (!active || activeX == null || activeYChaser == null || activeYTarget == null) return null;
 
     const leftPct = clampPct((activeX / GEOMETRY.width) * 100, 6, 94);
-    const topPct = clampPct((Math.min(activeYChaser, activeYTarget) / GEOMETRY.height) * 100, 10, 92);
+    const topPct = clampPct(
+      (Math.min(activeYChaser, activeYTarget) / GEOMETRY.height) * 100,
+      10,
+      92,
+    );
 
     return {
       leftPct,
@@ -219,13 +221,15 @@ export function ConvergenceChartInteractive({
             <div className="mt-1 space-y-0.5 text-[11px]" style={{ color: markerPalette.faint }}>
               <div>
                 <span className="font-medium" style={{ color: "#ea580c" }}>
-                  {chaserName}{chaserHasNote && <span style={{ fontSize: 9 }}>†</span>}:
+                  {chaserName}
+                  {chaserHasNote && <span style={{ fontSize: 9 }}>†</span>}:
                 </span>{" "}
                 {formatMetricValue(tooltip.chaser, unit)}
               </div>
               <div>
                 <span className="font-medium" style={{ color: "#059669" }}>
-                  {targetName}{targetHasNote && <span style={{ fontSize: 9 }}>†</span>}:
+                  {targetName}
+                  {targetHasNote && <span style={{ fontSize: 9 }}>†</span>}:
                 </span>{" "}
                 {formatMetricValue(tooltip.target, unit)}
               </div>

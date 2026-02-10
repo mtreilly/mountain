@@ -29,13 +29,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (countries.length === 0) {
     return Response.json(
       { error: { code: "MISSING_COUNTRIES", message: "countries parameter is required" } },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (indicators.length === 0) {
     return Response.json(
       { error: { code: "MISSING_INDICATORS", message: "indicators parameter is required" } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -45,7 +45,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const indicatorRows = await DB.prepare(
     `SELECT code, name, description, unit, source, category
      FROM indicators
-     WHERE code IN (${indicatorPlaceholders})`
+     WHERE code IN (${indicatorPlaceholders})`,
   )
     .bind(...indicators)
     .all<{
@@ -59,9 +59,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const indicatorByCode: Record<
     string,
-    { code: string; name: string; description: string | null; unit: string | null; source: string | null; category: string | null }
-  > =
-    {};
+    {
+      code: string;
+      name: string;
+      description: string | null;
+      unit: string | null;
+      source: string | null;
+      category: string | null;
+    }
+  > = {};
   for (const row of indicatorRows.results || []) indicatorByCode[row.code] = row;
 
   const points = await DB.prepare(
@@ -74,10 +80,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
      WHERE i.code IN (${indicatorPlaceholders})
        AND c.iso_alpha3 IN (${countryPlaceholders})
        AND d.year BETWEEN ? AND ?
-     ORDER BY i.code, c.iso_alpha3, d.year`
+     ORDER BY i.code, c.iso_alpha3, d.year`,
   )
     .bind(...indicators, ...countries, startYear, endYear)
-    .all<{ indicator: string; iso: string; year: number; value: number; source_vintage?: string | null }>();
+    .all<{
+      indicator: string;
+      iso: string;
+      year: number;
+      value: number;
+      source_vintage?: string | null;
+    }>();
 
   const data: Record<
     string,
@@ -89,7 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     data[row.indicator][row.iso].push(
       includeSourceVintage
         ? { year: row.year, value: row.value, source_vintage: row.source_vintage ?? null }
-        : { year: row.year, value: row.value }
+        : { year: row.year, value: row.value },
     );
   }
 

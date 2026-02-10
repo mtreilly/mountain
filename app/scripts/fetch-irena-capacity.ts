@@ -101,12 +101,12 @@ async function main() {
   console.log(
     `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
       `VALUES ('INSTALLED_CAPACITY_SOLAR_GW', 'Installed capacity (solar)', 'GW', 'IRENA', ` +
-      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`
+      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`,
   );
   console.log(
     `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
       `VALUES ('INSTALLED_CAPACITY_WIND_GW', 'Installed capacity (wind)', 'GW', 'IRENA', ` +
-      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`
+      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`,
   );
 
   const solarByIsoYear = new Map<string, number>();
@@ -162,7 +162,7 @@ async function main() {
   if (countries.length !== sizeCountry || techs.length !== sizeTech || years.length !== sizeYear) {
     // Be permissive; still attempt to iterate over ordered codes arrays.
     console.error(
-      `IRENA dimension size mismatch: countries=${countries.length}/${sizeCountry} techs=${techs.length}/${sizeTech} years=${years.length}/${sizeYear}`
+      `IRENA dimension size mismatch: countries=${countries.length}/${sizeCountry} techs=${techs.length}/${sizeTech} years=${years.length}/${sizeYear}`,
     );
   }
 
@@ -220,7 +220,7 @@ async function main() {
         `INSERT OR REPLACE INTO data_points (country_id, indicator_id, year, value, source_vintage) ` +
           `SELECT c.id, i.id, ${year}, ${value}, '${escapeSQL(vintage)}' ` +
           `FROM countries c, indicators i ` +
-          `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(indicatorCode)}';`
+          `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(indicatorCode)}';`,
       );
       emitted += 1;
     }

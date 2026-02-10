@@ -79,7 +79,7 @@ function buildMultiLinePaths(
     optimistic: Array<{ year: number; chaser: number; target: number }>;
     pessimistic: Array<{ year: number; chaser: number; target: number }>;
   },
-  geometry: ChartGeometry
+  geometry: ChartGeometry,
 ): {
   baselinePath: string;
   optimisticPath: string;
@@ -111,7 +111,9 @@ function buildMultiLinePaths(
   const xMin = Math.min(...allYears);
   const xMax = Math.max(...allYears);
   const xRange = Math.max(1, xMax - xMin);
-  const yMax = Math.max(...allValues) * 1.1;
+  const yMaxRaw = Math.max(...allValues);
+  // Guard against yMax=0 which would produce NaN coordinates in the SVG.
+  const yMax = Math.max(1, yMaxRaw * 1.1);
 
   const scales = {
     x: (year: number) => x + padding.left + ((year - xMin) / xRange) * chartWidth,
@@ -123,7 +125,10 @@ function buildMultiLinePaths(
 
   const buildPath = (proj: Array<{ year: number; chaser: number }>) =>
     proj
-      .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.chaser).toFixed(1)}`)
+      .map(
+        (d, i) =>
+          `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.chaser).toFixed(1)}`,
+      )
       .join(" ");
 
   return {
@@ -131,7 +136,10 @@ function buildMultiLinePaths(
     optimisticPath: buildPath(projections.optimistic),
     pessimisticPath: buildPath(projections.pessimistic),
     targetPath: projections.baseline
-      .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.target).toFixed(1)}`)
+      .map(
+        (d, i) =>
+          `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.target).toFixed(1)}`,
+      )
       .join(" "),
     scales,
   };
@@ -160,22 +168,28 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
   const maxYears = 100;
   const projections = {
     baseline: generateSensitivityProjection(
-      chaserValue, targetValue,
+      chaserValue,
+      targetValue,
       sensitivity.baseline.chaserGrowth,
       sensitivity.baseline.targetGrowth,
-      baseYear, maxYears
+      baseYear,
+      maxYears,
     ),
     optimistic: generateSensitivityProjection(
-      chaserValue, targetValue,
+      chaserValue,
+      targetValue,
       sensitivity.optimistic.chaserGrowth,
       sensitivity.optimistic.targetGrowth,
-      baseYear, maxYears
+      baseYear,
+      maxYears,
     ),
     pessimistic: generateSensitivityProjection(
-      chaserValue, targetValue,
+      chaserValue,
+      targetValue,
       sensitivity.pessimistic.chaserGrowth,
       sensitivity.pessimistic.targetGrowth,
-      baseYear, maxYears
+      baseYear,
+      maxYears,
     ),
   };
 
@@ -195,8 +209,10 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
     padding: { top: 30, right: 40, bottom: 40, left: 60 },
   };
 
-  const { baselinePath, optimisticPath, pessimisticPath, targetPath, scales } =
-    buildMultiLinePaths(projections, chartGeometry);
+  const { baselinePath, optimisticPath, pessimisticPath, targetPath, scales } = buildMultiLinePaths(
+    projections,
+    chartGeometry,
+  );
 
   // Generate Y-axis ticks
   const yTicks: number[] = [];
@@ -222,9 +238,17 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
 
   // Scenario table data
   const scenarios = [
-    { label: sensitivity.optimistic.label, years: sensitivity.optimistic.yearsToConvergence, color: palette.optimistic },
+    {
+      label: sensitivity.optimistic.label,
+      years: sensitivity.optimistic.yearsToConvergence,
+      color: palette.optimistic,
+    },
     { label: "Baseline", years: sensitivity.baseline.yearsToConvergence, color: palette.baseline },
-    { label: sensitivity.pessimistic.label, years: sensitivity.pessimistic.yearsToConvergence, color: palette.pessimistic },
+    {
+      label: sensitivity.pessimistic.label,
+      years: sensitivity.pessimistic.yearsToConvergence,
+      color: palette.pessimistic,
+    },
   ];
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -280,13 +304,17 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
   <g transform="translate(${tableX}, ${chartAreaY + 20})">
     <text x="0" y="0" font-family="${font}" font-size="14" font-weight="700" fill="${palette.ink}">Scenarios</text>
     <rect x="0" y="16" width="280" height="${scenarios.length * 50 + 20}" rx="8" fill="${palette.card}" stroke="${palette.border}"/>
-    ${scenarios.map((s, i) => `
+    ${scenarios
+      .map(
+        (s, i) => `
     <g transform="translate(16, ${36 + i * 50})">
       <rect x="0" y="4" width="12" height="12" rx="3" fill="${s.color}"/>
       <text x="22" y="14" font-family="${font}" font-size="14" font-weight="500" fill="${palette.ink}">${escapeXml(s.label)}</text>
       <text x="248" y="14" text-anchor="end" font-family="${font}" font-size="18" font-weight="700" fill="${palette.ink}">${s.years != null && Number.isFinite(s.years) && s.years > 0 ? formatYears(s.years) : "Never"}</text>
     </g>
-    `).join("")}
+    `,
+      )
+      .join("")}
   </g>
 
   <!-- Legend -->

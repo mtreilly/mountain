@@ -20,14 +20,11 @@ export function ShareCardPreview({
   className = "",
 }: ShareCardPreviewProps) {
   const dimensions = SHARE_CARD_SIZES[size];
-  const paramsWithDimensions = useMemo(
-    () => ({ ...params, dimensions }),
-    [params, dimensions]
-  );
+  const paramsWithDimensions = useMemo(() => ({ ...params, dimensions }), [params, dimensions]);
 
   const svgString = useMemo(
     () => generateShareCardSvg(paramsWithDimensions),
-    [paramsWithDimensions]
+    [paramsWithDimensions],
   );
 
   const scaledWidth = dimensions.width * scale;
@@ -51,7 +48,6 @@ export function ShareCardPreview({
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: SVG is generated internally
         dangerouslySetInnerHTML={{ __html: svgString }}
       />
     </div>

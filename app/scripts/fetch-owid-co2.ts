@@ -9,8 +9,7 @@
  * This script prints SQL to stdout and progress to stderr.
  */
 
-const OWID_CSV_URL =
-  "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv";
+const OWID_CSV_URL = "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv";
 
 const START_YEAR = 1990;
 const END_YEAR = 2023;
@@ -100,7 +99,7 @@ async function main() {
   console.log("\n-- CO2_PCAP data (OWID)");
   console.log(
     `INSERT OR REPLACE INTO indicators (code, name, unit, source, source_code, category)
-VALUES ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Data', 'owid-co2-data:co2_per_capita', 'environment');`
+VALUES ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Data', 'owid-co2-data:co2_per_capita', 'environment');`,
   );
 
   for await (const line of readLines(res.body)) {
@@ -111,9 +110,7 @@ VALUES ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Dat
       idxCo2PerCap = header.indexOf("co2_per_capita");
 
       if (idxIso === -1 || idxYear === -1 || idxCo2PerCap === -1) {
-        throw new Error(
-          `OWID CSV missing required columns: iso_code/year/co2_per_capita`
-        );
+        throw new Error(`OWID CSV missing required columns: iso_code/year/co2_per_capita`);
       }
       continue;
     }
@@ -137,7 +134,7 @@ VALUES ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Dat
       `INSERT OR REPLACE INTO data_points (country_id, indicator_id, year, value) ` +
         `SELECT c.id, i.id, ${year}, ${value} ` +
         `FROM countries c, indicators i ` +
-        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = 'CO2_PCAP';`
+        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = 'CO2_PCAP';`,
     );
     inserted += 1;
 
@@ -152,4 +149,3 @@ main().catch((err) => {
   console.error(err);
   process.exitCode = 1;
 });
-

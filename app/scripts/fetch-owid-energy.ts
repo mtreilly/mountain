@@ -168,7 +168,7 @@ async function main() {
   for (const s of SERIES) {
     console.log(
       `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
-        `VALUES ('${escapeSQL(s.code)}', '${escapeSQL(s.name)}', '${escapeSQL(s.unit)}', '${escapeSQL(s.source)}', '${escapeSQL(s.sourceCode)}', '${escapeSQL(s.category)}');`
+        `VALUES ('${escapeSQL(s.code)}', '${escapeSQL(s.name)}', '${escapeSQL(s.unit)}', '${escapeSQL(s.source)}', '${escapeSQL(s.sourceCode)}', '${escapeSQL(s.category)}');`,
     );
   }
 
@@ -213,7 +213,7 @@ async function main() {
         `INSERT OR REPLACE INTO data_points (country_id, indicator_id, year, value, source_vintage) ` +
           `SELECT c.id, i.id, ${year}, ${value}, '${escapeSQL(OWID_SOURCE_VINTAGE)}' ` +
           `FROM countries c, indicators i ` +
-          `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(s.code)}';`
+          `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(s.code)}';`,
       );
       emitted += 1;
     }

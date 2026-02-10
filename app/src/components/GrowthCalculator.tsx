@@ -38,8 +38,7 @@ export function GrowthCalculator({
         ? "text-amber-700 dark:text-amber-300"
         : "text-emerald-700 dark:text-emerald-300";
 
-  const ppDelta =
-    required == null ? null : (required - chaserGrowthRate) * 100;
+  const ppDelta = required == null ? null : (required - chaserGrowthRate) * 100;
 
   const targetAssumption =
     targetGrowthRate === 0
@@ -88,8 +87,7 @@ export function GrowthCalculator({
           </p>
         ) : (
           <p className="text-sm text-ink-muted leading-relaxed">
-            To catch up in{" "}
-            <span className="font-semibold text-ink">{years}</span> {yearsLabel},{" "}
+            To catch up in <span className="font-semibold text-ink">{years}</span> {yearsLabel},{" "}
             <span className="font-semibold text-chaser">{chaserName}</span> needs{" "}
             <span className={["font-semibold", toneClass].join(" ")}>
               {formatPercent(required)}
@@ -103,8 +101,7 @@ export function GrowthCalculator({
 
         {required != null && chaserValue < targetValue && ppDelta != null && (
           <p className="text-[11px] text-ink-faint mt-2">
-            vs current {formatPercent(chaserGrowthRate)}/yr{" "}
-            ({ppDelta >= 0 ? "+" : ""}
+            vs current {formatPercent(chaserGrowthRate)}/yr ({ppDelta >= 0 ? "+" : ""}
             {ppDelta.toFixed(1)}pp)
           </p>
         )}

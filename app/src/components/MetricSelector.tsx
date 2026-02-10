@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Indicator } from "../types";
 
@@ -59,7 +59,7 @@ export function MetricSelector({
         acc[category].push(indicator);
         return acc;
       },
-      {} as Record<string, Indicator[]>
+      {} as Record<string, Indicator[]>,
     );
   }, [indicators, search]);
 
@@ -93,12 +93,12 @@ export function MetricSelector({
     };
   }, []);
 
-  const close = () => {
+  const close = useCallback(() => {
     setIsOpen(false);
     setSearch("");
     setActiveIndex(-1);
     setPopover(null);
-  };
+  }, []);
 
   const open = () => {
     if (disabled) return;
@@ -146,7 +146,7 @@ export function MetricSelector({
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [isOpen]);
+  }, [close, isOpen]);
 
   useEffect(() => {
     if (isOpen && isMobile) {
@@ -196,7 +196,9 @@ export function MetricSelector({
                     selected ? "bg-amber-50 dark:bg-amber-950/30" : "",
                   ].join(" ")}
                 >
-                  <span className={`font-medium text-ink ${selected ? "text-amber-700 dark:text-amber-400" : ""}`}>
+                  <span
+                    className={`font-medium text-ink ${selected ? "text-amber-700 dark:text-amber-400" : ""}`}
+                  >
                     {indicator.name}
                   </span>
                   {indicator.unit && (
@@ -250,7 +252,9 @@ export function MetricSelector({
               Metric
             </span>
           )}
-          <span className={`truncate ${dense ? "text-xs" : "text-sm"} ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}>
+          <span
+            className={`truncate ${dense ? "text-xs" : "text-sm"} ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}
+          >
             {selectedIndicator?.name || "Select..."}
           </span>
         </span>
@@ -265,7 +269,9 @@ export function MetricSelector({
       </button>
 
       {/* Desktop popover */}
-      {isOpen && !isMobile && popover &&
+      {isOpen &&
+        !isMobile &&
+        popover &&
         createPortal(
           <div
             ref={popoverRef}
@@ -280,7 +286,12 @@ export function MetricSelector({
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   ref={inputRef}
@@ -293,7 +304,9 @@ export function MetricSelector({
                   onKeyDown={(e) => {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
-                      setActiveIndex((i) => (flatList.length ? Math.min(i + 1, flatList.length - 1) : -1));
+                      setActiveIndex((i) =>
+                        flatList.length ? Math.min(i + 1, flatList.length - 1) : -1,
+                      );
                     }
                     if (e.key === "ArrowUp") {
                       e.preventDefault();
@@ -323,11 +336,12 @@ export function MetricSelector({
               {ListContent}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {/* Mobile full-screen sheet */}
-      {isOpen && isMobile &&
+      {isOpen &&
+        isMobile &&
         createPortal(
           <div className="fixed inset-0 z-50 flex flex-col">
             <div className="absolute inset-0 sheet-backdrop animate-fade-in" onClick={close} />
@@ -352,8 +366,18 @@ export function MetricSelector({
                     className="p-2 -mr-2 rounded-lg hover:bg-surface-sunken transition-default"
                     aria-label="Close"
                   >
-                    <svg className="w-5 h-5 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-5 h-5 text-ink-muted"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -365,7 +389,12 @@ export function MetricSelector({
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                   <input
                     ref={inputRef}
@@ -381,14 +410,18 @@ export function MetricSelector({
                 </div>
               </div>
 
-              <div id={listboxId} role="listbox" className="flex-1 overflow-y-auto overscroll-contain">
+              <div
+                id={listboxId}
+                role="listbox"
+                className="flex-1 overflow-y-auto overscroll-contain"
+              >
                 {ListContent}
               </div>
 
               <div className="h-[env(safe-area-inset-bottom)]" />
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

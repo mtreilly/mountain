@@ -38,9 +38,7 @@ export function UrbanizationCard({ data, onShare }: UrbanizationCardProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-medium text-ink">Urbanization buildout</div>
         <div className="flex items-center gap-2">
-          <div className="text-[11px] text-ink-faint">
-            Uses people/home in assumptions
-          </div>
+          <div className="text-[11px] text-ink-faint">Uses people/home in assumptions</div>
           {onShare && (
             <button
               type="button"
@@ -60,21 +58,14 @@ export function UrbanizationCard({ data, onShare }: UrbanizationCardProps) {
         {data.deltaPersons != null && (
           <>
             {" "}
-            (
-            <span className="font-medium text-ink">
-              {formatSignedTotal(data.deltaPersons)}
-            </span>
-            )
+            (<span className="font-medium text-ink">{formatSignedTotal(data.deltaPersons)}</span>)
           </>
         )}
       </div>
       {data.homesNeeded != null && (
         <div className="mt-0.5 text-[11px] text-ink-faint">
           Homes (rough):{" "}
-          <span className="font-medium text-ink">
-            {formatUnitCount(data.homesNeeded)}
-          </span>{" "}
-          total (
+          <span className="font-medium text-ink">{formatUnitCount(data.homesNeeded)}</span> total (
           <span className="font-medium text-ink">
             {formatUnitCount(data.homesNeeded / data.yearsToProject)}
           </span>

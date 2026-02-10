@@ -20,4 +20,3 @@ export function useResizeObserver<T extends Element>() {
 
   return { ref, width: size.width, height: size.height };
 }
-

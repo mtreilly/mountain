@@ -25,7 +25,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           message: "chaser, target, and indicator parameters are required",
         },
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -38,7 +38,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
        JOIN indicators i ON d.indicator_id = i.id
        WHERE c.iso_alpha3 = ? AND i.code = ? AND d.is_projection = 0
        ORDER BY d.year DESC
-       LIMIT 1`
+       LIMIT 1`,
     )
       .bind(countryCode, indicator)
       .first();
@@ -59,7 +59,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           message: "Could not find data for one or both countries",
         },
       },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -74,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
        JOIN countries c ON d.country_id = c.id
        JOIN indicators i ON d.indicator_id = i.id
        WHERE c.iso_alpha3 = ? AND i.code = ? AND d.is_projection = 0
-       ORDER BY d.year ASC`
+       ORDER BY d.year ASC`,
     )
       .bind(chaser, indicator)
       .all();
@@ -93,13 +93,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   // Calculate years to convergence
   // Formula: years = ln(target/chaser) / ln(1 + growth_rate)
   const ratio = targetData.value / chaserData.value;
-  const yearsToConvergence =
-    growthRate > 0 ? Math.log(ratio) / Math.log(1 + growthRate) : Infinity;
+  const yearsToConvergence = growthRate > 0 ? Math.log(ratio) / Math.log(1 + growthRate) : Infinity;
 
   const convergenceYear =
-    yearsToConvergence !== Infinity
-      ? Math.round(chaserData.year + yearsToConvergence)
-      : null;
+    yearsToConvergence !== Infinity ? Math.round(chaserData.year + yearsToConvergence) : null;
 
   // Generate projection data
   const projection: Array<{ year: number; chaser: number; target: number }> = [];

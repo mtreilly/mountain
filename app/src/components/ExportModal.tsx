@@ -41,7 +41,12 @@ function DataExportCard({ label, description, onDownload, disabled }: DataExport
           <div className="w-3 h-3 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
         ) : (
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
         )}
         Download
@@ -58,12 +63,12 @@ export function ExportModal({
   onReset,
   comparisonMode = "countries",
   dataSourceName,
-	  onDownloadObservedCsv,
-	  onDownloadProjectionCsv,
-	  onDownloadReportJson,
-	  shareState,
-	  onOpenCitationPanel,
-	}: {
+  onDownloadObservedCsv,
+  onDownloadProjectionCsv,
+  onDownloadReportJson,
+  shareState,
+  onOpenCitationPanel,
+}: {
   isOpen: boolean;
   onClose: () => void;
   baseYear: number;
@@ -71,17 +76,18 @@ export function ExportModal({
   onReset?: () => void;
   comparisonMode?: "countries" | "regions";
   dataSourceName?: string | null;
-	  onDownloadObservedCsv?: DownloadCallback;
-	  onDownloadProjectionCsv?: DownloadCallback;
-	  onDownloadReportJson?: DownloadCallback;
-	  shareState?: ShareState;
-	  onOpenCitationPanel?: () => void;
-	}) {
+  onDownloadObservedCsv?: DownloadCallback;
+  onDownloadProjectionCsv?: DownloadCallback;
+  onDownloadReportJson?: DownloadCallback;
+  shareState?: ShareState;
+  onOpenCitationPanel?: () => void;
+}) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isRegionsMode = comparisonMode === "regions";
   const resolvedDataSourceName =
-    (dataSourceName?.trim() ? dataSourceName.trim() : null) ?? (isRegionsMode ? "OECD" : "World Bank");
+    (dataSourceName?.trim() ? dataSourceName.trim() : null) ??
+    (isRegionsMode ? "OECD" : "World Bank");
 
   const handleClose = useCallback(() => {
     onClose();
@@ -186,8 +192,18 @@ export function ExportModal({
             className="p-2 rounded-lg hover:bg-surface transition-default"
             aria-label="Close export modal"
           >
-            <svg className="w-5 h-5 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5 text-ink-muted"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -211,7 +227,7 @@ export function ExportModal({
                   toast.success(
                     typeof filename === "string" && filename.length
                       ? `Downloaded historical data: ${filename}`
-                      : "Downloaded historical data"
+                      : "Downloaded historical data",
                   );
                 }}
                 disabled={!onDownloadObservedCsv}
@@ -228,7 +244,7 @@ export function ExportModal({
                   toast.success(
                     typeof filename === "string" && filename.length
                       ? `Downloaded projection data: ${filename}`
-                      : "Downloaded projection data"
+                      : "Downloaded projection data",
                   );
                 }}
                 disabled={!onDownloadProjectionCsv}
@@ -245,7 +261,7 @@ export function ExportModal({
                   toast.success(
                     typeof filename === "string" && filename.length
                       ? `Downloaded report: ${filename}`
-                      : "Downloaded report"
+                      : "Downloaded report",
                   );
                 }}
                 disabled={!onDownloadReportJson}
@@ -262,7 +278,12 @@ export function ExportModal({
                   className="w-full px-3 py-2 rounded-lg border border-surface bg-surface text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface-raised transition-default inline-flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                   Cite This
                 </button>
@@ -277,9 +298,7 @@ export function ExportModal({
                 Embed
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
-	                <EmbedCodeGenerator
-	                  shareState={shareState}
-	                />
+                <EmbedCodeGenerator shareState={shareState} />
               </div>
             </section>
           )}
@@ -292,7 +311,8 @@ export function ExportModal({
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
                 <p className="text-sm text-ink-muted mb-3">
-                  Generate properly formatted citations for academic papers, blog posts, and publications.
+                  Generate properly formatted citations for academic papers, blog posts, and
+                  publications.
                 </p>
                 <button
                   type="button"
@@ -303,7 +323,12 @@ export function ExportModal({
                   className="w-full px-4 py-2.5 rounded-lg border border-surface bg-surface-raised text-ink text-sm font-medium hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                   Open Citation Panel
                   <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
@@ -319,7 +344,10 @@ export function ExportModal({
             </h3>
             <div className="p-4 rounded-lg border border-surface bg-surface space-y-4">
               <div>
-                <label htmlFor="base-year-input" className="block text-sm font-medium text-ink mb-1">
+                <label
+                  htmlFor="base-year-input"
+                  className="block text-sm font-medium text-ink mb-1"
+                >
                   Base year
                 </label>
                 <input
@@ -364,6 +392,6 @@ export function ExportModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

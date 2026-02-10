@@ -1,26 +1,26 @@
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
-import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
-import { generateShareCardSvg, type ShareCardParams, SHARE_CARD_SIZES } from "../lib/shareCardSvg";
+import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
+import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
+import { generateShareCardSvg, SHARE_CARD_SIZES, type ShareCardParams } from "../lib/shareCardSvg";
 import {
   generateCaptions,
-  type ThreadCard,
   type HistoricalData,
   type ImplicationsData,
+  type ThreadCard,
 } from "../lib/threadGenerator";
-import { ThreadPreview } from "./ThreadPreview";
 import { ThreadExportOptions } from "./ThreadExportOptions";
+import { ThreadPreview } from "./ThreadPreview";
 
 export interface ThreadGeneratorModalProps {
   isOpen: boolean;
@@ -112,7 +112,11 @@ export function ThreadGeneratorModal({
           siteUrl: shareCardParams.siteUrl,
           dataSource: shareCardParams.dataSource,
         })
-      : generatePlaceholderSvg("Historical Context", "Historical data not available", selectedTheme);
+      : generatePlaceholderSvg(
+          "Historical Context",
+          "Historical data not available",
+          selectedTheme,
+        );
 
     const implicationsCardSvg = implicationsData
       ? generateImplicationsCardSvg({
@@ -126,7 +130,7 @@ export function ThreadGeneratorModal({
       : generatePlaceholderSvg(
           "Implications Summary",
           "Implications data not available (requires GDP per capita metric)",
-          selectedTheme
+          selectedTheme,
         );
 
     // Include regenerateKey to allow users to "roll" captions while keeping inputs the same.
@@ -254,7 +258,8 @@ export function ThreadGeneratorModal({
   if (!isOpen || !shareCardParams) return null;
 
   const handleThemeKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
+      return;
     e.preventDefault();
     const order: Array<"light" | "dark"> = ["light", "dark"];
     const current = order.indexOf(selectedTheme);
@@ -281,9 +286,7 @@ export function ThreadGeneratorModal({
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
             <h2 className="text-lg font-semibold text-ink">Create Twitter Thread</h2>
-            <p className="text-sm text-ink-muted">
-              Generate a 4-card thread package with captions
-            </p>
+            <p className="text-sm text-ink-muted">Generate a 4-card thread package with captions</p>
           </div>
           <button
             type="button"
@@ -337,7 +340,12 @@ export function ThreadGeneratorModal({
               >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
                   </svg>
                   Light
                 </span>
@@ -359,7 +367,12 @@ export function ThreadGeneratorModal({
               >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                    />
                   </svg>
                   Dark
                 </span>
@@ -396,7 +409,7 @@ export function ThreadGeneratorModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -404,9 +417,10 @@ export function ThreadGeneratorModal({
  * Generate a placeholder SVG for missing data scenarios.
  */
 function generatePlaceholderSvg(title: string, message: string, theme: "light" | "dark"): string {
-  const palette = theme === "light"
-    ? { bg: "#faf8f5", card: "#fffffe", border: "#e5e0d8", ink: "#1a1815", muted: "#5c574f" }
-    : { bg: "#0f0e0d", card: "#1a1918", border: "#2a2826", ink: "#f5f3ef", muted: "#a8a49c" };
+  const palette =
+    theme === "light"
+      ? { bg: "#faf8f5", card: "#fffffe", border: "#e5e0d8", ink: "#1a1815", muted: "#5c574f" }
+      : { bg: "#0f0e0d", card: "#1a1918", border: "#2a2826", ink: "#f5f3ef", muted: "#a8a49c" };
 
   const font = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 

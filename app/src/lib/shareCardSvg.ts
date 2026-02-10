@@ -83,7 +83,7 @@ interface ChartGeometry {
 
 function buildChartPaths(
   projection: ShareCardParams["projection"],
-  geometry: ChartGeometry
+  geometry: ChartGeometry,
 ): {
   chaserPath: string;
   targetPath: string;
@@ -105,7 +105,9 @@ function buildChartPaths(
   const xMin = Math.min(...years);
   const xMax = Math.max(...years);
   const xRange = Math.max(1, xMax - xMin);
-  const yMax = Math.max(...values) * 1.1;
+  const yMaxRaw = Math.max(...values);
+  // Guard against yMax=0 which would produce NaN coordinates in the SVG.
+  const yMax = Math.max(1, yMaxRaw * 1.1);
 
   const scales = {
     x: (year: number) => x + padding.left + ((year - xMin) / xRange) * chartWidth,
@@ -116,11 +118,17 @@ function buildChartPaths(
   };
 
   const chaserPath = projection
-    .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.chaser).toFixed(1)}`)
+    .map(
+      (d, i) =>
+        `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.chaser).toFixed(1)}`,
+    )
     .join(" ");
 
   const targetPath = projection
-    .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.target).toFixed(1)}`)
+    .map(
+      (d, i) =>
+        `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.target).toFixed(1)}`,
+    )
     .join(" ");
 
   return { chaserPath, targetPath, scales };
@@ -218,11 +226,14 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   const stats = [
     {
       label: "TIME TO CONVERGE",
-      value: params.yearsToConvergence && Number.isFinite(params.yearsToConvergence) && params.yearsToConvergence > 0
-        ? formatYears(params.yearsToConvergence)
-        : currentGap <= 1
-          ? "Already ahead"
-          : "Never",
+      value:
+        params.yearsToConvergence &&
+        Number.isFinite(params.yearsToConvergence) &&
+        params.yearsToConvergence > 0
+          ? formatYears(params.yearsToConvergence)
+          : currentGap <= 1
+            ? "Already ahead"
+            : "Never",
     },
     {
       label: "CURRENT GAP",
@@ -275,7 +286,9 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   <!-- Chart area -->
   <rect x="${chartGeometry.x}" y="${chartGeometry.y}" width="${chartGeometry.width}" height="${chartGeometry.height}" rx="12" fill="url(#chartBg)" stroke="${palette.border}" stroke-opacity="0.5"/>
 
-  ${scales ? `
+  ${
+    scales
+      ? `
   <!-- Grid lines -->
   <g stroke="${palette.grid}" stroke-dasharray="3,3" stroke-opacity="0.6">
     ${yTicks.map((tick) => `<line x1="${chartGeometry.x + chartGeometry.padding.left}" y1="${scales.y(tick)}" x2="${chartGeometry.x + chartGeometry.width - chartGeometry.padding.right}" y2="${scales.y(tick)}"/>`).join("\n    ")}
@@ -292,11 +305,15 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   </g>
 
   <!-- Convergence marker -->
-  ${convergenceYear && convergenceYear <= scales.xMax ? `
+  ${
+    convergenceYear && convergenceYear <= scales.xMax
+      ? `
   <line x1="${scales.x(convergenceYear)}" y1="${chartGeometry.y + chartGeometry.padding.top}" x2="${scales.x(convergenceYear)}" y2="${chartGeometry.y + chartGeometry.height - chartGeometry.padding.bottom}" stroke="${palette.convergence}" stroke-dasharray="6,4" stroke-width="2" opacity="0.8"/>
   <rect x="${scales.x(convergenceYear) - 28}" y="${chartGeometry.y + chartGeometry.padding.top - 22}" width="56" height="20" rx="4" fill="${palette.convergence}"/>
   <text x="${scales.x(convergenceYear)}" y="${chartGeometry.y + chartGeometry.padding.top - 8}" text-anchor="middle" font-family="${font}" font-size="12" font-weight="600" fill="#ffffff">${convergenceYear}</text>
-  ` : ""}
+  `
+      : ""
+  }
 
   <!-- Target line (dashed) -->
   <path d="${targetPath}" fill="none" stroke="${palette.target}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
@@ -305,10 +322,14 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   <path d="${chaserPath}" fill="none" stroke="${palette.chaser}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- End point dots -->
-  ${projection.length > 0 ? `
+  ${
+    projection.length > 0
+      ? `
   <circle cx="${scales.x(projection[projection.length - 1].year)}" cy="${scales.y(projection[projection.length - 1].chaser)}" r="5" fill="${palette.chaser}"/>
   <circle cx="${scales.x(projection[projection.length - 1].year)}" cy="${scales.y(projection[projection.length - 1].target)}" r="5" fill="${palette.target}"/>
-  ` : ""}
+  `
+      : ""
+  }
 
   <!-- Legend -->
   <g transform="translate(${chartGeometry.x + chartGeometry.width - chartGeometry.padding.right + 8}, ${chartGeometry.y + chartGeometry.padding.top})">
@@ -318,20 +339,26 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     <circle cx="6" cy="28" r="4" fill="${palette.target}"/>
     <text x="16" y="32" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(truncateName(targetName, 6))}</text>
   </g>
-  ` : `
+  `
+      : `
   <!-- No data placeholder -->
   <text x="${width / 2}" y="${chartGeometry.y + chartGeometry.height / 2}" text-anchor="middle" font-family="${font}" font-size="18" fill="${palette.muted}">Insufficient data for projection</text>
-  `}
+  `
+  }
 
   <!-- Stat cards -->
   <g transform="translate(48, ${statCardsY})">
-    ${stats.map((stat, i) => `
+    ${stats
+      .map(
+        (stat, i) => `
     <g transform="translate(${i * (statCardWidth + 12)}, 0)">
       <rect width="${statCardWidth}" height="${statCardsHeight}" rx="10" fill="${palette.card}" stroke="${palette.border}"/>
       <text x="14" y="22" font-family="${font}" font-size="10" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(stat.label)}</text>
       <text x="14" y="50" font-family="${font}" font-size="22" font-weight="700" fill="${palette.ink}">${escapeXml(stat.value)}</text>
     </g>
-    `).join("")}
+    `,
+      )
+      .join("")}
   </g>
 
   <!-- Footer -->

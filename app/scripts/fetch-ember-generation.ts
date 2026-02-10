@@ -106,7 +106,9 @@ async function main() {
       const fromOptions = maxYear(years);
       const fromStats = (() => {
         if (!payload || typeof payload !== "object") return null;
-        const stats = (payload as Record<string, unknown>).stats as Record<string, unknown> | undefined;
+        const stats = (payload as Record<string, unknown>).stats as
+          | Record<string, unknown>
+          | undefined;
         const range = stats?.user_data_range as Record<string, unknown> | undefined;
         const max = range?.max;
         if (typeof max === "number" && Number.isFinite(max)) return max;
@@ -120,7 +122,7 @@ async function main() {
       targetYear = fromStats || fromOptions;
     } catch (err) {
       console.error(
-        `Could not determine latest Ember generation year; set EMBER_GENERATION_YEAR=YYYY to pin. ${err instanceof Error ? err.message : ""}`.trim()
+        `Could not determine latest Ember generation year; set EMBER_GENERATION_YEAR=YYYY to pin. ${err instanceof Error ? err.message : ""}`.trim(),
       );
       targetYear = null;
     }
@@ -132,7 +134,7 @@ async function main() {
   }
   if (targetYear < MIN_YEAR) {
     console.log(
-      `\n-- Ember electricity generation skipped (target year ${targetYear} < EMBER_GENERATION_MIN_YEAR ${MIN_YEAR})`
+      `\n-- Ember electricity generation skipped (target year ${targetYear} < EMBER_GENERATION_MIN_YEAR ${MIN_YEAR})`,
     );
     return;
   }
@@ -160,14 +162,16 @@ async function main() {
   }
 
   const rows =
-    (payload as {
-      data?: Array<{
-        entity_code: string | null;
-        date: string;
-        series: string;
-        generation_twh: number | null;
-      }>;
-    }).data || [];
+    (
+      payload as {
+        data?: Array<{
+          entity_code: string | null;
+          date: string;
+          series: string;
+          generation_twh: number | null;
+        }>;
+      }
+    ).data || [];
 
   const map = new Map<string, string>();
   for (const s of SERIES) map.set(s.emberSeries.trim().toLowerCase(), s.indicatorCode);
@@ -190,7 +194,7 @@ async function main() {
       `INSERT OR IGNORE INTO data_points (country_id, indicator_id, year, value, source_vintage) ` +
         `SELECT c.id, i.id, ${year}, ${value}, '${escapeSQL(vintage)}' ` +
         `FROM countries c, indicators i ` +
-        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(indicatorCode)}';`
+        `WHERE c.iso_alpha3 = '${escapeSQL(iso)}' AND i.code = '${escapeSQL(indicatorCode)}';`,
     );
     emitted += 1;
   }

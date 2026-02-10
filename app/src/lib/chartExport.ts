@@ -34,7 +34,7 @@ async function renderChartPngBlob(
     pixelRatio?: number;
     padding?: number;
     fit?: "contain" | "cover" | "stretch";
-  }
+  },
 ) {
   const { width: vbW, height: vbH } = getViewBoxSize(svg);
   const width = options?.width ?? vbW;
@@ -83,7 +83,7 @@ async function renderChartPngBlob(
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
         "image/png",
-        1
+        1,
       );
     });
 
@@ -108,7 +108,7 @@ export async function downloadChartPng(
     pixelRatio?: number;
     padding?: number;
     fit?: "contain" | "cover" | "stretch";
-  }
+  },
 ) {
   const blob = await renderChartPngBlob(svg, options);
   downloadBlob(filename, blob);
@@ -123,7 +123,7 @@ export async function copyChartPngToClipboard(
     pixelRatio?: number;
     padding?: number;
     fit?: "contain" | "cover" | "stretch";
-  }
+  },
 ) {
   const blob = await renderChartPngBlob(svg, options);
   const item = new ClipboardItem({ "image/png": blob });
@@ -135,7 +135,7 @@ export async function copyChartPngToClipboard(
 export async function svgStringToPngBlob(
   svgString: string,
   dimensions: { width: number; height: number },
-  pixelRatio = 2
+  pixelRatio = 2,
 ): Promise<Blob> {
   const { width, height } = dimensions;
 
@@ -161,7 +161,7 @@ export async function svgStringToPngBlob(
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("PNG export failed"))),
         "image/png",
-        1
+        1,
       );
     });
 
@@ -173,7 +173,7 @@ export async function svgStringToPngBlob(
 
 export async function generateShareCardPng(
   params: ShareCardParams,
-  size: ShareCardSize = "twitter"
+  size: ShareCardSize = "twitter",
 ): Promise<Blob> {
   const dimensions = SHARE_CARD_SIZES[size];
   const svgString = generateShareCardSvg({ ...params, dimensions });
@@ -182,7 +182,7 @@ export async function generateShareCardPng(
 
 export async function downloadShareCardPng(
   params: ShareCardParams,
-  size: ShareCardSize = "twitter"
+  size: ShareCardSize = "twitter",
 ): Promise<void> {
   const blob = await generateShareCardPng(params, size);
   const filename = getShareCardFilename(params, size);
@@ -191,7 +191,7 @@ export async function downloadShareCardPng(
 
 export async function copyShareCardToClipboard(
   params: ShareCardParams,
-  size: ShareCardSize = "twitter"
+  size: ShareCardSize = "twitter",
 ): Promise<void> {
   const blob = await generateShareCardPng(params, size);
   const item = new ClipboardItem({ "image/png": blob });

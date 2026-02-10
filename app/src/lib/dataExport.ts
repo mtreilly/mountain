@@ -1,19 +1,24 @@
 import type { Indicator } from "../types";
-import type { ShareState } from "./shareState";
 import {
-  generateToolCitation,
-  generateDataSourceCitation,
-  createCitationContext,
   buildPermalink,
   type CitationFormat,
+  createCitationContext,
+  generateDataSourceCitation,
+  generateToolCitation,
 } from "./citations";
-import { WORLD_BANK_INDICATOR_CODES, getDataSourceLicense } from "./dataSourceUrls";
+import { getDataSourceLicense, WORLD_BANK_INDICATOR_CODES } from "./dataSourceUrls";
+import type { ShareState } from "./shareState";
 
 type SeriesPoint = { year: number; value: number };
 
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
+}
+
+function sanitizeHeaderValue(value: string) {
+  // Keep comment headers single-line even if names contain newlines.
+  return value.replace(/[\r\n]+/g, " ").trim();
 }
 
 /**
@@ -26,7 +31,13 @@ function generateCsvHeader(params: {
   targetName: string;
   toolUrl?: string;
 }): string {
-  const { state, indicator, chaserName, targetName, toolUrl = "https://convergence.example.com" } = params;
+  const {
+    state,
+    indicator,
+    chaserName,
+    targetName,
+    toolUrl = "https://convergence.example.com",
+  } = params;
   const now = new Date();
   const permalink = buildPermalink(toolUrl, state);
   const source = indicator?.source || "World Bank";
@@ -36,10 +47,10 @@ function generateCsvHeader(params: {
   const lines = [
     "# Convergence Explorer Data Export",
     `# Generated: ${now.toISOString()}`,
-    `# Comparison: ${chaserName} → ${targetName}`,
-    `# Indicator: ${indicator?.name || state.indicator}`,
+    `# Comparison: ${sanitizeHeaderValue(chaserName)} → ${sanitizeHeaderValue(targetName)}`,
+    `# Indicator: ${sanitizeHeaderValue(indicator?.name || state.indicator)}`,
     `# URL: ${permalink}`,
-    `# Data Source: ${source}${sourceCode ? ` (${sourceCode})` : ""}`,
+    `# Data Source: ${sanitizeHeaderValue(source)}${sourceCode ? ` (${sourceCode})` : ""}`,
     `# License: CC-BY 4.0 (visualizations)${license ? `, ${license.name} (data)` : ""}`,
     "#",
   ];
@@ -93,7 +104,7 @@ export function toObservedCsv(params: {
           String(point.value),
           csvEscape(indicator?.unit || ""),
           csvEscape(indicator?.source || ""),
-        ].join(",")
+        ].join(","),
       );
     }
   }
@@ -149,7 +160,7 @@ export function toProjectionCsv(params: {
         String(state.cg),
         String(state.tg),
         state.tmode,
-      ].join(",")
+      ].join(","),
     );
   }
 
@@ -165,7 +176,15 @@ export function toReportJson(params: {
   derived: { yearsToConvergence: number; convergenceYear: number | null; gap: number };
   toolUrl?: string;
 }) {
-  const { state, indicator, countriesByIso3, observed, projection, derived, toolUrl = "https://convergence.example.com" } = params;
+  const {
+    state,
+    indicator,
+    countriesByIso3,
+    observed,
+    projection,
+    derived,
+    toolUrl = "https://convergence.example.com",
+  } = params;
 
   const chaserName = countriesByIso3[state.chaser]?.name || state.chaser;
   const targetName = countriesByIso3[state.target]?.name || state.target;
@@ -175,7 +194,9 @@ export function toReportJson(params: {
   // Generate citations
   const citationContext = createCitationContext({
     state,
-    indicator: indicator ? { code: indicator.code, name: indicator.name, source: indicator.source } : null,
+    indicator: indicator
+      ? { code: indicator.code, name: indicator.name, source: indicator.source }
+      : null,
     chaserName,
     targetName,
     toolUrl,
@@ -196,10 +217,31 @@ export function toReportJson(params: {
   const indicatorCode = indicator?.code || state.indicator;
 
   const dataCitations: Record<CitationFormat, string> = {
-    bibtex: generateDataSourceCitation(source, sourceCode, indicatorName, indicatorCode, now, "bibtex"),
+    bibtex: generateDataSourceCitation(
+      source,
+      sourceCode,
+      indicatorName,
+      indicatorCode,
+      now,
+      "bibtex",
+    ),
     apa: generateDataSourceCitation(source, sourceCode, indicatorName, indicatorCode, now, "apa"),
-    chicago: generateDataSourceCitation(source, sourceCode, indicatorName, indicatorCode, now, "chicago"),
-    plaintext: generateDataSourceCitation(source, sourceCode, indicatorName, indicatorCode, now, "plaintext"),
+    chicago: generateDataSourceCitation(
+      source,
+      sourceCode,
+      indicatorName,
+      indicatorCode,
+      now,
+      "chicago",
+    ),
+    plaintext: generateDataSourceCitation(
+      source,
+      sourceCode,
+      indicatorName,
+      indicatorCode,
+      now,
+      "plaintext",
+    ),
   };
 
   const license = getDataSourceLicense(source);
@@ -257,6 +299,6 @@ export function toReportJson(params: {
       derived,
     },
     null,
-    2
+    2,
   );
 }

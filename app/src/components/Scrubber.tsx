@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScrubberProps {
   value: number;
@@ -35,7 +35,7 @@ export function Scrubber({
       startX.current = e.clientX;
       startValue.current = value;
     },
-    [value]
+    [value],
   );
 
   const handleMouseMove = useCallback(
@@ -56,7 +56,7 @@ export function Scrubber({
 
       onChange(newValue);
     },
-    [isDragging, min, max, step, onChange]
+    [isDragging, min, max, step, onChange],
   );
 
   const handleMouseUp = useCallback(() => {

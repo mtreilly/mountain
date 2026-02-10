@@ -23,7 +23,12 @@ export function DataStates({
       {error && !loading && (
         <div className="card p-3 animate-fade-in-up">
           <div className="flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -46,4 +51,3 @@ export function DataStates({
     </>
   );
 }
-

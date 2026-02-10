@@ -62,10 +62,7 @@ async function fetchCountries(): Promise<WBCountry[]> {
 
   // Filter to actual countries (exclude aggregates like "World", "EU", etc.)
   const realCountries = countries.filter(
-    (c) =>
-      c.region.value !== "Aggregates" &&
-      c.iso2Code.length === 2 &&
-      c.id.length === 3
+    (c) => c.region.value !== "Aggregates" && c.iso2Code.length === 2 && c.id.length === 3,
   );
 
   console.error(`Found ${realCountries.length} countries`);
@@ -76,7 +73,7 @@ async function fetchIndicatorData(
   indicatorCode: string,
   source: string | undefined,
   startYear: number = 1990,
-  endYear: number = 2023
+  endYear: number = 2023,
 ): Promise<WBDataPoint[]> {
   console.error(`Fetching ${indicatorCode}${source ? ` (source=${source})` : ""} data...`);
 
@@ -94,7 +91,9 @@ async function fetchIndicatorData(
   const validData = data.filter((d) => d.value !== null);
   console.error(`Got ${validData.length} data points for ${indicatorCode}`);
   if (validData.length > 0) {
-    console.error(`  Sample data point: country.id="${validData[0].country.id}", date="${validData[0].date}", value=${validData[0].value}`);
+    console.error(
+      `  Sample data point: country.id="${validData[0].country.id}", date="${validData[0].date}", value=${validData[0].value}`,
+    );
   }
 
   return validData;
@@ -117,7 +116,7 @@ async function main() {
     const income = escapeSQL(country.incomeLevel.value);
 
     console.log(
-      `INSERT OR REPLACE INTO countries (iso_alpha3, iso_alpha2, name, region, income_group) VALUES ('${country.id}', '${country.iso2Code}', '${name}', '${region}', '${income}');`
+      `INSERT OR REPLACE INTO countries (iso_alpha3, iso_alpha2, name, region, income_group) VALUES ('${country.id}', '${country.iso2Code}', '${name}', '${region}', '${income}');`,
     );
   }
 
@@ -152,7 +151,9 @@ async function main() {
       }
       byCountry.get(iso3)!.push(point);
     }
-    console.error(`  Grouped into ${byCountry.size} countries, skipped ${skipped} aggregate entries`);
+    console.error(
+      `  Grouped into ${byCountry.size} countries, skipped ${skipped} aggregate entries`,
+    );
 
     for (const [iso3, points] of byCountry) {
       for (const point of points) {
@@ -163,7 +164,7 @@ async function main() {
           `INSERT OR REPLACE INTO data_points (country_id, indicator_id, year, value) ` +
             `SELECT c.id, i.id, ${year}, ${value} ` +
             `FROM countries c, indicators i ` +
-            `WHERE c.iso_alpha3 = '${iso3}' AND i.code = '${indicator.name}';`
+            `WHERE c.iso_alpha3 = '${iso3}' AND i.code = '${indicator.name}';`,
         );
       }
     }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 interface SlideOverProps {
@@ -61,8 +61,8 @@ export function SlideOver({
 
         const focusables = Array.from(
           root.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          )
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
         ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
 
         if (focusables.length === 0) {
@@ -127,9 +127,7 @@ export function SlideOver({
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-4 border-b border-surface bg-surface-raised">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-ink truncate">{title}</h2>
-            {subtitle && (
-              <p className="text-sm text-ink-muted truncate">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-ink-muted truncate">{subtitle}</p>}
           </div>
           <button
             type="button"
@@ -158,6 +156,6 @@ export function SlideOver({
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

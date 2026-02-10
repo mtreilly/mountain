@@ -1,31 +1,31 @@
 import { strict as assert } from "node:assert";
 import {
+  buildPermalink,
+  type CitationContext,
+  createCitationContext,
+  generateDataSourceCitation,
+  generateFullCitation,
+  generateToolCitation,
+  getAllCitationFormats,
+} from "../src/lib/citations";
+import { toObservedCsv, toProjectionCsv } from "../src/lib/dataExport";
+import {
+  getDataSourceBaseUrl,
+  getDataSourceLicense,
+  getDataSourceUrl,
+  getWorldBankUrl,
+} from "../src/lib/dataSourceUrls";
+import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
+import {
   parseEmbedParams,
   parseShareStateFromSearch,
   toSearchString,
   toSyncedSearchString,
 } from "../src/lib/shareState";
-import { toObservedCsv, toProjectionCsv } from "../src/lib/dataExport";
-import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
-import {
-  generateToolCitation,
-  generateDataSourceCitation,
-  generateFullCitation,
-  createCitationContext,
-  buildPermalink,
-  getAllCitationFormats,
-  type CitationContext,
-} from "../src/lib/citations";
-import {
-  getDataSourceUrl,
-  getDataSourceBaseUrl,
-  getWorldBankUrl,
-  getDataSourceLicense,
-} from "../src/lib/dataSourceUrls";
 
 function testShareStateRoundtrip() {
   const parsed = parseShareStateFromSearch(
-    "?chaser=nga&target=irl&indicator=gdp_pcap_ppp&cg=0.0351&tg=0.0154&tmode=growing&baseYear=2023&view=table"
+    "?chaser=nga&target=irl&indicator=gdp_pcap_ppp&cg=0.0351&tg=0.0154&tmode=growing&baseYear=2023&view=table",
   );
 
   assert.equal(parsed.chaser, "NGA");
@@ -45,7 +45,7 @@ function testShareStateRoundtrip() {
 
 function testStaticTargetForcesTgZero() {
   const parsed = parseShareStateFromSearch(
-    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=static&baseYear=2023"
+    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=static&baseYear=2023",
   );
   assert.equal(parsed.tmode, "static");
   assert.equal(parsed.tg, 0);
@@ -75,7 +75,7 @@ function testEmbedUrlSyncPreservesEmbedParams() {
 
 function testCsvExports() {
   const state = parseShareStateFromSearch(
-    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=growing&baseYear=2023"
+    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=growing&baseYear=2023",
   );
 
   const observedCsv = toObservedCsv({
@@ -193,7 +193,7 @@ function testImplicationsMath() {
 
 function createTestCitationContext(): CitationContext {
   const state = parseShareStateFromSearch(
-    "?chaser=IND&target=CHN&indicator=GDP_PCAP_PPP&cg=0.05&tg=0.03&tmode=growing&baseYear=2023"
+    "?chaser=IND&target=CHN&indicator=GDP_PCAP_PPP&cg=0.05&tg=0.03&tmode=growing&baseYear=2023",
   );
   return {
     toolName: "Convergence Explorer",
@@ -248,7 +248,11 @@ function testPlaintextCitation() {
   const ctx = createTestCitationContext();
   const citation = generateToolCitation(ctx, "plaintext");
 
-  assert.ok(citation.includes("Convergence Explorer - India to China: GDP per capita (PPP) convergence analysis"));
+  assert.ok(
+    citation.includes(
+      "Convergence Explorer - India to China: GDP per capita (PPP) convergence analysis",
+    ),
+  );
   assert.ok(citation.includes("URL: https://convergence.example.com"));
   assert.ok(citation.includes("Accessed: January 15, 2024"));
 }
@@ -260,7 +264,7 @@ function testDataSourceCitation() {
     "GDP per capita (PPP)",
     "GDP_PCAP_PPP",
     new Date("2024-01-15"),
-    "bibtex"
+    "bibtex",
   );
 
   assert.ok(bibtex.startsWith("@misc{worldbank2024gdppcapppp,"));
@@ -274,7 +278,7 @@ function testDataSourceCitation() {
     "GDP per capita (PPP)",
     "GDP_PCAP_PPP",
     new Date("2024-01-15"),
-    "apa"
+    "apa",
   );
   assert.ok(apa.includes("World Bank. (2024). GDP per capita (PPP) [Data set]."));
 }
@@ -290,7 +294,7 @@ function testFullCitation() {
 
 function testBuildPermalink() {
   const state = parseShareStateFromSearch(
-    "?chaser=IND&target=CHN&indicator=GDP_PCAP_PPP&cg=0.05&tg=0.03&tmode=growing&baseYear=2023"
+    "?chaser=IND&target=CHN&indicator=GDP_PCAP_PPP&cg=0.05&tg=0.03&tmode=growing&baseYear=2023",
   );
   const permalink = buildPermalink("https://example.com", state);
 
@@ -302,7 +306,7 @@ function testBuildPermalink() {
 
 function testCreateCitationContext() {
   const state = parseShareStateFromSearch(
-    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=growing&baseYear=2023"
+    "?chaser=NGA&target=IRL&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.015&tmode=growing&baseYear=2023",
   );
 
   const ctx = createCitationContext({

@@ -35,7 +35,12 @@ export const IMPLICATION_METRICS: Array<{
   { code: "CO2_PCAP", transform: "loglog", apply: "multiply" },
   { code: "URBAN_POP_PCT", transform: "logx", apply: "add", clamp: { min: 0, max: 100 } },
   { code: "INDUSTRY_VA_PCT_GDP", transform: "logx", apply: "add", clamp: { min: 0, max: 100 } },
-  { code: "CAPITAL_FORMATION_PCT_GDP", transform: "logx", apply: "add", clamp: { min: 0, max: 100 } },
+  {
+    code: "CAPITAL_FORMATION_PCT_GDP",
+    transform: "logx",
+    apply: "add",
+    clamp: { min: 0, max: 100 },
+  },
 ];
 
 export type SeriesPoint = { year: number; value: number };
@@ -91,7 +96,7 @@ function dedupeByGdp(pairs: Array<{ gdp: number; y: number }>) {
 function interpolateInLogX(
   points: Array<{ gdp: number; y: number }>,
   gdp: number,
-  interpolateY: (a: number, b: number, t: number) => number
+  interpolateY: (a: number, b: number, t: number) => number,
 ) {
   if (points.length < 2) return null;
   if (!Number.isFinite(gdp) || gdp <= 0) return null;
@@ -134,9 +139,7 @@ export function buildTemplateMapping(params: {
   for (const iso of iso3) {
     const g = gdpByIso[iso] || [];
     const m = metricByIso[iso] || [];
-    pooledPairs.push(
-      ...makePairs({ gdpSeries: g, metricSeries: m, requirePositiveY })
-    );
+    pooledPairs.push(...makePairs({ gdpSeries: g, metricSeries: m, requirePositiveY }));
   }
 
   pooledPairs.sort((a, b) => a.gdp - b.gdp);
@@ -161,7 +164,8 @@ export function estimateFromTemplate(params: {
   apply: MetricApply;
   clampRange?: { min: number; max: number };
 }) {
-  const { templateAtCurrentGdp, templateAtFutureGdp, chaserCurrentMetric, apply, clampRange } = params;
+  const { templateAtCurrentGdp, templateAtFutureGdp, chaserCurrentMetric, apply, clampRange } =
+    params;
   if (templateAtFutureGdp == null || !Number.isFinite(templateAtFutureGdp)) return null;
 
   let estimated: number | null = null;

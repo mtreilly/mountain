@@ -137,7 +137,8 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     {
       icon: "🌍",
       title: "EMISSIONS",
-      value: co2DeltaMt != null ? `${co2DeltaMt >= 0 ? "+" : ""}${Math.round(co2DeltaMt)} MtCO₂` : null,
+      value:
+        co2DeltaMt != null ? `${co2DeltaMt >= 0 ? "+" : ""}${Math.round(co2DeltaMt)} MtCO₂` : null,
       subtitle: "Territorial emissions",
       color: palette.emissions,
     },
@@ -163,7 +164,9 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
   </text>
 
   <!-- Implication Cards -->
-  ${cards.map((card, i) => `
+  ${cards
+    .map(
+      (card, i) => `
   <g transform="translate(${leftX + i * (cardWidth + gap)}, ${cardY})">
     <rect width="${cardWidth}" height="${cardHeight}" rx="16" fill="${palette.card}" stroke="${palette.border}"/>
 
@@ -175,16 +178,24 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="80" y="35" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(card.title)}</text>
 
     <!-- Value -->
-    ${card.value != null ? `
+    ${
+      card.value != null
+        ? `
     <text x="24" y="100" font-family="${font}" font-size="32" font-weight="800" fill="${palette.ink}">${escapeXml(card.value)}</text>
-    ` : `
+    `
+        : `
     <text x="24" y="100" font-family="${font}" font-size="20" fill="${palette.faint}">Data unavailable</text>
-    `}
+    `
+    }
 
     <!-- Subtitle -->
-    ${card.subtitle != null ? `
+    ${
+      card.subtitle != null
+        ? `
     <text x="24" y="140" font-family="${font}" font-size="14" fill="${palette.muted}">${escapeXml(card.subtitle)}</text>
-    ` : ""}
+    `
+        : ""
+    }
 
     <!-- Accent bar (bottom rounded corners via clip-path) -->
     <defs>
@@ -194,7 +205,9 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     </defs>
     <rect x="0" y="${cardHeight - 6}" width="${cardWidth}" height="6" fill="${card.color}" fill-opacity="0.6" clip-path="url(#accentClip${i})"/>
   </g>
-  `).join("")}
+  `,
+    )
+    .join("")}
 
   <!-- GDP Summary -->
   <g transform="translate(${leftX}, ${gdpY})">
@@ -208,14 +221,18 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="90" y="30" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">GDP (TOTAL)</text>
 
     <!-- GDP Values -->
-    ${gdpCurrent != null && gdpFuture != null ? `
+    ${
+      gdpCurrent != null && gdpFuture != null
+        ? `
     <text x="90" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.ink}">$${formatLargeNumber(gdpCurrent)}</text>
     <text x="250" y="55" font-family="${font}" font-size="18" fill="${palette.muted}">→</text>
     <text x="280" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.gdp}">$${formatLargeNumber(gdpFuture)}</text>
     <text x="430" y="55" font-family="${font}" font-size="14" fill="${palette.muted}">by ${horizonYear}</text>
-    ` : `
+    `
+        : `
     <text x="90" y="50" font-family="${font}" font-size="16" fill="${palette.faint}">GDP projection data unavailable</text>
-    `}
+    `
+    }
   </g>
 
   <!-- Disclaimer -->

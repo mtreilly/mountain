@@ -1,10 +1,10 @@
 import { formatNumber } from "../../lib/convergence";
 import type {
-  ObservedElectricity,
-  TechEquivalents,
   BaselineMultipliers,
   MixBuildout,
+  ObservedElectricity,
   PowerMixKey,
+  TechEquivalents,
 } from "../../types/implications";
 
 interface ElectricityMixCardProps {
@@ -55,8 +55,7 @@ function formatSourceVintage(vintage: string) {
     return suffix ? `Ember gen ${suffix}` : "Ember gen";
   if (kind.includes("ember-installed-capacity"))
     return suffix ? `Ember cap ${suffix}` : "Ember cap";
-  if (kind.includes("owid-energy-data"))
-    return suffix ? `OWID energy ${suffix}` : "OWID energy";
+  if (kind.includes("owid-energy-data")) return suffix ? `OWID energy ${suffix}` : "OWID energy";
   if (kind.includes("owid-co2-data")) return suffix ? `OWID CO₂ ${suffix}` : "OWID CO₂";
 
   return v.length > 40 ? `${v.slice(0, 37)}…` : v;
@@ -197,29 +196,17 @@ export function ElectricityMixCard({
       {observedMix && (
         <div className="mt-1 text-[11px] text-ink-faint">
           Observed generation mix{" "}
-          <span className="font-medium text-ink">
-            {formatTotal(observedMix.totalTWh)}
-          </span>{" "}
-          ({observedMix.year}
+          <span className="font-medium text-ink">{formatTotal(observedMix.totalTWh)}</span> (
+          {observedMix.year}
           {observedMix.totalSourceVintage
             ? ` · ${formatSourceVintage(observedMix.totalSourceVintage)}`
-            : ""})
-          · Solar{" "}
-          {observedMix.shares.solar != null
-            ? `${observedMix.shares.solar.toFixed(0)}%`
-            : "—"}{" "}
-          · Wind{" "}
-          {observedMix.shares.wind != null
-            ? `${observedMix.shares.wind.toFixed(0)}%`
-            : "—"}{" "}
-          · Coal{" "}
-          {observedMix.shares.coal != null
-            ? `${observedMix.shares.coal.toFixed(0)}%`
-            : "—"}{" "}
-          · Nuclear{" "}
-          {observedMix.shares.nuclear != null
-            ? `${observedMix.shares.nuclear.toFixed(0)}%`
-            : "—"}
+            : ""}
+          ) · Solar{" "}
+          {observedMix.shares.solar != null ? `${observedMix.shares.solar.toFixed(0)}%` : "—"} ·
+          Wind {observedMix.shares.wind != null ? `${observedMix.shares.wind.toFixed(0)}%` : "—"} ·
+          Coal {observedMix.shares.coal != null ? `${observedMix.shares.coal.toFixed(0)}%` : "—"} ·
+          Nuclear{" "}
+          {observedMix.shares.nuclear != null ? `${observedMix.shares.nuclear.toFixed(0)}%` : "—"}
         </div>
       )}
 
@@ -316,9 +303,7 @@ export function ElectricityMixCard({
           </div>
           <div>
             Wind:{" "}
-            <span className="font-medium text-ink">
-              {formatUnitCount(techEquivalents.wind.gw)}
-            </span>{" "}
+            <span className="font-medium text-ink">{formatUnitCount(techEquivalents.wind.gw)}</span>{" "}
             GW ({formatUnitCount(techEquivalents.wind.gw / horizonYears)} GW/yr)
             {techEquivalents.wind.turbines != null && (
               <>

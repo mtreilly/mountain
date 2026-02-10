@@ -1,17 +1,18 @@
 import { useMemo } from "react";
-import type { Indicator } from "../../types";
 import {
-  IMPLICATION_METRICS,
   buildTemplateMapping,
   estimateFromTemplate,
+  IMPLICATION_METRICS,
   type TemplateId,
 } from "../../lib/templatePaths";
+import type { Indicator } from "../../types";
 
 type TemplateDef = {
   id: TemplateId;
   label: string;
   iso3: string[];
 };
+
 import { calculateCagr, computeTotals, projectValue } from "../../lib/implicationsMath";
 import {
   applyScenarioToImpliedMetric,
@@ -50,7 +51,11 @@ export type MixPreset = { id: string; label: string; mix: Record<PowerMixKey, nu
 
 export const MIX_PRESETS: MixPreset[] = [
   { id: "clean", label: "Clean (60/30/10)", mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 } },
-  { id: "renewables", label: "Solar+Wind (50/50)", mix: { solar: 50, wind: 50, nuclear: 0, coal: 0 } },
+  {
+    id: "renewables",
+    label: "Solar+Wind (50/50)",
+    mix: { solar: 50, wind: 50, nuclear: 0, coal: 0 },
+  },
   { id: "nuclear", label: "All nuclear", mix: { solar: 0, wind: 0, nuclear: 100, coal: 0 } },
   { id: "coal", label: "All coal", mix: { solar: 0, wind: 0, nuclear: 0, coal: 100 } },
   { id: "balanced", label: "Balanced", mix: { solar: 30, wind: 30, nuclear: 20, coal: 20 } },
@@ -68,7 +73,10 @@ interface UseImplicationsComputedOptions {
   baseYear: number;
   templateDef: TemplateDef;
   data: Record<string, Record<string, Array<{ year: number; value: number }>>>;
-  dataWithVintage: Record<string, Record<string, Array<{ year: number; value: number; source_vintage?: string | null }>>>;
+  dataWithVintage: Record<
+    string,
+    Record<string, Array<{ year: number; value: number; source_vintage?: string | null }>>
+  >;
   indicatorByCode: Record<string, Indicator>;
   getLatestValue: (code: string, iso: string) => number | null;
   popAssumption: PopAssumption;
@@ -109,7 +117,10 @@ export function useImplicationsComputed({
   const year = observedBaseYear + horizonYears;
 
   const popSeries = useMemo(() => data["POPULATION"]?.[chaserIso] || [], [chaserIso, data]);
-  const popCurrent = useMemo(() => getLatestValue("POPULATION", chaserIso), [chaserIso, getLatestValue]);
+  const popCurrent = useMemo(
+    () => getLatestValue("POPULATION", chaserIso),
+    [chaserIso, getLatestValue],
+  );
 
   const popTrendRate = useMemo(() => {
     const rate = calculateCagr({ series: popSeries, lookbackYears: 10 });
@@ -118,11 +129,12 @@ export function useImplicationsComputed({
   }, [popSeries]);
 
   const popGrowthRate = popAssumption === "trend" ? popTrendRate : 0;
-  const popFuture = popCurrent != null ? projectValue(popCurrent, popGrowthRate, horizonYears) : null;
+  const popFuture =
+    popCurrent != null ? projectValue(popCurrent, popGrowthRate, horizonYears) : null;
 
   const scenarioDef = useMemo(
     () => IMPLICATION_SCENARIOS.find((s) => s.id === scenario) ?? IMPLICATION_SCENARIOS[0],
-    [scenario]
+    [scenario],
   );
 
   const rows = useMemo(() => {
@@ -190,7 +202,12 @@ export function useImplicationsComputed({
       if (implied != null && current == null) {
         noteParts.push("Using template level (no current local baseline).");
       }
-      if (scenario !== "baseline" && impliedScenario != null && implied != null && impliedScenario !== implied) {
+      if (
+        scenario !== "baseline" &&
+        impliedScenario != null &&
+        implied != null &&
+        impliedScenario !== implied
+      ) {
         noteParts.push("Scenario adjustment applied.");
       }
       if (mapping.gdpMin != null && mapping.gdpMax != null) {
@@ -264,7 +281,7 @@ export function useImplicationsComputed({
       const coal = valueAtYear("ELECTRICITY_GEN_COAL", yr);
       const nuclear = valueAtYear("ELECTRICITY_GEN_NUCLEAR", yr);
       const hasAnySource = [solar, wind, coal, nuclear].some(
-        (x) => x != null && Number.isFinite(x) && x >= 0
+        (x) => x != null && Number.isFinite(x) && x >= 0,
       );
       if (!hasAnySource) continue;
       snapshot = { year: yr, total: p.value };
@@ -320,7 +337,9 @@ export function useImplicationsComputed({
     const demandFutureTWh =
       electricityRow?.impliedTotal?.unit === "TWh" ? electricityRow.impliedTotal.value : null;
     const demandDeltaTWh =
-      demandCurrentTWh != null && demandFutureTWh != null ? demandFutureTWh - demandCurrentTWh : null;
+      demandCurrentTWh != null && demandFutureTWh != null
+        ? demandFutureTWh - demandCurrentTWh
+        : null;
 
     const gridLossFrac = clamp(assumptions.gridLossPct / 100, 0, 0.5);
     const netImportsFrac = clamp(assumptions.netImportsPct / 100, -0.5, 0.5);
@@ -339,7 +358,8 @@ export function useImplicationsComputed({
 
     const avgGWFromTWhPerYear = (twh: number) => (twh * 1000) / 8760;
     const demandDeltaAvgGW = demandDeltaTWh != null ? avgGWFromTWhPerYear(demandDeltaTWh) : null;
-    const buildoutDeltaAvgGW = buildoutDeltaTWh != null ? avgGWFromTWhPerYear(buildoutDeltaTWh) : null;
+    const buildoutDeltaAvgGW =
+      buildoutDeltaTWh != null ? avgGWFromTWhPerYear(buildoutDeltaTWh) : null;
 
     const twhPerYearPerGW = (capacityFactor: number) => 8.76 * capacityFactor;
     const gwFromTWhPerYear = (twh: number, capacityFactor: number) =>
@@ -420,7 +440,10 @@ export function useImplicationsComputed({
         buildoutDeltaTWh,
         demandDeltaAvgGW,
         buildoutDeltaAvgGW,
-        assumptions: { gridLossPct: assumptions.gridLossPct, netImportsPct: assumptions.netImportsPct },
+        assumptions: {
+          gridLossPct: assumptions.gridLossPct,
+          netImportsPct: assumptions.netImportsPct,
+        },
         equivalents: electricityEquivalents,
       },
       urban: {
@@ -461,10 +484,16 @@ export function useImplicationsComputed({
       return twh / denom;
     };
 
-    const inferredSolarGw = gwFromTWh(observedElectricity.bySourceTWh.solar, eq.assumptions.solarCf);
+    const inferredSolarGw = gwFromTWh(
+      observedElectricity.bySourceTWh.solar,
+      eq.assumptions.solarCf,
+    );
     const inferredWindGw = gwFromTWh(observedElectricity.bySourceTWh.wind, eq.assumptions.windCf);
     const inferredCoalGw = gwFromTWh(observedElectricity.bySourceTWh.coal, eq.assumptions.coalCf);
-    const inferredNuclearGw = gwFromTWh(observedElectricity.bySourceTWh.nuclear, eq.assumptions.nuclearCf);
+    const inferredNuclearGw = gwFromTWh(
+      observedElectricity.bySourceTWh.nuclear,
+      eq.assumptions.nuclearCf,
+    );
 
     const ratio = (needGw: number, baseGw: number | null) => {
       if (!Number.isFinite(needGw) || needGw <= 0) return null;
@@ -476,7 +505,7 @@ export function useImplicationsComputed({
       capSolar?.year ?? -Infinity,
       capWind?.year ?? -Infinity,
       capCoal?.year ?? -Infinity,
-      capNuclear?.year ?? -Infinity
+      capNuclear?.year ?? -Infinity,
     );
 
     const solarBase =
@@ -506,7 +535,9 @@ export function useImplicationsComputed({
     return {
       kind,
       year:
-        kind === "reported" && Number.isFinite(capacityYear) ? capacityYear : observedElectricity.year,
+        kind === "reported" && Number.isFinite(capacityYear)
+          ? capacityYear
+          : observedElectricity.year,
       ratio: {
         solar: ratio(eq.solar.gw, solarBase),
         wind: ratio(eq.wind.gw, windBase),
@@ -547,7 +578,8 @@ export function useImplicationsComputed({
     const capFromTWh = (twh: number, key: PowerMixKey) => twh / twhPerYearPerGW(cf[key]);
 
     const maxAnnualizedGrowth = (points: Array<{ year: number; value: number }> | undefined) => {
-      if (!points || points.length < 2) return { maxYoY: null as number | null, max5y: null as number | null };
+      if (!points || points.length < 2)
+        return { maxYoY: null as number | null, max5y: null as number | null };
       const sorted = [...points]
         .filter((p) => Number.isFinite(p.year) && Number.isFinite(p.value))
         .sort((a, b) => a.year - b.year);
@@ -617,7 +649,8 @@ export function useImplicationsComputed({
       solar: baseCap.solar != null && baseCap.solar > 0 ? baseCap.solar : inferredBaseCap.solar,
       wind: baseCap.wind != null && baseCap.wind > 0 ? baseCap.wind : inferredBaseCap.wind,
       coal: baseCap.coal != null && baseCap.coal > 0 ? baseCap.coal : inferredBaseCap.coal,
-      nuclear: baseCap.nuclear != null && baseCap.nuclear > 0 ? baseCap.nuclear : inferredBaseCap.nuclear,
+      nuclear:
+        baseCap.nuclear != null && baseCap.nuclear > 0 ? baseCap.nuclear : inferredBaseCap.nuclear,
     };
 
     const ratioFn = (needGw: number, baseGw: number | null) => {
@@ -650,22 +683,21 @@ export function useImplicationsComputed({
         },
         equivalents: {
           plants: key === "nuclear" || key === "coal" ? gw : null,
-          panels:
-            key === "solar" ? (gw * 1e9) / clamp(assumptions.panelWatts, 100, 1000) : null,
-          turbines:
-            key === "wind" ? (gw * 1000) / clamp(assumptions.windTurbineMw, 0.5, 20) : null,
+          panels: key === "solar" ? (gw * 1e9) / clamp(assumptions.panelWatts, 100, 1000) : null,
+          turbines: key === "wind" ? (gw * 1000) / clamp(assumptions.windTurbineMw, 0.5, 20) : null,
         },
         multiplier: {
           capacityX: ratioFn(gw, effectiveBaseCap[key]),
           generationX:
-            observedElectricity?.bySourceTWh[key] != null && observedElectricity.bySourceTWh[key]! > 0
+            observedElectricity?.bySourceTWh[key] != null &&
+            observedElectricity.bySourceTWh[key]! > 0
               ? twh / observedElectricity.bySourceTWh[key]!
               : null,
         },
         pace: {
           max5yTwhPerYear: growth.max5y,
           paceX:
-            growth.max5y != null && growth.max5y > 0 ? (twh / horizonYears) / growth.max5y : null,
+            growth.max5y != null && growth.max5y > 0 ? twh / horizonYears / growth.max5y : null,
         },
       };
     };
@@ -706,7 +738,15 @@ export function useImplicationsComputed({
         windTurbineMw: clamp(assumptions.windTurbineMw, 0.5, 20),
       },
     };
-  }, [assumptions, chaserIso, data, horizonYears, macro.electricity.equivalents?.deltaTWh, mix, observedElectricity]);
+  }, [
+    assumptions,
+    chaserIso,
+    data,
+    horizonYears,
+    macro.electricity.equivalents?.deltaTWh,
+    mix,
+    observedElectricity,
+  ]);
 
   return {
     gdpFuture,
