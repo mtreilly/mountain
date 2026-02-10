@@ -149,6 +149,39 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
     return ticks;
   }, [pixelWidth, scales, width]);
 
+  /* ── Filter milestones that were already exceeded at the start ──────────
+     When two countries have close figures the chaser may already sit above
+     the 25 %, 50 %, or even 75 % threshold before any growth is projected.
+     Showing those markers bunches them at the left edge of the chart.
+     We also drop markers that would overlap in pixel-space.                */
+  const visibleMilestones = useMemo(() => {
+    if (!milestones?.length || !projection.length) return [];
+
+    const firstYear = projection[0].year;
+
+    // 1. Drop milestones that were already reached at the first data point
+    const progressive = milestones.filter((m) => m.year > firstYear);
+
+    // 2. Keep only those within chart bounds
+    const inBounds = progressive.filter(
+      (m) => m.year >= scales.xMin && m.year <= scales.xMax,
+    );
+
+    // 3. Remove markers too close together – iterate highest-% first so we
+    //    preserve the most meaningful milestone when there is a cluster
+    const MIN_PX_GAP = 30;
+    const kept: Milestone[] = [];
+    for (let i = inBounds.length - 1; i >= 0; i--) {
+      const mx = scales.x(inBounds[i].year);
+      const tooClose = kept.some(
+        (prev) => Math.abs(scales.x(prev.year) - mx) < MIN_PX_GAP,
+      );
+      if (!tooClose) kept.push(inBounds[i]);
+    }
+
+    return kept.sort((a, b) => a.percentage - b.percentage);
+  }, [milestones, projection, scales]);
+
   const mergedClassName = ["w-full", svgProps?.className].filter(Boolean).join(" ");
   const mergedStyle = { ...(svgProps?.style || {}) };
   const ariaLabel =
@@ -257,11 +290,9 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
       />
 
       {/* Milestone markers */}
-      {!!milestones?.length && (
+      {!!visibleMilestones.length && (
         <g>
-          {milestones
-            .filter((m) => m.year >= scales.xMin && m.year <= scales.xMax)
-            .map((m) => {
+          {visibleMilestones.map((m) => {
               const x = scales.x(m.year);
               const y = scales.y(m.chaserValue);
               const label = `${Math.round(m.percentage * 100)}%`;
