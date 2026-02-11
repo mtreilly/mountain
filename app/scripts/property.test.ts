@@ -628,7 +628,15 @@ function testComputeTotalsOutputNonNegativeWhenPresent() {
       arbPop,
       fc.double({ min: 0, max: 1e6, noNaN: true, noInfinity: true }),
       fc.double({ min: 0, max: 1e6, noNaN: true, noInfinity: true }),
-      (code, currentMetric, impliedMetric, popCurrent, popFuture, gdpPcapCurrent, gdpPcapFuture) => {
+      (
+        code,
+        currentMetric,
+        impliedMetric,
+        popCurrent,
+        popFuture,
+        gdpPcapCurrent,
+        gdpPcapFuture,
+      ) => {
         const out = computeTotals({
           code,
           currentMetric,
@@ -2168,17 +2176,29 @@ function run() {
     ["shareState: normalize is idempotent", testShareStateNormalizeIdempotent],
     ["shareState: parsed invariants", testShareStateParsedInvariants],
     ["shareState: embed params roundtrip", testEmbedParamsRoundtrip],
-    ["shareState: unicode/url-unsafe fuzz roundtrip", testShareStateUnicodeAndUrlUnsafeInputRoundtrip],
+    [
+      "shareState: unicode/url-unsafe fuzz roundtrip",
+      testShareStateUnicodeAndUrlUnsafeInputRoundtrip,
+    ],
     ["convergence: years formula matches growth", testConvergenceYearsMatchesProjectionMath],
-    ["convergence: higher differential means fewer years", testConvergenceYearsMonotonicInGrowthDifferential],
+    [
+      "convergence: higher differential means fewer years",
+      testConvergenceYearsMonotonicInGrowthDifferential,
+    ],
     ["convergence: required growth rate hits target path", testRequiredGrowthRateHitsTargetPath],
     ["convergence: generateProjection shape/invariants", testGenerateProjectionShape],
     ["convergence: milestones match first reach year", testMilestonesMatchFirstReachYear],
     ["implicationsMath: projectValue year0 identity", testProjectValueYearZeroIdentity],
-    ["implicationsMath: projectValue zero-rate identity", testProjectValueZeroRateKeepsBaseForAllYears],
+    [
+      "implicationsMath: projectValue zero-rate identity",
+      testProjectValueZeroRateKeepsBaseForAllYears,
+    ],
     ["implicationsMath: calculateCagr synthetic series", testCalculateCagrSyntheticSeries],
     ["implicationsMath: computeTotals invariants", testComputeTotalsInvariants],
-    ["implicationsMath: computeTotals non-negative outputs", testComputeTotalsOutputNonNegativeWhenPresent],
+    [
+      "implicationsMath: computeTotals non-negative outputs",
+      testComputeTotalsOutputNonNegativeWhenPresent,
+    ],
     [
       "templatePaths: buildTemplateMapping points unique/sorted",
       testBuildTemplateMappingPointsSortedUnique,

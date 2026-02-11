@@ -51,7 +51,10 @@ const indicators = [
   },
 ];
 
-const seriesByIndicatorAndIso: Record<string, Record<string, Array<{ year: number; value: number }>>> = {
+const seriesByIndicatorAndIso: Record<
+  string,
+  Record<string, Array<{ year: number; value: number }>>
+> = {
   GDP_PCAP_PPP: {
     NGA: [
       { year: 2021, value: 5100 },

@@ -12,7 +12,8 @@ async function openImplications(page: import("@playwright/test").Page) {
 
   await expect
     .poll(
-      async () => ((await desktopTrigger.isVisible().catch(() => false)) ? 1 : 0) +
+      async () =>
+        ((await desktopTrigger.isVisible().catch(() => false)) ? 1 : 0) +
         ((await mobileTrigger.isVisible().catch(() => false)) ? 1 : 0),
       { timeout: 30_000 },
     )
@@ -59,7 +60,11 @@ test("Implications controls update template and scenario context", async ({ page
   await clickDeterministic(usTemplateButton);
   await expect(usTemplateButton).toHaveClass(/text-white/);
 
-  const efficientGrowthButton = panel.getByRole("button", { name: "Efficient growth", exact: true }).first();
+  const efficientGrowthButton = panel
+    .getByRole("button", { name: "Efficient growth", exact: true })
+    .first();
   await clickDeterministic(efficientGrowthButton);
-  await expect(panel.getByText("Less energy/electricity per unit of GDP than the template path.").first()).toBeVisible();
+  await expect(
+    panel.getByText("Less energy/electricity per unit of GDP than the template path.").first(),
+  ).toBeVisible();
 });

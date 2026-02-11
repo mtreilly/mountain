@@ -32,9 +32,7 @@ describe("useBatchData", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    const { result } = renderHook(() =>
-      useBatchData({ countries, indicators, startYear: 2000 }),
-    );
+    const { result } = renderHook(() => useBatchData({ countries, indicators, startYear: 2000 }));
 
     await waitFor(() => {
       expect(result.current.getLatestValue("GDP_PCAP_PPP", "NGA")).toBe(5400);

@@ -50,7 +50,9 @@ test("Keyboard: country picker modal opens with Enter, closes with Escape, and r
 test("Keyboard: growth-rate slider responds to arrow keys", async ({ page }) => {
   await page.goto("/");
 
-  const slider = page.locator('input[type="range"][aria-label="Nigeria growth rate"]:visible').first();
+  const slider = page
+    .locator('input[type="range"][aria-label="Nigeria growth rate"]:visible')
+    .first();
   await expect(slider).toBeVisible();
   await slider.focus();
   await expect(slider).toBeFocused();

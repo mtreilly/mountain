@@ -48,7 +48,9 @@ test("Header link copy writes share URL to clipboard", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Link" }).click();
 
-  const copied = await page.evaluate(() => (window as Window & { __copiedText?: string }).__copiedText);
+  const copied = await page.evaluate(
+    () => (window as Window & { __copiedText?: string }).__copiedText,
+  );
   expect(copied).toBeTruthy();
   expect(copied).toMatch(/\/share\?/);
   expect(copied).toContain("chaser=NGA");

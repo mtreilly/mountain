@@ -62,7 +62,7 @@ describe("useResizeObserver", () => {
                 bottom: 180,
                 toJSON: () => ({}),
               },
-            } as ResizeObserverEntry,
+            } as unknown as ResizeObserverEntry,
           ],
           // @ts-expect-error - acceptable in test
           instance,

@@ -2,14 +2,18 @@ import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { generateToolCitation, type CitationContext } from "../src/lib/citations";
+import { type CitationContext, generateToolCitation } from "../src/lib/citations";
 import { generateProjection } from "../src/lib/convergence";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "../src/lib/dataExport";
 import { generateHistoricalCardSvg } from "../src/lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../src/lib/implicationsCardSvg";
 import { calculateSensitivityScenarios } from "../src/lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../src/lib/sensitivityCardSvg";
-import { generateShareCardSvg, SHARE_CARD_SIZES, type ShareCardParams } from "../src/lib/shareCardSvg";
+import {
+  generateShareCardSvg,
+  SHARE_CARD_SIZES,
+  type ShareCardParams,
+} from "../src/lib/shareCardSvg";
 import { parseShareStateFromSearch } from "../src/lib/shareState";
 import { generateCaptions } from "../src/lib/threadGenerator";
 import type { Indicator } from "../src/types";
@@ -118,7 +122,10 @@ function fixtureProjection() {
   }));
 }
 
-function fixtureShareCardParams(theme: "light" | "dark", size: "twitter" | "linkedin"): ShareCardParams {
+function fixtureShareCardParams(
+  theme: "light" | "dark",
+  size: "twitter" | "linkedin",
+): ShareCardParams {
   const projection = fixtureProjection();
   const latest = projection[0];
   const gap = latest.target / latest.chaser;

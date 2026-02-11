@@ -10,19 +10,29 @@ async function selectRegion(
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByPlaceholder(/Search regions/i).fill(region);
-  await dialog.getByRole("button", { name: new RegExp(region, "i") }).first().click();
+  await dialog
+    .getByRole("button", { name: new RegExp(region, "i") })
+    .first()
+    .click();
 }
 
 test.beforeEach(async ({ page }) => {
   await installApiMocks(page);
 });
 
-test("Region comparison flow switches mode, selects regions, and updates projection", async ({ page }) => {
+test("Region comparison flow switches mode, selects regions, and updates projection", async ({
+  page,
+}) => {
   await page.goto("/");
 
-  await page.locator("button:visible", { hasText: /^Regions$/ }).first().click();
+  await page
+    .locator("button:visible", { hasText: /^Regions$/ })
+    .first()
+    .click();
   await expect(page).toHaveURL(/mode=regions/);
-  await expect(page.getByRole("button", { name: /Swap chaser and target regions/i }).first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Swap chaser and target regions/i }).first(),
+  ).toBeVisible();
 
   await selectRegion(page, /Chaser( Region)?:/i, "California");
   await expect(page.getByRole("button", { name: /Chaser( Region)?: California/i })).toBeVisible();
@@ -33,7 +43,10 @@ test("Region comparison flow switches mode, selects regions, and updates project
   await page.getByRole("button", { name: "Fast" }).first().click();
   await expect(page).toHaveURL(/cg=0\.050/);
 
-  await page.getByRole("button", { name: /Swap chaser and target regions/i }).first().click();
+  await page
+    .getByRole("button", { name: /Swap chaser and target regions/i })
+    .first()
+    .click();
   await expect(page.getByRole("button", { name: /Chaser( Region)?: London/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Target( Region)?: California/i })).toBeVisible();
 

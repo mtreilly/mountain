@@ -1,16 +1,25 @@
 import { expect, test } from "@playwright/test";
 import { installApiMocks } from "./support/mockApi";
 
-async function selectCountry(page: import("@playwright/test").Page, pickerLabel: RegExp, country: string) {
+async function selectCountry(
+  page: import("@playwright/test").Page,
+  pickerLabel: RegExp,
+  country: string,
+) {
   await page.getByRole("button", { name: pickerLabel }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByPlaceholder("Search countries…").fill(country);
-  await dialog.getByRole("button", { name: new RegExp(country, "i") }).first().click();
+  await dialog
+    .getByRole("button", { name: new RegExp(country, "i") })
+    .first()
+    .click();
 }
 
 async function selectMetric(page: import("@playwright/test").Page, metricName: string) {
-  await page.getByRole("button", { name: /GDP per capita \(PPP\)|Life expectancy at birth/i }).click();
+  await page
+    .getByRole("button", { name: /GDP per capita \(PPP\)|Life expectancy at birth/i })
+    .click();
   await page.getByPlaceholder("Search metrics...").fill(metricName);
   await page.getByRole("option", { name: new RegExp(metricName, "i") }).click();
 }
@@ -54,4 +63,3 @@ test("Country comparison flow updates selectors, growth, and projection view", a
   await milestonesToggle.check();
   await expect(milestonesToggle).toBeChecked();
 });
-

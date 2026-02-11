@@ -5,7 +5,9 @@ test.beforeEach(async ({ page }) => {
   await installApiMocks(page);
 });
 
-test("Responsive: mobile stacks selectors and keeps modal in viewport", async ({ page }, testInfo) => {
+test("Responsive: mobile stacks selectors and keeps modal in viewport", async ({
+  page,
+}, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile-only assertion");
 
   await page.goto("/");
@@ -89,4 +91,3 @@ test("Responsive: desktop shows sidebar layout", async ({ page }, testInfo) => {
   expect(Math.abs((targetBox?.y ?? 0) - (chaserBox?.y ?? 0))).toBeLessThan(30);
   expect((targetBox?.x ?? 0) - (chaserBox?.x ?? 0)).toBeGreaterThan(120);
 });
-

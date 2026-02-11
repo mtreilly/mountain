@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { performance } from "node:perf_hooks";
-import { generateToolCitation, type CitationContext } from "../src/lib/citations";
+import { type CitationContext, generateToolCitation } from "../src/lib/citations";
 import { generateProjection } from "../src/lib/convergence";
 import { toObservedCsv, toProjectionCsv } from "../src/lib/dataExport";
 import { generateHistoricalCardSvg } from "../src/lib/historicalCardSvg";
@@ -170,74 +170,110 @@ function benchmarkGenerateThreadArtifacts() {
 }
 
 function run() {
-  bench("generateProjection (100y)", () => {
-    generateProjection(5400, 68000, 0.03, 2023, 100);
-  }, 5);
+  bench(
+    "generateProjection (100y)",
+    () => {
+      generateProjection(5400, 68000, 0.03, 2023, 100);
+    },
+    5,
+  );
 
-  bench("parseShareStateFromSearch (full URL)", () => {
-    parseShareStateFromSearch(
-      "?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tg=0.010&tmode=growing&baseYear=2023&view=chart&adjC=0&adjT=0&goal=35&ms=0&tpl=us&ih=40&impCard=co2&impElecMode=mix&mode=regions&cr=UKC&tr=UKI",
-    );
-  }, 1);
+  bench(
+    "parseShareStateFromSearch (full URL)",
+    () => {
+      parseShareStateFromSearch(
+        "?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tg=0.010&tmode=growing&baseYear=2023&view=chart&adjC=0&adjT=0&goal=35&ms=0&tpl=us&ih=40&impCard=co2&impElecMode=mix&mode=regions&cr=UKC&tr=UKI",
+      );
+    },
+    1,
+  );
 
-  bench("toSearchString (full state)", () => {
-    toSearchString(state);
-  }, 1);
+  bench(
+    "toSearchString (full state)",
+    () => {
+      toSearchString(state);
+    },
+    1,
+  );
 
-  bench("toObservedCsv (50y observed)", () => {
-    toObservedCsv({
-      state,
-      indicator,
-      countriesByIso3: {
-        NGA: { name: "Nigeria" },
-        USA: { name: "United States" },
-      },
-      data: observed50,
-      toolUrl: "https://convergence.example.com",
-    });
-  }, 2);
+  bench(
+    "toObservedCsv (50y observed)",
+    () => {
+      toObservedCsv({
+        state,
+        indicator,
+        countriesByIso3: {
+          NGA: { name: "Nigeria" },
+          USA: { name: "United States" },
+        },
+        data: observed50,
+        toolUrl: "https://convergence.example.com",
+      });
+    },
+    2,
+  );
 
-  bench("toProjectionCsv (100y projected)", () => {
-    toProjectionCsv({
-      state,
-      indicator,
-      projection: projection100,
-      chaserName: "Nigeria",
-      targetName: "United States",
-      toolUrl: "https://convergence.example.com",
-    });
-  }, 3);
+  bench(
+    "toProjectionCsv (100y projected)",
+    () => {
+      toProjectionCsv({
+        state,
+        indicator,
+        projection: projection100,
+        chaserName: "Nigeria",
+        targetName: "United States",
+        toolUrl: "https://convergence.example.com",
+      });
+    },
+    3,
+  );
 
-  bench("generateShareCardSvg", () => {
-    generateShareCardSvg(shareCardParams);
-  }, 50);
+  bench(
+    "generateShareCardSvg",
+    () => {
+      generateShareCardSvg(shareCardParams);
+    },
+    50,
+  );
 
   bench("generateThread artifacts (4 cards + captions)", benchmarkGenerateThreadArtifacts, 100);
 
-  bench("computeTotals", () => {
-    computeTotals({
-      code: "ELECTRICITY_USE_PCAP",
-      currentMetric: 1200,
-      impliedMetric: 2600,
-      popCurrent: 220_000_000,
-      popFuture: 320_000_000,
-      gdpPcapCurrent: 5400,
-      gdpPcapFuture: 13000,
-    });
-  }, 5);
+  bench(
+    "computeTotals",
+    () => {
+      computeTotals({
+        code: "ELECTRICITY_USE_PCAP",
+        currentMetric: 1200,
+        impliedMetric: 2600,
+        popCurrent: 220_000_000,
+        popFuture: 320_000_000,
+        gdpPcapCurrent: 5400,
+        gdpPcapFuture: 13000,
+      });
+    },
+    5,
+  );
 
-  bench("OECD region lookup (all regions)", () => {
-    for (const region of ALL_TL2_REGIONS) {
-      const metadata = getRegionByCode(region.code);
-      const latest = getLatestRegionData(region.code);
-      if (!metadata) throw new Error(`Missing metadata for ${region.code}`);
-      void latest;
-    }
-  }, 1);
+  bench(
+    "OECD region lookup (all regions)",
+    () => {
+      for (const region of ALL_TL2_REGIONS) {
+        const metadata = getRegionByCode(region.code);
+        const latest = getLatestRegionData(region.code);
+        if (!metadata) throw new Error(`Missing metadata for ${region.code}`);
+        void latest;
+      }
+    },
+    1,
+  );
 
-  bench("citation generation", () => {
-    generateToolCitation(citationCtx, "bibtex");
-  }, 2);
+  bench(
+    "citation generation",
+    () => {
+      generateToolCitation(citationCtx, "bibtex");
+    },
+    2,
+  );
 }
 
 run();

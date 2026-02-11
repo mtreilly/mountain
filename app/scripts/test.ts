@@ -17,6 +17,10 @@ import {
   getWorldBankUrl,
 } from "../src/lib/dataSourceUrls";
 import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
+import {
+  calculateSensitivityScenarios,
+  generateSensitivityProjection,
+} from "../src/lib/sensitivityAnalysis";
 import { getShareCardFilename, type ShareCardParams } from "../src/lib/shareCardSvg";
 import {
   parseEmbedParams,
@@ -24,10 +28,6 @@ import {
   toSearchString,
   toSyncedSearchString,
 } from "../src/lib/shareState";
-import {
-  calculateSensitivityScenarios,
-  generateSensitivityProjection,
-} from "../src/lib/sensitivityAnalysis";
 
 function createShareCardParams(theme: "light" | "dark" = "light"): ShareCardParams {
   return {
@@ -72,7 +72,9 @@ function installCanvasDomStubs(options?: { decodeReject?: boolean }) {
     drawImage(...args: unknown[]) {
       drawCalls.push({ args });
     },
-    fillRect() {},
+    fillRect() {
+      // no-op for canvas mock
+    },
     fillStyle: "white",
   };
 
@@ -529,7 +531,12 @@ function testImplicationsMathComputeTotalsByCode() {
 }
 
 function testImplicationsMathNullHandlingMatrix() {
-  const perCapCodes = ["ENERGY_USE_PCAP", "ELECTRICITY_USE_PCAP", "CO2_PCAP", "URBAN_POP_PCT"] as const;
+  const perCapCodes = [
+    "ENERGY_USE_PCAP",
+    "ELECTRICITY_USE_PCAP",
+    "CO2_PCAP",
+    "URBAN_POP_PCT",
+  ] as const;
   for (const code of perCapCodes) {
     const missingCurrentPop = computeTotals({
       code,
@@ -993,7 +1000,10 @@ async function run() {
     ["dataSourceUrls: licenses", testDataSourceLicenses],
     ["chartExport: svg string png dimensions", testChartExportSvgStringToPngRespectsDimensions],
     ["chartExport: invalid svg failure path", testChartExportInvalidSvgFailsGracefully],
-    ["chartExport: share card png requested size", testChartExportGenerateShareCardPngUsesRequestedSize],
+    [
+      "chartExport: share card png requested size",
+      testChartExportGenerateShareCardPngUsesRequestedSize,
+    ],
     ["chartExport: filename pattern", testShareCardFilenamePattern],
   ] as const;
 

@@ -9,9 +9,7 @@ async function expectNoCriticalViolations(page: import("@playwright/test").Page)
 
   expect(
     critical,
-    critical
-      .map((v) => `${v.id}: ${v.help} (${v.nodes.length} nodes)`)
-      .join("\n"),
+    critical.map((v) => `${v.id}: ${v.help} (${v.nodes.length} nodes)`).join("\n"),
   ).toEqual([]);
 }
 
@@ -22,9 +20,7 @@ async function expectNoCriticalViolationsInEmbedShell(page: import("@playwright/
 
   expect(
     critical,
-    critical
-      .map((v) => `${v.id}: ${v.help} (${v.nodes.length} nodes)`)
-      .join("\n"),
+    critical.map((v) => `${v.id}: ${v.help} (${v.nodes.length} nodes)`).join("\n"),
   ).toEqual([]);
 }
 
