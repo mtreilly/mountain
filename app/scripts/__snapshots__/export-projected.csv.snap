@@ -1,0 +1,29 @@
+# Convergence Explorer Data Export
+# Generated: 2024-01-15T00:00:00.000Z
+# Comparison: Nigeria → United States
+# Indicator: GDP per capita (PPP)
+# URL: https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1
+# Data Source: World Bank (NY.GDP.PCAP.PP.KD)
+# License: CC-BY 4.0 (visualizations), CC-BY 4.0 (data)
+#
+year,chaser_iso3,chaser_value,target_iso3,target_value,indicator,unit,baseYear,cg,tg,tmode
+2023,NGA,5400,USA,68000,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2024,NGA,5562,USA,68680,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2025,NGA,5729,USA,69367,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2026,NGA,5901,USA,70060,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2027,NGA,6078,USA,70761,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2028,NGA,6260,USA,71469,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2029,NGA,6448,USA,72183,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2030,NGA,6641,USA,72905,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2031,NGA,6841,USA,73634,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2032,NGA,7046,USA,74371,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2033,NGA,7257,USA,75114,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2034,NGA,7475,USA,75865,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2035,NGA,7699,USA,76624,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2036,NGA,7930,USA,77390,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2037,NGA,8168,USA,78164,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2038,NGA,8413,USA,78946,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2039,NGA,8665,USA,79735,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2040,NGA,8925,USA,80533,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2041,NGA,9193,USA,81338,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing
+2042,NGA,9469,USA,82151,GDP_PCAP_PPP,constant 2021 int$,2023,0.03,0.01,growing

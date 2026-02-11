@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { generateShareCardPng, svgStringToPngBlob } from "../src/lib/chartExport";
 import {
   buildPermalink,
   type CitationContext,
@@ -16,12 +17,115 @@ import {
   getWorldBankUrl,
 } from "../src/lib/dataSourceUrls";
 import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
+import { getShareCardFilename, type ShareCardParams } from "../src/lib/shareCardSvg";
 import {
   parseEmbedParams,
   parseShareStateFromSearch,
   toSearchString,
   toSyncedSearchString,
 } from "../src/lib/shareState";
+import {
+  calculateSensitivityScenarios,
+  generateSensitivityProjection,
+} from "../src/lib/sensitivityAnalysis";
+
+function createShareCardParams(theme: "light" | "dark" = "light"): ShareCardParams {
+  return {
+    chaserName: "Nigeria",
+    targetName: "Ireland",
+    chaserCode: "NGA",
+    targetCode: "IRL",
+    metricLabel: "GDP per capita (PPP)",
+    projection: [
+      { year: 2023, chaser: 5200, target: 89000 },
+      { year: 2024, chaser: 5382, target: 90335 },
+      { year: 2025, chaser: 5570, target: 91690 },
+    ],
+    convergenceYear: 2080,
+    yearsToConvergence: 57,
+    currentGap: 17.1,
+    chaserGrowth: 0.035,
+    targetGrowth: 0.015,
+    targetMode: "growing",
+    theme,
+  };
+}
+
+function installCanvasDomStubs(options?: { decodeReject?: boolean }) {
+  const g = globalThis as {
+    Image?: typeof Image;
+    document?: Document;
+  };
+  const originalImage = g.Image;
+  const originalDocument = g.document;
+  const originalCreateObjectURL = URL.createObjectURL;
+  const originalRevokeObjectURL = URL.revokeObjectURL;
+
+  const revoked: string[] = [];
+  const drawCalls: Array<{ args: unknown[] }> = [];
+  const scaleCalls: Array<{ x: number; y: number }> = [];
+
+  const ctx = {
+    scale(x: number, y: number) {
+      scaleCalls.push({ x, y });
+    },
+    drawImage(...args: unknown[]) {
+      drawCalls.push({ args });
+    },
+    fillRect() {},
+    fillStyle: "white",
+  };
+
+  const canvas = {
+    width: 0,
+    height: 0,
+    getContext(kind: string) {
+      if (kind !== "2d") return null;
+      return ctx;
+    },
+    toBlob(callback: (blob: Blob | null) => void, type?: string) {
+      callback(new Blob(["png"], { type: type ?? "image/png" }));
+    },
+  };
+
+  class FakeImage {
+    decoding = "async";
+    src = "";
+
+    async decode() {
+      if (options?.decodeReject) {
+        throw new Error("Invalid SVG");
+      }
+    }
+  }
+
+  URL.createObjectURL = (() => "blob:test") as typeof URL.createObjectURL;
+  URL.revokeObjectURL = ((url: string | URL) => {
+    revoked.push(String(url));
+  }) as typeof URL.revokeObjectURL;
+  g.Image = FakeImage as unknown as typeof Image;
+  g.document = {
+    createElement(tag: string) {
+      if (tag === "canvas") {
+        return canvas as unknown as HTMLElement;
+      }
+      throw new Error(`Unexpected element request: ${tag}`);
+    },
+  } as unknown as Document;
+
+  return {
+    canvas,
+    revoked,
+    drawCalls,
+    scaleCalls,
+    restore() {
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+      g.Image = originalImage;
+      g.document = originalDocument;
+    },
+  };
+}
 
 function testShareStateRoundtrip() {
   const parsed = parseShareStateFromSearch(
@@ -71,6 +175,79 @@ function testEmbedUrlSyncPreservesEmbedParams() {
 
   const nonEmbed = toSyncedSearchString(state, { embed: false });
   assert.equal(nonEmbed, toSearchString(state));
+}
+
+function testShareStateParsingBranchesAndDefaults() {
+  const parsed = parseShareStateFromSearch(
+    "?mode=regions&cr=us-ca&tr=ukc&impCard=elec-demand&impElecMode=mix&tpl=EU&view=table&goal=999&ih=-50&adjC=0&adjT=0&ms=0",
+  );
+  assert.equal(parsed.mode, "regions");
+  assert.equal(parsed.cr, "US-CA");
+  assert.equal(parsed.tr, "UKC");
+  assert.equal(parsed.impCard, "elec-demand");
+  assert.equal(parsed.impElecMode, "mix");
+  assert.equal(parsed.tpl, "eu");
+  assert.equal(parsed.view, "table");
+  assert.equal(parsed.goal, 150);
+  assert.equal(parsed.ih, 1);
+  assert.equal(parsed.adjC, false);
+  assert.equal(parsed.adjT, false);
+  assert.equal(parsed.ms, false);
+
+  const serialized = toSearchString(parsed);
+  assert.ok(serialized.includes("mode=regions"));
+  assert.ok(serialized.includes("cr=US-CA"));
+  assert.ok(serialized.includes("tr=UKC"));
+  assert.ok(serialized.includes("impCard=elec-demand"));
+  assert.ok(serialized.includes("impElecMode=mix"));
+  assert.ok(serialized.includes("tpl=eu"));
+  assert.ok(serialized.includes("goal=150"));
+  assert.ok(serialized.includes("ih=1"));
+  assert.ok(serialized.includes("adjC=0"));
+  assert.ok(serialized.includes("adjT=0"));
+  assert.ok(serialized.includes("ms=0"));
+  assert.ok(serialized.includes("view=table"));
+}
+
+function testShareStateInvalidInputsFallBackSafely() {
+  const parsed = parseShareStateFromSearch(
+    "?chaser=%20nga%20&target=%20irl%20&indicator=%20gdp_pcap_ppp%20&mode=regions&cr=??&tr=%%%&tpl=bad&impCard=bad&impElecMode=bad&view=grid&tmode=static&tg=0.123",
+  );
+  assert.equal(parsed.chaser, "NGA");
+  assert.equal(parsed.target, "IRL");
+  assert.equal(parsed.indicator, "GDP_PCAP_PPP");
+  assert.equal(parsed.tmode, "static");
+  assert.equal(parsed.tg, 0);
+  assert.equal(parsed.mode, "regions");
+  assert.equal(parsed.cr, "UKC");
+  assert.equal(parsed.tr, "UKI");
+  assert.equal(parsed.tpl, "china");
+  assert.equal(parsed.impCard, "gdp");
+  assert.equal(parsed.impElecMode, "compare");
+  assert.equal(parsed.view, "chart");
+
+  const countriesMode = parseShareStateFromSearch("?mode=countries&cr=UKC&tr=UKI");
+  const countriesSearch = toSearchString(countriesMode);
+  assert.ok(!countriesSearch.includes("mode=regions"));
+  assert.ok(!countriesSearch.includes("cr="));
+  assert.ok(!countriesSearch.includes("tr="));
+}
+
+function testEmbedParsingDefaultsAndClamps() {
+  const defaults = parseEmbedParams("?embed=true");
+  assert.equal(defaults.embed, true);
+  assert.equal(defaults.interactive, true);
+  assert.equal(defaults.embedTheme, "auto");
+  assert.equal(defaults.height, 400);
+
+  const explicit = parseEmbedParams("?embed=true&interactive=false&embedTheme=LIGHT&h=1200");
+  assert.equal(explicit.embed, true);
+  assert.equal(explicit.interactive, false);
+  assert.equal(explicit.embedTheme, "light");
+  assert.equal(explicit.height, 800);
+
+  const clampedLow = parseEmbedParams("?embed=true&h=100");
+  assert.equal(clampedLow.height, 320);
 }
 
 function testCsvExports() {
@@ -187,6 +364,297 @@ function testImplicationsMath() {
   assert.equal(industry.currentTotal?.unit, "int$");
   assert.equal(industry.currentTotal?.value, 0.2 * 10_000 * 1_000_000);
   assert.equal(industry.impliedTotal?.value, 0.1 * 20_000 * 2_000_000);
+}
+
+function testImplicationsMathGuardsAndClamps() {
+  assert.equal(calculateCagr({ series: [], lookbackYears: 10 }), null);
+  assert.equal(
+    calculateCagr({
+      series: [{ year: 2023, value: 0 }],
+      lookbackYears: 10,
+    }),
+    null,
+  );
+  assert.equal(
+    calculateCagr({
+      series: [
+        { year: 2023, value: 100 },
+        { year: 2023, value: 120 },
+      ],
+      lookbackYears: 10,
+    }),
+    null,
+  );
+
+  const unsorted = calculateCagr({
+    series: [
+      { year: 2020, value: 121 },
+      { year: 2010, value: 100 },
+    ],
+    lookbackYears: 10,
+  });
+  assert.ok(unsorted != null);
+  assert.ok(Math.abs((unsorted as number) - 0.019244876491456564) < 1e-12);
+
+  const missingPop = computeTotals({
+    code: "ENERGY_USE_PCAP",
+    currentMetric: 1000,
+    impliedMetric: 2000,
+    popCurrent: null,
+    popFuture: 1_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.deepEqual(missingPop, { currentTotal: null, impliedTotal: null });
+
+  const negativePerCap = computeTotals({
+    code: "CO2_PCAP",
+    currentMetric: -5,
+    impliedMetric: -3,
+    popCurrent: 1_000_000,
+    popFuture: 1_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.equal(negativePerCap.currentTotal?.unit, "MtCO2");
+  assert.equal(negativePerCap.currentTotal?.value, 0);
+  assert.equal(negativePerCap.impliedTotal?.value, 0);
+}
+
+function testImplicationsMathCagrLookbackSelection() {
+  const cagrUsingLookbackPoint = calculateCagr({
+    series: [
+      { year: 2000, value: 100 },
+      { year: 2010, value: 150 },
+      { year: 2020, value: 300 },
+    ],
+    lookbackYears: 5,
+  });
+  assert.ok(cagrUsingLookbackPoint != null);
+  // targetYear=2015 should select 2010, so CAGR=(300/150)^(1/10)-1
+  assert.ok(Math.abs((cagrUsingLookbackPoint as number) - (Math.pow(2, 1 / 10) - 1)) < 1e-12);
+
+  const cagrFallbackEarliest = calculateCagr({
+    series: [
+      { year: 2018, value: 100 },
+      { year: 2020, value: 121 },
+    ],
+    lookbackYears: 20,
+  });
+  assert.ok(cagrFallbackEarliest != null);
+  assert.ok(Math.abs((cagrFallbackEarliest as number) - 0.1) < 1e-12);
+
+  const invalidEarlier = calculateCagr({
+    series: [
+      { year: 2010, value: Number.NaN },
+      { year: 2020, value: 200 },
+    ],
+    lookbackYears: 10,
+  });
+  assert.equal(invalidEarlier, null);
+}
+
+function testImplicationsMathComputeTotalsByCode() {
+  const energy = computeTotals({
+    code: "ENERGY_USE_PCAP",
+    currentMetric: 1000,
+    impliedMetric: 2000,
+    popCurrent: 2_000_000,
+    popFuture: 3_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 12_000,
+  });
+  assert.equal(energy.currentTotal?.unit, "toe");
+  assert.equal(energy.currentTotal?.value, 2_000_000);
+  assert.equal(energy.impliedTotal?.value, 6_000_000);
+
+  const electricityPartialMetric = computeTotals({
+    code: "ELECTRICITY_USE_PCAP",
+    currentMetric: null,
+    impliedMetric: 1500,
+    popCurrent: 1_000_000,
+    popFuture: 2_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.equal(electricityPartialMetric.currentTotal, null);
+  assert.equal(electricityPartialMetric.impliedTotal?.unit, "TWh");
+  assert.equal(electricityPartialMetric.impliedTotal?.value, 3);
+
+  const urbanClamped = computeTotals({
+    code: "URBAN_POP_PCT",
+    currentMetric: 120,
+    impliedMetric: -20,
+    popCurrent: 1_000_000,
+    popFuture: 2_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.equal(urbanClamped.currentTotal?.unit, "persons");
+  assert.equal(urbanClamped.currentTotal?.value, 1_000_000);
+  assert.equal(urbanClamped.impliedTotal?.value, 0);
+
+  const industryMissingCurrentPop = computeTotals({
+    code: "INDUSTRY_VA_PCT_GDP",
+    currentMetric: 30,
+    impliedMetric: 40,
+    popCurrent: null,
+    popFuture: 2_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.deepEqual(industryMissingCurrentPop, { currentTotal: null, impliedTotal: null });
+
+  const industryMissingFuturePop = computeTotals({
+    code: "CAPITAL_FORMATION_PCT_GDP",
+    currentMetric: 30,
+    impliedMetric: 40,
+    popCurrent: 1_000_000,
+    popFuture: null,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 20_000,
+  });
+  assert.deepEqual(industryMissingFuturePop, { currentTotal: null, impliedTotal: null });
+
+  const unknownCode = computeTotals({
+    code: "GDP_PCAP_PPP",
+    currentMetric: 1,
+    impliedMetric: 1,
+    popCurrent: 1_000_000,
+    popFuture: 1_000_000,
+    gdpPcapCurrent: 10_000,
+    gdpPcapFuture: 10_000,
+  });
+  assert.deepEqual(unknownCode, { currentTotal: null, impliedTotal: null });
+}
+
+function testImplicationsMathNullHandlingMatrix() {
+  const perCapCodes = ["ENERGY_USE_PCAP", "ELECTRICITY_USE_PCAP", "CO2_PCAP", "URBAN_POP_PCT"] as const;
+  for (const code of perCapCodes) {
+    const missingCurrentPop = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: 20,
+      popCurrent: null,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.deepEqual(missingCurrentPop, { currentTotal: null, impliedTotal: null });
+
+    const missingFuturePop = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: 20,
+      popCurrent: 1_000_000,
+      popFuture: null,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.deepEqual(missingFuturePop, { currentTotal: null, impliedTotal: null });
+
+    const missingCurrentMetric = computeTotals({
+      code,
+      currentMetric: null,
+      impliedMetric: 20,
+      popCurrent: 1_000_000,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.equal(missingCurrentMetric.currentTotal, null);
+    assert.ok(missingCurrentMetric.impliedTotal != null);
+
+    const missingImpliedMetric = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: null,
+      popCurrent: 1_000_000,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.ok(missingImpliedMetric.currentTotal != null);
+    assert.equal(missingImpliedMetric.impliedTotal, null);
+  }
+
+  const gdpCodes = ["INDUSTRY_VA_PCT_GDP", "CAPITAL_FORMATION_PCT_GDP"] as const;
+  for (const code of gdpCodes) {
+    const missingCurrentPop = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: 20,
+      popCurrent: null,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.deepEqual(missingCurrentPop, { currentTotal: null, impliedTotal: null });
+
+    const missingFuturePop = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: 20,
+      popCurrent: 1_000_000,
+      popFuture: null,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.deepEqual(missingFuturePop, { currentTotal: null, impliedTotal: null });
+
+    const missingCurrentMetric = computeTotals({
+      code,
+      currentMetric: null,
+      impliedMetric: 20,
+      popCurrent: 1_000_000,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.equal(missingCurrentMetric.currentTotal, null);
+    assert.ok(missingCurrentMetric.impliedTotal != null);
+
+    const missingImpliedMetric = computeTotals({
+      code,
+      currentMetric: 10,
+      impliedMetric: null,
+      popCurrent: 1_000_000,
+      popFuture: 1_000_000,
+      gdpPcapCurrent: 10_000,
+      gdpPcapFuture: 20_000,
+    });
+    assert.ok(missingImpliedMetric.currentTotal != null);
+    assert.equal(missingImpliedMetric.impliedTotal, null);
+  }
+}
+
+function testSensitivityEdgeCases() {
+  const alreadyConverged = calculateSensitivityScenarios({
+    chaserValue: 100,
+    targetValue: 100,
+    chaserGrowthRate: 0.05,
+    targetGrowthRate: 0.01,
+    baseYear: 2023,
+    delta: 0.01,
+  });
+  assert.equal(alreadyConverged.baseline.yearsToConvergence, 0);
+  assert.equal(alreadyConverged.baseline.convergenceYear, 2023);
+
+  const neverConverges = calculateSensitivityScenarios({
+    chaserValue: 50,
+    targetValue: 100,
+    chaserGrowthRate: 0.01,
+    targetGrowthRate: 0.02,
+    baseYear: 2023,
+    delta: 0.01,
+  });
+  assert.equal(neverConverges.baseline.yearsToConvergence, null);
+  assert.equal(neverConverges.optimistic.yearsToConvergence, null);
+  assert.equal(neverConverges.pessimistic.yearsToConvergence, null);
+
+  const immediate = generateSensitivityProjection(100, 100, 0.03, 0.01, 2020, 50);
+  assert.equal(immediate.length, 1);
+  assert.equal(immediate[0].year, 2020);
 }
 
 // === Citation Tests ===
@@ -433,13 +901,79 @@ function testDataSourceLicenses() {
   assert.equal(unknownLicense, null);
 }
 
-function run() {
+async function testChartExportSvgStringToPngRespectsDimensions() {
+  const stubs = installCanvasDomStubs();
+  try {
+    const blob = await svgStringToPngBlob(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="8"></svg>',
+      { width: 1200, height: 627 },
+      2,
+    );
+
+    assert.equal(blob.type, "image/png");
+    assert.equal(stubs.canvas.width, 2400);
+    assert.equal(stubs.canvas.height, 1254);
+    assert.equal(stubs.scaleCalls.length, 1);
+    assert.deepEqual(stubs.scaleCalls[0], { x: 2, y: 2 });
+    assert.equal(stubs.drawCalls.length, 1);
+    assert.equal(stubs.drawCalls[0].args[3], 1200);
+    assert.equal(stubs.drawCalls[0].args[4], 627);
+    assert.deepEqual(stubs.revoked, ["blob:test"]);
+  } finally {
+    stubs.restore();
+  }
+}
+
+async function testChartExportInvalidSvgFailsGracefully() {
+  const stubs = installCanvasDomStubs({ decodeReject: true });
+  try {
+    await assert.rejects(
+      () => svgStringToPngBlob("<svg><invalid></svg>", { width: 100, height: 50 }, 2),
+      /Invalid SVG/,
+    );
+    assert.deepEqual(stubs.revoked, ["blob:test"]);
+  } finally {
+    stubs.restore();
+  }
+}
+
+async function testChartExportGenerateShareCardPngUsesRequestedSize() {
+  const stubs = installCanvasDomStubs();
+  try {
+    const blob = await generateShareCardPng(createShareCardParams("dark"), "linkedin");
+    assert.equal(blob.type, "image/png");
+    assert.equal(stubs.canvas.width, 2400);
+    assert.equal(stubs.canvas.height, 1254);
+    assert.equal(stubs.drawCalls.length, 1);
+    assert.equal(stubs.drawCalls[0].args[3], 1200);
+    assert.equal(stubs.drawCalls[0].args[4], 627);
+  } finally {
+    stubs.restore();
+  }
+}
+
+function testShareCardFilenamePattern() {
+  const filename = getShareCardFilename(createShareCardParams("dark"), "twitter");
+  assert.ok(filename.endsWith(".png"));
+  assert.ok(filename.includes("convergence-NGA-IRL-twitter-dark-"));
+  assert.ok(/\d{4}-\d{2}-\d{2}\.png$/.test(filename));
+}
+
+async function run() {
   const tests = [
     ["shareState roundtrip", testShareStateRoundtrip],
     ["tmode static forces tg=0", testStaticTargetForcesTgZero],
     ["embed mode preserves embed params", testEmbedUrlSyncPreservesEmbedParams],
+    ["shareState parsing branches and defaults", testShareStateParsingBranchesAndDefaults],
+    ["shareState invalid inputs fallback", testShareStateInvalidInputsFallBackSafely],
+    ["embed params default and clamping", testEmbedParsingDefaultsAndClamps],
     ["csv exports", testCsvExports],
     ["implications math", testImplicationsMath],
+    ["implications math guards and clamping", testImplicationsMathGuardsAndClamps],
+    ["implications math cagr lookback selection", testImplicationsMathCagrLookbackSelection],
+    ["implications math totals by code", testImplicationsMathComputeTotalsByCode],
+    ["implications math null handling matrix", testImplicationsMathNullHandlingMatrix],
+    ["sensitivity edge cases", testSensitivityEdgeCases],
     // Citation tests
     ["citations: bibtex format", testBibtexCitation],
     ["citations: apa format", testApaCitation],
@@ -457,11 +991,15 @@ function run() {
     ["dataSourceUrls: base urls", testDataSourceBaseUrls],
     ["dataSourceUrls: world bank urls", testWorldBankUrls],
     ["dataSourceUrls: licenses", testDataSourceLicenses],
+    ["chartExport: svg string png dimensions", testChartExportSvgStringToPngRespectsDimensions],
+    ["chartExport: invalid svg failure path", testChartExportInvalidSvgFailsGracefully],
+    ["chartExport: share card png requested size", testChartExportGenerateShareCardPngUsesRequestedSize],
+    ["chartExport: filename pattern", testShareCardFilenamePattern],
   ] as const;
 
   for (const [name, fn] of tests) {
     try {
-      fn();
+      await fn();
       process.stdout.write(`ok - ${name}\n`);
     } catch (err) {
       process.stderr.write(`not ok - ${name}\n`);
@@ -470,4 +1008,4 @@ function run() {
   }
 }
 
-run();
+await run();

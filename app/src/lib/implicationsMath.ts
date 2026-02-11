@@ -81,9 +81,10 @@ export function computeTotals(params: {
   const toPercent = (x: number) => clamp(x, 0, 100) / 100;
 
   const perCapToTotal = (perCap: number, pop: number, unit: TotalDisplay["unit"]) => {
-    if (unit === "toe") return { unit, value: (perCap * pop) / 1000 }; // kg -> tonnes
-    if (unit === "TWh") return { unit, value: (perCap * pop) / 1e9 }; // kWh -> TWh
-    if (unit === "MtCO2") return { unit, value: (perCap * pop) / 1e6 }; // t -> Mt
+    const safePerCap = Math.max(0, perCap);
+    if (unit === "toe") return { unit, value: (safePerCap * pop) / 1000 }; // kg -> tonnes
+    if (unit === "TWh") return { unit, value: (safePerCap * pop) / 1e9 }; // kWh -> TWh
+    if (unit === "MtCO2") return { unit, value: (safePerCap * pop) / 1e6 }; // t -> Mt
     return null;
   };
 

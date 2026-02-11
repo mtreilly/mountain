@@ -64,10 +64,11 @@ const LONG_TEMPLATES = {
 } as const;
 
 function fillTemplate(template: string, data: HeadlineData): string {
+  const sanitizeText = (value: string) => value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const replacements: Record<string, string> = {
-    "{chaser}": data.chaserName,
-    "{target}": data.targetName,
-    "{metric}": data.metricName,
+    "{chaser}": sanitizeText(data.chaserName),
+    "{target}": sanitizeText(data.targetName),
+    "{metric}": sanitizeText(data.metricName),
     "{years}": formatYears(data.yearsToConvergence),
     "{year}": data.convergenceYear?.toString() ?? "N/A",
     "{gap}": data.gap.toFixed(1),

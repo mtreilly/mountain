@@ -1,0 +1,6 @@
+@misc{convergence2024ngausa,
+  title = {Convergence Explorer: Nigeria to United States: GDP per capita (PPP) convergence analysis},
+  url = {https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1},
+  note = {Interactive economic convergence visualization tool},
+  urldate = {2024-01-15}
+}

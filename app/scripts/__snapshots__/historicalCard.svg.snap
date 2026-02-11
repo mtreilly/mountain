@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#faf8f5"/>
+      <stop offset="100%" stop-color="#f3f0eb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="675" fill="url(#bg)"/>
+
+  <!-- Header -->
+  <text x="48" y="45" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1a1815">
+    Nigeria → United States
+  </text>
+  <text x="48" y="75" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#5c574f">
+    Where they started
+  </text>
+
+  <!-- Chaser Card -->
+  <g transform="translate(70, 130)">
+    <rect width="500" height="200" rx="16" fill="#fffffe" stroke="#e5e0d8"/>
+    <rect x="0" y="0" width="500" height="48" rx="16" fill="#ea580c" fill-opacity="0.1"/>
+    <rect x="0" y="32" width="500" height="16" fill="#fffffe"/>
+    <circle cx="28" cy="24" r="10" fill="#ea580c"/>
+    <text x="48" y="30" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#1a1815">Nigeria</text>
+
+    
+    <text x="28" y="85" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">2000</text>
+    <text x="28" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1a1815">$3.4K</text>
+    
+
+    
+    <text x="290" y="85" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">2023</text>
+    <text x="290" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1a1815">$5.4K</text>
+    
+
+    
+    <text x="28" y="165" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">Growth</text>
+    <text x="28" y="185" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#ea580c">1.6×</text>
+    
+
+    <!-- Arrow -->
+    
+    <path d="M 240 95 L 270 95" stroke="#8a847a" stroke-width="2" marker-end="url(#arrow)"/>
+    
+  </g>
+
+  <!-- Target Card -->
+  <g transform="translate(630, 130)">
+    <rect width="500" height="200" rx="16" fill="#fffffe" stroke="#e5e0d8"/>
+    <rect x="0" y="0" width="500" height="48" rx="16" fill="#059669" fill-opacity="0.1"/>
+    <rect x="0" y="32" width="500" height="16" fill="#fffffe"/>
+    <circle cx="28" cy="24" r="10" fill="#059669"/>
+    <text x="48" y="30" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#1a1815">United States</text>
+
+    
+    <text x="28" y="85" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">2000</text>
+    <text x="28" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1a1815">$42.0K</text>
+    
+
+    
+    <text x="290" y="85" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">2023</text>
+    <text x="290" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1a1815">$68.0K</text>
+    
+
+    
+    <text x="28" y="165" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#5c574f">Growth</text>
+    <text x="28" y="185" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#059669">1.6×</text>
+    
+
+    <!-- Arrow -->
+    
+    <path d="M 240 95 L 270 95" stroke="#8a847a" stroke-width="2"/>
+    
+  </g>
+
+  <!-- Growth Comparison Bars -->
+  <g transform="translate(120, 380)">
+    <text x="0" y="-15" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1a1815">Relative Growth Since 2000</text>
+
+    <!-- Chaser bar -->
+    <text x="-10" y="20" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#5c574f">Nigeria</text>
+    <rect x="0" y="8" width="960" height="34" rx="4" fill="#f0ebe4"/>
+    
+    <rect x="0" y="8" width="941.7301038062284" height="34" rx="4" fill="#ea580c"/>
+    <text x="951.7301038062284" y="26" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#1a1815">1.6×</text>
+    
+
+    <!-- Target bar -->
+    <text x="-10" y="80" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#5c574f">United States</text>
+    <rect x="0" y="68" width="960" height="34" rx="4" fill="#f0ebe4"/>
+    
+    <rect x="0" y="68" width="960" height="34" rx="4" fill="#059669"/>
+    <text x="970" y="86" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#1a1815">1.6×</text>
+    
+  </g>
+
+  <!-- Footer -->
+  <line x1="48" y1="625" x2="1152" y2="625" stroke="#e5e0d8" stroke-opacity="0.5"/>
+  <text x="48" y="657" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" fill="#8a847a">convergence.example.com</text>
+  <text x="1152" y="657" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">Data: World Bank</text>
+</svg>

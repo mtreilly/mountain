@@ -72,9 +72,10 @@ function escapeBibtex(str: string): string {
  * Generate a BibTeX key from context
  */
 function generateBibtexKey(ctx: CitationContext): string {
+  const sanitizeKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const year = ctx.accessDate.getFullYear();
-  const chaser = ctx.chaserIso.toLowerCase();
-  const target = ctx.targetIso.toLowerCase();
+  const chaser = sanitizeKey(ctx.chaserIso);
+  const target = sanitizeKey(ctx.targetIso);
   return `convergence${year}${chaser}${target}`;
 }
 
@@ -82,8 +83,9 @@ function generateBibtexKey(ctx: CitationContext): string {
  * Generate a BibTeX key for a data source
  */
 function generateDataSourceBibtexKey(source: string, indicatorCode: string, year: number): string {
-  const sourcePart = source.toLowerCase().replace(/\s+/g, "");
-  const codePart = indicatorCode.toLowerCase().replace(/_/g, "");
+  const sanitizeKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const sourcePart = sanitizeKey(source);
+  const codePart = sanitizeKey(indicatorCode);
   return `${sourcePart}${year}${codePart}`;
 }
 

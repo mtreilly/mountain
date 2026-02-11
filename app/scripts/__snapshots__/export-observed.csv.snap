@@ -1,0 +1,29 @@
+# Convergence Explorer Data Export
+# Generated: 2024-01-15T00:00:00.000Z
+# Comparison: Nigeria → United States
+# Indicator: GDP per capita (PPP)
+# URL: https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1
+# Data Source: World Bank (NY.GDP.PCAP.PP.KD)
+# License: CC-BY 4.0 (visualizations), CC-BY 4.0 (data)
+#
+country_iso3,country_name,indicator,indicator_name,year,value,unit,source
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2014,4800,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2015,4900,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2016,5000,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2017,5050,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2018,5100,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2019,5150,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2020,5000,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2021,5100,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2022,5250,constant 2021 int$,World Bank
+NGA,Nigeria,GDP_PCAP_PPP,GDP per capita (PPP),2023,5400,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2014,56000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2015,57000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2016,58000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2017,59500,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2018,61000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2019,62500,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2020,61000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2021,64000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2022,66000,constant 2021 int$,World Bank
+USA,United States,GDP_PCAP_PPP,GDP per capita (PPP),2023,68000,constant 2021 int$,World Bank

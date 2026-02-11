@@ -1,6 +1,11 @@
 import { strict as assert } from "node:assert";
 import fc from "fast-check";
-import { buildPermalink, type CitationContext, generateToolCitation } from "../src/lib/citations";
+import {
+  buildPermalink,
+  type CitationContext,
+  generateDataSourceCitation,
+  generateToolCitation,
+} from "../src/lib/citations";
 import {
   calculateMilestones,
   calculateRequiredChaserGrowthRate,
@@ -99,6 +104,32 @@ function isIso3(s: string) {
 
 function isIndicatorCode(s: string) {
   return /^[A-Z0-9_]{2,64}$/.test(s);
+}
+
+function hasBalancedUnescapedBraces(input: string) {
+  let depth = 0;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    const escaped = i > 0 && input[i - 1] === "\\";
+    if (escaped) continue;
+    if (ch === "{") depth++;
+    if (ch === "}") depth--;
+    if (depth < 0) return false;
+  }
+  return depth === 0;
+}
+
+function hasUnescapedBibtexSpecial(input: string) {
+  return /(^|[^\\])[&%$#_]/.test(input);
+}
+
+function extractBibtexField(citation: string, field: string) {
+  const line = citation.split("\n").find((l) => l.trimStart().startsWith(`${field} = {`));
+  if (!line) return null;
+  const start = line.indexOf("{");
+  const end = line.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  return line.slice(start + 1, end);
 }
 
 function normalizeStateLoose(state: ShareState): ShareState {
@@ -234,6 +265,56 @@ function testEmbedParamsRoundtrip() {
   );
 }
 
+function testShareStateUnicodeAndUrlUnsafeInputRoundtrip() {
+  const weirdChars = [
+    "a",
+    "Z",
+    "0",
+    " ",
+    "&",
+    "=",
+    "?",
+    "#",
+    "/",
+    "%",
+    "+",
+    "<",
+    ">",
+    '"',
+    "'",
+    "🔥",
+    "🚀",
+    "中",
+    "é",
+  ] as const;
+
+  const arbWeird = fc
+    .array(fc.constantFrom(...weirdChars), { minLength: 1, maxLength: 24 })
+    .map((xs) => xs.join(""));
+
+  fc.assert(
+    fc.property(arbWeird, arbWeird, arbWeird, arbWeird, arbWeird, (a, b, c, d, e) => {
+      const search =
+        `?chaser=${encodeURIComponent(a)}` +
+        `&target=${encodeURIComponent(b)}` +
+        `&indicator=${encodeURIComponent(c)}` +
+        `&cg=${encodeURIComponent(d)}` +
+        `&tg=${encodeURIComponent(e)}` +
+        `&mode=${encodeURIComponent(a)}` +
+        `&cr=${encodeURIComponent(b)}` +
+        `&tr=${encodeURIComponent(c)}`;
+
+      const parsed = parseShareStateFromSearch(search);
+      assertShareStateInvariants(parsed);
+
+      const canonical = parseShareStateFromSearch(toSearchString(parsed));
+      const reparsed = parseShareStateFromSearch(toSearchString(canonical));
+      assert.deepEqual(reparsed, canonical);
+    }),
+    { numRuns: 180 },
+  );
+}
+
 function testConvergenceYearsMatchesProjectionMath() {
   const arb = fc.record({
     chaser: fc.double({ min: 1e-6, max: 1e9, noNaN: true, noInfinity: true }),
@@ -252,6 +333,38 @@ function testConvergenceYearsMatchesProjectionMath() {
       assert.ok(years > 0);
       const projected = chaser * Math.pow(1 + g, years);
       assert.ok(projected >= target || approxEqual(projected, target, 1e-10, 1e-10));
+    }),
+    { numRuns: 200 },
+  );
+}
+
+function testConvergenceYearsMonotonicInGrowthDifferential() {
+  const arb = fc.record({
+    chaser: fc.double({ min: 1e-6, max: 1e9, noNaN: true, noInfinity: true }),
+    ratio: fc.double({ min: 1.000001, max: 1000, noNaN: true, noInfinity: true }),
+    targetGrowthRate: fc.double({ min: -0.05, max: 0.08, noNaN: true, noInfinity: true }),
+    diff1: fc.double({ min: 1e-6, max: 0.1, noNaN: true, noInfinity: true }),
+    diff2: fc.double({ min: 1e-6, max: 0.1, noNaN: true, noInfinity: true }),
+  });
+
+  fc.assert(
+    fc.property(arb, ({ chaser, ratio, targetGrowthRate, diff1, diff2 }) => {
+      const target = chaser * ratio;
+      const lowDiff = Math.min(diff1, diff2);
+      const highDiff = Math.max(diff1, diff2);
+      const chaserGrowthLow = targetGrowthRate + lowDiff;
+      const chaserGrowthHigh = targetGrowthRate + highDiff;
+
+      const relativeLow = (1 + chaserGrowthLow) / (1 + targetGrowthRate) - 1;
+      const relativeHigh = (1 + chaserGrowthHigh) / (1 + targetGrowthRate) - 1;
+      fc.pre(relativeLow > 0 && relativeHigh > 0);
+
+      const yearsLow = calculateYearsToConvergence(chaser, target, relativeLow);
+      const yearsHigh = calculateYearsToConvergence(chaser, target, relativeHigh);
+
+      assert.ok(Number.isFinite(yearsLow));
+      assert.ok(Number.isFinite(yearsHigh));
+      assert.ok(yearsHigh <= yearsLow + 1e-12);
     }),
     { numRuns: 200 },
   );
@@ -393,6 +506,19 @@ function testProjectValueYearZeroIdentity() {
   );
 }
 
+function testProjectValueZeroRateKeepsBaseForAllYears() {
+  fc.assert(
+    fc.property(
+      fc.double({ min: -1e9, max: 1e9, noNaN: true, noInfinity: true }),
+      fc.integer({ min: 0, max: 300 }),
+      (value, years) => {
+        assert.ok(approxEqual(projectValue(value, 0, years), value, 0, 1e-12));
+      },
+    ),
+    { numRuns: 250 },
+  );
+}
+
 function testCalculateCagrSyntheticSeries() {
   const arb = fc.record({
     startYear: fc.integer({ min: 1950, max: 2090 }),
@@ -480,6 +606,50 @@ function testComputeTotalsInvariants() {
       },
     ),
     { numRuns: 220 },
+  );
+}
+
+function testComputeTotalsOutputNonNegativeWhenPresent() {
+  const arbPop = fc.oneof(
+    fc.constant(null),
+    fc.double({ min: -1e6, max: 1e9, noNaN: true, noInfinity: true }),
+  );
+  const arbMetric = fc.oneof(
+    fc.constant(null),
+    fc.double({ min: -1e6, max: 1e6, noNaN: true, noInfinity: true }),
+  );
+
+  fc.assert(
+    fc.property(
+      fc.constantFrom(...IMPLICATION_METRIC_CODES),
+      arbMetric,
+      arbMetric,
+      arbPop,
+      arbPop,
+      fc.double({ min: 0, max: 1e6, noNaN: true, noInfinity: true }),
+      fc.double({ min: 0, max: 1e6, noNaN: true, noInfinity: true }),
+      (code, currentMetric, impliedMetric, popCurrent, popFuture, gdpPcapCurrent, gdpPcapFuture) => {
+        const out = computeTotals({
+          code,
+          currentMetric,
+          impliedMetric,
+          popCurrent,
+          popFuture,
+          gdpPcapCurrent,
+          gdpPcapFuture,
+        });
+
+        if (out.currentTotal != null) {
+          assert.ok(Number.isFinite(out.currentTotal.value));
+          assert.ok(out.currentTotal.value >= 0);
+        }
+        if (out.impliedTotal != null) {
+          assert.ok(Number.isFinite(out.impliedTotal.value));
+          assert.ok(out.impliedTotal.value >= 0);
+        }
+      },
+    ),
+    { numRuns: 250 },
   );
 }
 
@@ -1465,6 +1635,44 @@ function testSensitivityScenarioOrderingAndYears() {
   );
 }
 
+function testSensitivityRatePerturbationsSymmetricAroundBaseline() {
+  const arb = fc.record({
+    chaserValue: fc.double({ min: 1e-6, max: 1e9, noNaN: true, noInfinity: true }),
+    ratio: fc.double({ min: 1.000001, max: 1e6, noNaN: true, noInfinity: true }),
+    targetGrowthRate: fc.double({ min: 0, max: 0.1, noNaN: true, noInfinity: true }),
+    delta: fc.double({ min: 1e-5, max: 0.02, noNaN: true, noInfinity: true }),
+    extra: fc.double({ min: 0.02, max: 0.2, noNaN: true, noInfinity: true }),
+    baseYear: fc.integer({ min: 1950, max: 2100 }),
+  });
+
+  fc.assert(
+    fc.property(arb, ({ chaserValue, ratio, targetGrowthRate, delta, extra, baseYear }) => {
+      const targetValue = chaserValue * ratio;
+      const chaserGrowthRate = targetGrowthRate + delta + extra;
+      fc.pre(chaserGrowthRate >= delta);
+
+      const res = calculateSensitivityScenarios({
+        chaserValue,
+        targetValue,
+        chaserGrowthRate,
+        targetGrowthRate,
+        baseYear,
+        delta,
+      });
+
+      assert.ok(approxEqual(res.optimistic.chaserGrowth - res.baseline.chaserGrowth, delta));
+      assert.ok(approxEqual(res.baseline.chaserGrowth - res.pessimistic.chaserGrowth, delta));
+
+      const o = res.optimistic.yearsToConvergence ?? Infinity;
+      const b = res.baseline.yearsToConvergence ?? Infinity;
+      const p = res.pessimistic.yearsToConvergence ?? Infinity;
+      assert.ok(o <= b + 1e-10);
+      assert.ok(b <= p + 1e-10);
+    }),
+    { numRuns: 200 },
+  );
+}
+
 function testGenerateSensitivityProjectionShape() {
   const arb = fc.record({
     chaserValue: fc.double({ min: 1e-6, max: 1e9, noNaN: true, noInfinity: true }),
@@ -1569,6 +1777,16 @@ function testOECDApiUrlBuilderEncodesDimensions() {
     }),
     { numRuns: 120 },
   );
+}
+
+function testOecdRegionCodesAlwaysResolveToMetadata() {
+  for (const code of OECD_REGION_CODES) {
+    const region = getRegionByCode(code);
+    assert.ok(region != null);
+    assert.equal(region!.code, code);
+    assert.ok(region!.name.length > 0);
+    assert.ok(region!.countryCode.length > 0);
+  }
 }
 
 function testRegionalConvergenceMatchesMathOrNullCases() {
@@ -1681,6 +1899,38 @@ function testHeadlineScenarioAndUrlSuffix() {
   assert.equal(all.scenario, "converging");
   assert.ok(all.headlines.short.length > 0);
   assert.ok(all.headlines.long.length > 0);
+}
+
+function testHeadlineOutputContainsNoRawAngleBrackets() {
+  const arbText = fc
+    .array(fc.constantFrom(...("ab<>/&\"'🔥 " as const).split("")), { minLength: 1, maxLength: 30 })
+    .map((xs) => xs.join(""));
+
+  fc.assert(
+    fc.property(arbText, arbText, arbText, (chaserName, targetName, metricName) => {
+      const data: HeadlineData = {
+        chaserName,
+        chaserIso: "AAA",
+        targetName,
+        targetIso: "BBB",
+        metricName,
+        chaserGrowthRate: 0.05,
+        targetGrowthRate: 0.02,
+        yearsToConvergence: 10,
+        convergenceYear: 2035,
+        gap: 5,
+      };
+
+      const out = generateHeadline(data);
+      assert.ok(!/[<>]/.test(out.short));
+      assert.ok(!/[<>]/.test(out.long));
+
+      const all = generateAllHeadlines(data);
+      for (const s of all.headlines.short) assert.ok(!/[<>]/.test(s));
+      for (const s of all.headlines.long) assert.ok(!/[<>]/.test(s));
+    }),
+    { numRuns: 180 },
+  );
 }
 
 function testShareUrlEncodesTextAndUrl() {
@@ -1836,6 +2086,73 @@ function testRegionalExportsRowCountsAndEscaping() {
   );
 }
 
+function testBibtexCitationsBalancedAndEscaped() {
+  const arb = fc.record({
+    toolName: fc
+      .array(fc.constantFrom(...("Tool & Name % # _ { }" as const).split("")), {
+        minLength: 1,
+        maxLength: 40,
+      })
+      .map((xs) => xs.join("")),
+    source: fc
+      .array(fc.constantFrom(...("Source & Name % # _ { }" as const).split("")), {
+        minLength: 1,
+        maxLength: 40,
+      })
+      .map((xs) => xs.join("")),
+    indicatorName: fc
+      .array(fc.constantFrom(...("GDP & Growth % # _ { }" as const).split("")), {
+        minLength: 1,
+        maxLength: 50,
+      })
+      .map((xs) => xs.join("")),
+    state: arbShareStateLoose,
+  });
+
+  fc.assert(
+    fc.property(arb, ({ toolName, source, indicatorName, state }) => {
+      const normalized = normalizeStateLoose(state);
+      const ctx: CitationContext = {
+        toolName,
+        toolUrl: "https://example.com/app",
+        accessDate: new Date("2024-01-15T00:00:00.000Z"),
+        chaserName: "A & B",
+        chaserIso: normalized.chaser,
+        targetName: "C # D",
+        targetIso: normalized.target,
+        indicatorName,
+        indicatorCode: normalized.indicator,
+        dataSource: source,
+        dataSourceCode: null,
+        state: normalized,
+      };
+
+      const toolBib = generateToolCitation(ctx, "bibtex");
+      assert.ok(hasBalancedUnescapedBraces(toolBib));
+      const toolTitle = extractBibtexField(toolBib, "title");
+      assert.ok(toolTitle != null);
+      assert.ok(!hasUnescapedBibtexSpecial(toolTitle!));
+
+      const dataBib = generateDataSourceCitation(
+        source,
+        null,
+        indicatorName,
+        normalized.indicator,
+        new Date("2024-01-15T00:00:00.000Z"),
+        "bibtex",
+      );
+      assert.ok(hasBalancedUnescapedBraces(dataBib));
+      const author = extractBibtexField(dataBib, "author");
+      const title = extractBibtexField(dataBib, "title");
+      const note = extractBibtexField(dataBib, "note");
+      assert.ok(author != null && !hasUnescapedBibtexSpecial(author!));
+      assert.ok(title != null && !hasUnescapedBibtexSpecial(title!));
+      assert.ok(note != null && !hasUnescapedBibtexSpecial(note!));
+    }),
+    { numRuns: 140 },
+  );
+}
+
 function run() {
   const tests = [
     ["convergence: formatters", testConvergenceFormatters],
@@ -1851,13 +2168,17 @@ function run() {
     ["shareState: normalize is idempotent", testShareStateNormalizeIdempotent],
     ["shareState: parsed invariants", testShareStateParsedInvariants],
     ["shareState: embed params roundtrip", testEmbedParamsRoundtrip],
+    ["shareState: unicode/url-unsafe fuzz roundtrip", testShareStateUnicodeAndUrlUnsafeInputRoundtrip],
     ["convergence: years formula matches growth", testConvergenceYearsMatchesProjectionMath],
+    ["convergence: higher differential means fewer years", testConvergenceYearsMonotonicInGrowthDifferential],
     ["convergence: required growth rate hits target path", testRequiredGrowthRateHitsTargetPath],
     ["convergence: generateProjection shape/invariants", testGenerateProjectionShape],
     ["convergence: milestones match first reach year", testMilestonesMatchFirstReachYear],
     ["implicationsMath: projectValue year0 identity", testProjectValueYearZeroIdentity],
+    ["implicationsMath: projectValue zero-rate identity", testProjectValueZeroRateKeepsBaseForAllYears],
     ["implicationsMath: calculateCagr synthetic series", testCalculateCagrSyntheticSeries],
     ["implicationsMath: computeTotals invariants", testComputeTotalsInvariants],
+    ["implicationsMath: computeTotals non-negative outputs", testComputeTotalsOutputNonNegativeWhenPresent],
     [
       "templatePaths: buildTemplateMapping points unique/sorted",
       testBuildTemplateMappingPointsSortedUnique,
@@ -1872,13 +2193,20 @@ function run() {
     ["growthBenchmarks: monotonic + boundaries", testBenchmarkGrowthRateIsMonotonic],
     ["implicationsScenarios: adjustments", testScenarioAdjustmentsBehaveAsSpecified],
     ["sensitivityAnalysis: ordering + years", testSensitivityScenarioOrderingAndYears],
+    [
+      "sensitivityAnalysis: perturbations symmetric around baseline",
+      testSensitivityRatePerturbationsSymmetricAroundBaseline,
+    ],
     ["sensitivityAnalysis: projection shape", testGenerateSensitivityProjectionShape],
     ["oecdRegions: lookups + latest", testOECDRegionLookupsAndLatestData],
     ["oecdRegions: api url builder", testOECDApiUrlBuilderEncodesDimensions],
+    ["oecdRegions: all codes resolve to metadata", testOecdRegionCodesAlwaysResolveToMetadata],
     ["oecdRegions: regional convergence math", testRegionalConvergenceMatchesMathOrNullCases],
     ["headlineGenerator: scenario + url suffix", testHeadlineScenarioAndUrlSuffix],
+    ["headlineGenerator: no raw angle brackets", testHeadlineOutputContainsNoRawAngleBrackets],
     ["headlineGenerator: share url encoding", testShareUrlEncodesTextAndUrl],
     ["regionsDataExport: csv/json invariants", testRegionalExportsRowCountsAndEscaping],
+    ["citations: bibtex balanced and escaped", testBibtexCitationsBalancedAndEscaped],
   ] as const;
 
   for (const [name, fn] of tests) {

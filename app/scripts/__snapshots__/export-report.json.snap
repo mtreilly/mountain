@@ -1,0 +1,268 @@
+{
+  "meta": {
+    "generated": "2024-01-15T00:00:00.000Z",
+    "tool": "Convergence Explorer",
+    "version": "1.0",
+    "permalink": "https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1"
+  },
+  "citation": {
+    "tool": {
+      "bibtex": "@misc{convergence2024ngausa,\n  title = {Convergence Explorer: Nigeria to United States: GDP per capita (PPP) convergence analysis},\n  url = {https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1},\n  note = {Interactive economic convergence visualization tool},\n  urldate = {2024-01-15}\n}",
+      "apa": "Convergence Explorer. (n.d.). Nigeria to United States: GDP per capita (PPP) convergence analysis. Retrieved January 15, 2024, from https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1",
+      "chicago": "\"Nigeria to United States: GDP per capita (PPP) convergence analysis.\" Convergence Explorer. Accessed January 15, 2024. https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1",
+      "plaintext": "Convergence Explorer - Nigeria to United States: GDP per capita (PPP) convergence analysis\nURL: https://convergence.example.com?chaser=NGA&target=USA&indicator=GDP_PCAP_PPP&cg=0.030&tmode=growing&tg=0.010&baseYear=2023&v=1\nAccessed: January 15, 2024"
+    },
+    "dataSource": {
+      "bibtex": "@misc{worldbank2024gdppcapppp,\n  author = {{World Bank}},\n  title = {GDP per capita (PPP)},\n  url = {https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.KD},\n  note = {World Bank data},\n  urldate = {2024-01-15}\n}",
+      "apa": "World Bank. (2024). GDP per capita (PPP) [Data set]. https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.KD",
+      "chicago": "World Bank. \"GDP per capita (PPP).\" Accessed January 15, 2024. https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.KD",
+      "plaintext": "Data Source: World Bank - GDP per capita (PPP) (NY.GDP.PCAP.PP.KD)\nURL: https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.KD\nAccessed: January 15, 2024"
+    }
+  },
+  "dataSource": {
+    "name": "World Bank",
+    "code": "NY.GDP.PCAP.PP.KD",
+    "indicatorCode": "GDP_PCAP_PPP",
+    "license": {
+      "name": "CC-BY 4.0",
+      "url": "https://datacatalog.worldbank.org/public-licenses#cc-by"
+    }
+  },
+  "state": {
+    "chaser": "NGA",
+    "target": "USA",
+    "indicator": "GDP_PCAP_PPP",
+    "cg": 0.03,
+    "tg": 0.01,
+    "tmode": "growing",
+    "baseYear": 2023,
+    "view": "chart",
+    "adjC": true,
+    "adjT": true,
+    "goal": 25,
+    "ms": true,
+    "tpl": "china",
+    "ih": 25,
+    "impCard": "gdp",
+    "impElecMode": "compare",
+    "mode": "countries",
+    "cr": "UKC",
+    "tr": "UKI"
+  },
+  "indicator": {
+    "code": "GDP_PCAP_PPP",
+    "name": "GDP per capita (PPP)",
+    "unit": "constant 2021 int$",
+    "source": "World Bank",
+    "category": "economic"
+  },
+  "countries": {
+    "chaser": {
+      "iso3": "NGA",
+      "name": "Nigeria"
+    },
+    "target": {
+      "iso3": "USA",
+      "name": "United States"
+    }
+  },
+  "observed": {
+    "NGA": {
+      "lastObservedYear": 2023,
+      "series": [
+        {
+          "year": 2014,
+          "value": 4800
+        },
+        {
+          "year": 2015,
+          "value": 4900
+        },
+        {
+          "year": 2016,
+          "value": 5000
+        },
+        {
+          "year": 2017,
+          "value": 5050
+        },
+        {
+          "year": 2018,
+          "value": 5100
+        },
+        {
+          "year": 2019,
+          "value": 5150
+        },
+        {
+          "year": 2020,
+          "value": 5000
+        },
+        {
+          "year": 2021,
+          "value": 5100
+        },
+        {
+          "year": 2022,
+          "value": 5250
+        },
+        {
+          "year": 2023,
+          "value": 5400
+        }
+      ]
+    },
+    "USA": {
+      "lastObservedYear": 2023,
+      "series": [
+        {
+          "year": 2014,
+          "value": 56000
+        },
+        {
+          "year": 2015,
+          "value": 57000
+        },
+        {
+          "year": 2016,
+          "value": 58000
+        },
+        {
+          "year": 2017,
+          "value": 59500
+        },
+        {
+          "year": 2018,
+          "value": 61000
+        },
+        {
+          "year": 2019,
+          "value": 62500
+        },
+        {
+          "year": 2020,
+          "value": 61000
+        },
+        {
+          "year": 2021,
+          "value": 64000
+        },
+        {
+          "year": 2022,
+          "value": 66000
+        },
+        {
+          "year": 2023,
+          "value": 68000
+        }
+      ]
+    }
+  },
+  "projection": [
+    {
+      "year": 2023,
+      "chaser": 5400,
+      "target": 68000
+    },
+    {
+      "year": 2024,
+      "chaser": 5562,
+      "target": 68680
+    },
+    {
+      "year": 2025,
+      "chaser": 5729,
+      "target": 69367
+    },
+    {
+      "year": 2026,
+      "chaser": 5901,
+      "target": 70060
+    },
+    {
+      "year": 2027,
+      "chaser": 6078,
+      "target": 70761
+    },
+    {
+      "year": 2028,
+      "chaser": 6260,
+      "target": 71469
+    },
+    {
+      "year": 2029,
+      "chaser": 6448,
+      "target": 72183
+    },
+    {
+      "year": 2030,
+      "chaser": 6641,
+      "target": 72905
+    },
+    {
+      "year": 2031,
+      "chaser": 6841,
+      "target": 73634
+    },
+    {
+      "year": 2032,
+      "chaser": 7046,
+      "target": 74371
+    },
+    {
+      "year": 2033,
+      "chaser": 7257,
+      "target": 75114
+    },
+    {
+      "year": 2034,
+      "chaser": 7475,
+      "target": 75865
+    },
+    {
+      "year": 2035,
+      "chaser": 7699,
+      "target": 76624
+    },
+    {
+      "year": 2036,
+      "chaser": 7930,
+      "target": 77390
+    },
+    {
+      "year": 2037,
+      "chaser": 8168,
+      "target": 78164
+    },
+    {
+      "year": 2038,
+      "chaser": 8413,
+      "target": 78946
+    },
+    {
+      "year": 2039,
+      "chaser": 8665,
+      "target": 79735
+    },
+    {
+      "year": 2040,
+      "chaser": 8925,
+      "target": 80533
+    },
+    {
+      "year": 2041,
+      "chaser": 9193,
+      "target": 81338
+    },
+    {
+      "year": 2042,
+      "chaser": 9469,
+      "target": 82151
+    }
+  ],
+  "derived": {
+    "yearsToConvergence": 97,
+    "convergenceYear": 2120,
+    "gap": 12.592592592592593
+  }
+}
