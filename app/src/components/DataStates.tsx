@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 export function DataStates({
   loading,
   error,
@@ -9,13 +11,14 @@ export function DataStates({
   metricName: string;
   showMissingData: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {loading && (
         <div className="text-center py-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-raised border border-surface text-sm">
             <div className="w-3 h-3 rounded-full border-2 border-t-[var(--color-accent)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-            <span className="text-ink-muted">Loading...</span>
+            <span className="text-ink-muted">{t("data.loading")}</span>
           </div>
         </div>
       )}
@@ -36,7 +39,7 @@ export function DataStates({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            <span className="text-ink-muted">Could not load {metricName}</span>
+            <span className="text-ink-muted">{t("data.couldNotLoad", { metric: metricName })}</span>
           </div>
         </div>
       )}
@@ -44,7 +47,7 @@ export function DataStates({
       {showMissingData && !loading && !error && (
         <div className="card p-3 animate-fade-in-up">
           <p className="text-ink-muted text-sm">
-            No data for <span className="font-medium text-ink">{metricName}</span>.
+            {t("data.noData")} <span className="font-medium text-ink">{metricName}</span>.
           </p>
         </div>
       )}

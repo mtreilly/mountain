@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import type { Country } from "../types";
 
@@ -227,6 +228,7 @@ export function CountryPickerModal({
   onSelect: (iso: string) => void;
   color?: "chaser" | "target";
 }) {
+  const { t } = useTranslation();
   const headingId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -358,14 +360,14 @@ export function CountryPickerModal({
                 {title}
               </h2>
               <div className="mt-1 text-xs sm:text-sm text-ink-muted">
-                Search or browse. {filtered.length} results
+                {t("selector.searchOrBrowse", { count: filtered.length })}
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-surface transition-default focus-ring"
-              aria-label="Close"
+              aria-label={t("selector.close")}
             >
               <svg
                 className="w-5 h-5 text-ink-muted"
@@ -403,7 +405,7 @@ export function CountryPickerModal({
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search countries…"
+                placeholder={t("selector.searchCountries")}
                 className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-surface bg-surface text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
@@ -432,30 +434,30 @@ export function CountryPickerModal({
               value={regionFilter}
               onChange={(e) => setRegionFilter(e.target.value)}
               className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus-ring"
-              aria-label="Filter by region"
+              aria-label={t("selector.filterByRegion")}
             >
-              <option value="all">All regions</option>
+              <option value="all">{t("selector.allRegions")}</option>
               {regions.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
-              <option value="Other">Other</option>
+              <option value="Other">{t("selector.other")}</option>
             </select>
 
             <select
               value={incomeFilter}
               onChange={(e) => setIncomeFilter(e.target.value)}
               className="px-3 py-1.5 rounded-full text-xs border border-surface bg-surface text-ink focus-ring"
-              aria-label="Filter by income group"
+              aria-label={t("selector.filterByIncome")}
             >
-              <option value="all">All incomes</option>
+              <option value="all">{t("selector.allIncomes")}</option>
               {incomes.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
-              <option value="Other">Other</option>
+              <option value="Other">{t("selector.other")}</option>
             </select>
           </div>
         </div>
@@ -463,7 +465,7 @@ export function CountryPickerModal({
         <div className="p-4 sm:p-5">
           <div className="max-h-[65vh] overflow-auto">
             {filtered.length === 0 ? (
-              <div className="py-16 text-center text-ink-faint text-sm">No countries found</div>
+              <div className="py-16 text-center text-ink-faint text-sm">{t("selector.noCountriesFound")}</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {filtered.map((c) => {

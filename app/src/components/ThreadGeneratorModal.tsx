@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
@@ -43,6 +44,7 @@ export function ThreadGeneratorModal({
   horizonYears,
   appUrl,
 }: ThreadGeneratorModalProps) {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const themeButtonRefs = useRef<Record<"light" | "dark", HTMLButtonElement | null>>({
@@ -113,8 +115,8 @@ export function ThreadGeneratorModal({
           dataSource: shareCardParams.dataSource,
         })
       : generatePlaceholderSvg(
-          "Historical Context",
-          "Historical data not available",
+          t("thread.historicalContext"),
+          t("thread.historicalUnavailable"),
           selectedTheme,
         );
 
@@ -128,8 +130,8 @@ export function ThreadGeneratorModal({
           dataSource: shareCardParams.dataSource,
         })
       : generatePlaceholderSvg(
-          "Implications Summary",
-          "Implications data not available (requires GDP per capita metric)",
+          t("thread.implicationsSummary"),
+          t("thread.implicationsUnavailable"),
           selectedTheme,
         );
 
@@ -152,6 +154,7 @@ export function ThreadGeneratorModal({
     regenerateKey,
     selectedTheme,
     shareCardParams,
+    t,
   ]);
 
   const cards = useMemo(() => {
@@ -188,8 +191,8 @@ export function ThreadGeneratorModal({
   const handleRegenerate = useCallback(() => {
     setCaptionOverrides({});
     setRegenerateKey((k) => k + 1);
-    toast.success("Regenerated thread cards");
-  }, []);
+    toast.success(t("thread.regenerated"));
+  }, [t]);
 
   const handleThemeChange = useCallback((theme: "light" | "dark") => {
     setSelectedTheme(theme);
@@ -279,21 +282,21 @@ export function ThreadGeneratorModal({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Create Twitter Thread"
+        aria-label={t("thread.title")}
         className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Create Twitter Thread</h2>
-            <p className="text-sm text-ink-muted">Generate a 4-card thread package with captions</p>
+            <h2 className="text-lg font-semibold text-ink">{t("thread.title")}</h2>
+            <p className="text-sm text-ink-muted">{t("thread.subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
-            aria-label="Close thread generator modal"
+            aria-label={t("thread.closeModal")}
           >
             <svg
               className="w-5 h-5 text-ink-muted"
@@ -315,7 +318,7 @@ export function ThreadGeneratorModal({
           {/* Theme Selector */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Theme
+              {t("theme.theme")}
             </h3>
             <div
               role="radiogroup"
@@ -347,7 +350,7 @@ export function ThreadGeneratorModal({
                       d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  Light
+                  {t("theme.light")}
                 </span>
               </button>
               <button
@@ -374,7 +377,7 @@ export function ThreadGeneratorModal({
                       d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
                     />
                   </svg>
-                  Dark
+                  {t("theme.dark")}
                 </span>
               </button>
             </div>
@@ -383,7 +386,7 @@ export function ThreadGeneratorModal({
           {/* Preview */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Thread Preview
+              {t("thread.threadPreview")}
             </h3>
             <ThreadPreview cards={cards} onCaptionChange={handleCaptionChange} />
           </section>
@@ -391,7 +394,7 @@ export function ThreadGeneratorModal({
           {/* Export Options */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Export
+              {t("thread.exportSection")}
             </h3>
             <ThreadExportOptions
               cards={cards}
@@ -404,7 +407,7 @@ export function ThreadGeneratorModal({
 
           {/* Tips */}
           <p className="text-xs text-ink-faint text-center">
-            Tip: Download the ZIP for all images + captions, or copy individual cards above
+            {t("thread.tip")}
           </p>
         </div>
       </div>

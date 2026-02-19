@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { formatMetricValue, formatPercent, formatYears, type Milestone } from "../lib/convergence";
 
 interface ResultSummaryProps {
@@ -33,6 +34,7 @@ export function ResultSummary({
   targetIsAdjusted,
   milestones,
 }: ResultSummaryProps) {
+  const { t } = useTranslation();
   const chaserAlreadyAhead = chaserValue >= targetValue;
   const willConverge =
     !chaserAlreadyAhead && Number.isFinite(yearsToConvergence) && yearsToConvergence > 0;
@@ -48,24 +50,24 @@ export function ResultSummary({
 
   const headline = willConverge ? (
     <>
-      <span className="font-bold text-chaser">{chaserName}</span> could match{" "}
-      <span className="font-bold text-target">{targetName}</span> in{" "}
+      <span className="font-bold text-chaser">{chaserName}</span> {t("result.couldMatch")}{" "}
+      <span className="font-bold text-target">{targetName}</span> {t("result.in")}{" "}
       <span className="text-2xl sm:text-3xl font-display font-black">
         {formatYears(yearsToConvergence)}
       </span>
       {convergenceYear && (
-        <span className="text-ink-muted text-sm sm:text-base font-sans"> by {convergenceYear}</span>
+        <span className="text-ink-muted text-sm sm:text-base font-sans"> {t("result.by", { year: convergenceYear })}</span>
       )}
     </>
   ) : chaserAlreadyAhead ? (
     <>
-      <span className="font-bold text-chaser">{chaserName}</span> is already ahead of{" "}
+      <span className="font-bold text-chaser">{chaserName}</span> {t("result.alreadyAhead")}{" "}
       <span className="font-bold text-target">{targetName}</span>
     </>
   ) : (
     <>
       <span className="font-bold text-chaser">{chaserName}</span>{" "}
-      <span className="font-bold text-amber-600 dark:text-amber-400">won't catch up</span> to{" "}
+      <span className="font-bold text-amber-600 dark:text-amber-400">{t("result.wontCatchUp")}</span> {t("result.to")}{" "}
       <span className="font-bold text-target">{targetName}</span>
     </>
   );
@@ -78,16 +80,16 @@ export function ResultSummary({
       {/* Growth rate comparison - inline and compact */}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-ink-muted">
         <span>
-          At <span className="font-medium text-chaser">{formatPercent(chaserGrowthRate)}</span>
-          /yr
+          {t("result.at")} <span className="font-medium text-chaser">{formatPercent(chaserGrowthRate)}</span>
+          {t("result.perYear")}
           {targetGrowthRate !== 0 ? (
             <>
               {" "}
               vs <span className="font-medium text-target">{formatPercent(targetGrowthRate)}</span>
-              /yr
+              {t("result.perYear")}
             </>
           ) : (
-            <> (target static)</>
+            <> {t("result.targetStatic")}</>
           )}
         </span>
         <span className="text-ink-faint">·</span>
@@ -95,7 +97,7 @@ export function ResultSummary({
         {milestoneText && willConverge && (
           <>
             <span className="text-ink-faint">·</span>
-            <span className="text-ink-faint">Milestones: {milestoneText}</span>
+            <span className="text-ink-faint">{t("result.milestones")} {milestoneText}</span>
           </>
         )}
       </div>
@@ -107,7 +109,7 @@ export function ResultSummary({
             <div className="text-base sm:text-lg font-display font-bold text-ink tabular-nums">
               {gap.toFixed(1)}×
             </div>
-            <div className="text-[10px] text-ink-faint uppercase tracking-wider">Gap</div>
+            <div className="text-[10px] text-ink-faint uppercase tracking-wider">{t("result.gap")}</div>
           </div>
           <div className="min-w-0">
             <div className="text-base sm:text-lg font-display font-bold text-chaser tabular-nums">

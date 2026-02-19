@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Country, Indicator } from "../types";
 import { CountrySelector } from "./CountrySelector";
 import { MetricSelector } from "./MetricSelector";
@@ -40,6 +41,7 @@ export function SelectorsPanel({
   onTargetRegionCodeChange: (code: string) => void;
   onSwapRegions: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="animate-fade-in-up stagger-1 no-print space-y-2">
       <div className="flex items-center justify-between lg:hidden">
@@ -55,7 +57,7 @@ export function SelectorsPanel({
                 : "text-ink-muted hover:bg-surface-raised/60",
             ].join(" ")}
           >
-            Countries
+            {t("mode.countriesLabel")}
           </button>
           <button
             type="button"
@@ -68,11 +70,11 @@ export function SelectorsPanel({
                 : "text-ink-muted hover:bg-surface-raised/60",
             ].join(" ")}
           >
-            Regions
+            {t("mode.regionsLabel")}
           </button>
         </div>
         {comparisonMode === "regions" && (
-          <span className="text-xs text-ink-faint">GDP per capita (USD PPP) · OECD Data</span>
+          <span className="text-xs text-ink-faint">{t("selector.gdpPerCapita")} ({t("selector.usdPppOecdData")})</span>
         )}
       </div>
 
@@ -87,7 +89,7 @@ export function SelectorsPanel({
                 aria-pressed
                 className="px-2 py-1 text-[11px] font-medium transition-default focus-ring bg-surface-raised text-ink shadow-sm"
               >
-                Countries
+                {t("mode.countriesLabel")}
               </button>
               <button
                 type="button"
@@ -95,14 +97,14 @@ export function SelectorsPanel({
                 aria-pressed={false}
                 className="px-2 py-1 text-[11px] font-medium transition-default focus-ring text-ink-muted hover:bg-surface-raised/60"
               >
-                Regions
+                {t("mode.regionsLabel")}
               </button>
             </div>
 
             <div className="min-w-[180px] flex-1">
               <CountrySelector
                 dense
-                label="Chaser"
+                label={t("selector.chaser")}
                 value={chaserIso}
                 onChange={onChaserIsoChange}
                 countries={countries}
@@ -114,8 +116,8 @@ export function SelectorsPanel({
               type="button"
               onClick={onSwapCountries}
               className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
-              title="Swap chaser and target"
-              aria-label="Swap chaser and target countries"
+              title={t("selector.swapCountries")}
+              aria-label={t("selector.swapCountries")}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -135,7 +137,7 @@ export function SelectorsPanel({
             <div className="min-w-[180px] flex-1">
               <CountrySelector
                 dense
-                label="Target"
+                label={t("selector.target")}
                 value={targetIso}
                 onChange={onTargetIsoChange}
                 countries={countries}
@@ -157,7 +159,7 @@ export function SelectorsPanel({
           {/* Tablet: 2x2 grid */}
           <div className="hidden sm:grid lg:hidden sm:grid-cols-[1fr,auto,1fr] sm:gap-3 sm:items-end">
             <CountrySelector
-              label="Chaser"
+              label={t("selector.chaser")}
               value={chaserIso}
               onChange={onChaserIsoChange}
               countries={countries}
@@ -168,8 +170,8 @@ export function SelectorsPanel({
               type="button"
               onClick={onSwapCountries}
               className="hidden sm:flex items-center justify-center w-8 h-10 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised border border-transparent hover:border-surface transition-default focus-ring"
-              title="Swap chaser and target"
-              aria-label="Swap chaser and target countries"
+              title={t("selector.swapCountries")}
+              aria-label={t("selector.swapCountries")}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -187,7 +189,7 @@ export function SelectorsPanel({
               </svg>
             </button>
             <CountrySelector
-              label="Target"
+              label={t("selector.target")}
               value={targetIso}
               onChange={onTargetIsoChange}
               countries={countries}
@@ -207,7 +209,7 @@ export function SelectorsPanel({
           {/* Mobile: vertical stack */}
           <div className="sm:hidden space-y-3">
             <CountrySelector
-              label="Chaser"
+              label={t("selector.chaser")}
               value={chaserIso}
               onChange={onChaserIsoChange}
               countries={countries}
@@ -215,12 +217,12 @@ export function SelectorsPanel({
               color="chaser"
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-ink-faint">vs</span>
+              <span className="text-xs text-ink-faint">{t("selector.vs")}</span>
               <button
                 type="button"
                 onClick={onSwapCountries}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default focus-ring rounded-lg"
-                aria-label="Swap chaser and target countries"
+                aria-label={t("selector.swapCountries")}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -236,11 +238,11 @@ export function SelectorsPanel({
                     d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
                   />
                 </svg>
-                Swap
+                {t("selector.swap")}
               </button>
             </div>
             <CountrySelector
-              label="Target"
+              label={t("selector.target")}
               value={targetIso}
               onChange={onTargetIsoChange}
               countries={countries}
@@ -267,7 +269,7 @@ export function SelectorsPanel({
                 aria-pressed={false}
                 className="px-2 py-1 text-[11px] font-medium transition-default focus-ring text-ink-muted hover:bg-surface-raised/60"
               >
-                Countries
+                {t("mode.countriesLabel")}
               </button>
               <button
                 type="button"
@@ -275,14 +277,14 @@ export function SelectorsPanel({
                 aria-pressed
                 className="px-2 py-1 text-[11px] font-medium transition-default focus-ring bg-surface-raised text-ink shadow-sm"
               >
-                Regions
+                {t("mode.regionsLabel")}
               </button>
             </div>
 
             <div className="min-w-[200px] flex-1">
               <RegionSelector
                 dense
-                label="Chaser"
+                label={t("selector.chaser")}
                 value={chaserRegionCode}
                 onChange={onChaserRegionCodeChange}
                 excludeCode={targetRegionCode}
@@ -293,8 +295,8 @@ export function SelectorsPanel({
               type="button"
               onClick={onSwapRegions}
               className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
-              title="Swap chaser and target"
-              aria-label="Swap chaser and target regions"
+              title={t("selector.swapCountries")}
+              aria-label={t("selector.swapRegions")}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -314,7 +316,7 @@ export function SelectorsPanel({
             <div className="min-w-[200px] flex-1">
               <RegionSelector
                 dense
-                label="Target"
+                label={t("selector.target")}
                 value={targetRegionCode}
                 onChange={onTargetRegionCodeChange}
                 excludeCode={chaserRegionCode}
@@ -322,13 +324,13 @@ export function SelectorsPanel({
               />
             </div>
             <div className="shrink-0 text-[11px] text-ink-faint whitespace-nowrap px-1">
-              GDP/cap (PPP) · OECD
+              {t("selector.gdpCapPppOecd")}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-2 items-end lg:hidden">
             <RegionSelector
-              label="Chaser Region"
+              label={t("selector.chaserRegion")}
               value={chaserRegionCode}
               onChange={onChaserRegionCodeChange}
               excludeCode={targetRegionCode}
@@ -339,7 +341,7 @@ export function SelectorsPanel({
                 type="button"
                 onClick={onSwapRegions}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-ink-muted hover:text-ink transition-default focus-ring rounded-lg"
-                aria-label="Swap chaser and target regions"
+                aria-label={t("selector.swapRegions")}
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -355,20 +357,20 @@ export function SelectorsPanel({
                     d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
                   />
                 </svg>
-                Swap
+                {t("selector.swap")}
               </button>
             </div>
             <RegionSelector
-              label="Target Region"
+              label={t("selector.targetRegion")}
               value={targetRegionCode}
               onChange={onTargetRegionCodeChange}
               excludeCode={chaserRegionCode}
               color="target"
             />
             <div className="sm:col-span-3 px-3 py-2 rounded-lg bg-surface-sunken border border-surface text-center">
-              <span className="text-xs text-ink-muted">GDP per capita</span>
+              <span className="text-xs text-ink-muted">{t("selector.gdpPerCapita")}</span>
               <span className="mx-2 text-ink-faint">·</span>
-              <span className="text-xs text-ink-faint">USD PPP · OECD Data</span>
+              <span className="text-xs text-ink-faint">{t("selector.usdPppOecdData")}</span>
             </div>
           </div>
         </div>

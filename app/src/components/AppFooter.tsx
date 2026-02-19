@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { getDataSourceBaseUrl } from "../lib/dataSourceUrls";
 
 export function AppFooter({
@@ -11,6 +12,7 @@ export function AppFooter({
   regionsCount?: number;
   dataSourceName?: string | null;
 }) {
+  const { t } = useTranslation();
   const isRegions = comparisonMode === "regions";
   const resolvedSourceName = isRegions
     ? "OECD"
@@ -25,7 +27,7 @@ export function AppFooter({
     <footer className="mt-10 lg:mt-12 pt-6 border-t border-surface">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-ink-faint">
         <p>
-          Data:{" "}
+          {t("footer.data")}{" "}
           {resolvedSourceUrl ? (
             <a
               href={resolvedSourceUrl}
@@ -39,7 +41,7 @@ export function AppFooter({
             <span>{resolvedSourceName}</span>
           )}
           {" · "}
-          Inspired by{" "}
+          {t("footer.inspiredBy")}{" "}
           <a
             href="https://oliverwkim.com/The-Mountain-To-Climb/"
             target="_blank"
@@ -58,10 +60,10 @@ export function AppFooter({
             Global Developments
           </a>
           {" · "}
-          {isRegions ? `${regionsCount ?? "TL2"} regions` : `${countriesCount} countries`}
+          {isRegions ? t("footer.regionsCount", { count: regionsCount ?? 0 }) : t("footer.countriesCount", { count: countriesCount })}
         </p>
         <p className="flex items-center gap-1.5">
-          <span>Built by</span>
+          <span>{t("footer.builtBy")}</span>
           <a
             href="https://actuallymaybe.com"
             target="_blank"

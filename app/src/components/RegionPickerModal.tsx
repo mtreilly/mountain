@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import type { OECDRegion } from "../lib/oecdRegions";
 
@@ -23,6 +24,7 @@ export function RegionPickerModal({
   onSelect: (code: string) => void;
   color?: "chaser" | "target";
 }) {
+  const { t } = useTranslation();
   const headingId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -134,14 +136,14 @@ export function RegionPickerModal({
                 {title}
               </h2>
               <div className="mt-1 text-xs sm:text-sm text-ink-muted">
-                Search or browse. {filtered.length} results
+                {t("selector.searchOrBrowse", { count: filtered.length })}
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-surface transition-default focus-ring"
-              aria-label="Close"
+              aria-label={t("selector.close")}
             >
               <svg
                 className="w-5 h-5 text-ink-muted"
@@ -179,7 +181,7 @@ export function RegionPickerModal({
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search regions…"
+                placeholder={t("selector.searchRegions")}
                 className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-surface bg-surface text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
@@ -189,7 +191,7 @@ export function RegionPickerModal({
         <div className="p-4 sm:p-5">
           <div className="max-h-[65vh] overflow-auto">
             {filtered.length === 0 ? (
-              <div className="py-16 text-center text-ink-faint text-sm">No regions found</div>
+              <div className="py-16 text-center text-ink-faint text-sm">{t("selector.noRegionsFound")}</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {filtered.map((r) => {

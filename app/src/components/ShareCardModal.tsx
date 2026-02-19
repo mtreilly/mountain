@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { copyShareCardToClipboard, downloadShareCardPng } from "../lib/chartExport";
 import { SHARE_CARD_SIZES, type ShareCardParams, type ShareCardSize } from "../lib/shareCardSvg";
@@ -18,13 +19,14 @@ interface ShareCardModalProps {
   shareCardParams: ShareCardParams | null;
 }
 
-const SIZE_OPTIONS: Array<{ value: ShareCardSize; label: string; description: string }> = [
-  { value: "twitter", label: "Twitter/X", description: "1200×675" },
-  { value: "linkedin", label: "LinkedIn", description: "1200×627" },
-  { value: "square", label: "Square", description: "1080×1080" },
+const SIZE_OPTIONS: Array<{ value: ShareCardSize; labelKey: string; description: string }> = [
+  { value: "twitter", labelKey: "shareCard.twitterX", description: "1200×675" },
+  { value: "linkedin", labelKey: "shareCard.linkedin", description: "1200×627" },
+  { value: "square", labelKey: "shareCard.square", description: "1080×1080" },
 ];
 
 export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardModalProps) {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const themeButtonRefs = useRef<Record<"light" | "dark", HTMLButtonElement | null>>({
@@ -82,10 +84,10 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
     setIsCopying(true);
     try {
       await copyShareCardToClipboard(paramsWithOverrides, selectedSize);
-      toast.success("Copied to clipboard");
+      toast.success(t("shareCard.copiedToClipboard"));
     } catch (error) {
       console.error("Copy failed:", error);
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("shareCard.failedToCopy"));
     } finally {
       setIsCopying(false);
     }
@@ -96,10 +98,10 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
     setIsDownloading(true);
     try {
       await downloadShareCardPng(paramsWithOverrides, selectedSize);
-      toast.success("Downloaded share card");
+      toast.success(t("shareCard.downloadedShareCard"));
     } catch (error) {
       console.error("Download failed:", error);
-      toast.error("Failed to download");
+      toast.error(t("shareCard.failedToDownload"));
     } finally {
       setIsDownloading(false);
     }
@@ -206,21 +208,21 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Create Share Card"
+        aria-label={t("shareCard.title")}
         className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Create Share Card</h2>
-            <p className="text-sm text-ink-muted">Generate an image optimized for social media</p>
+            <h2 className="text-lg font-semibold text-ink">{t("shareCard.title")}</h2>
+            <p className="text-sm text-ink-muted">{t("shareCard.subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
-            aria-label="Close share card modal"
+            aria-label={t("shareCard.closeModal")}
           >
             <svg
               className="w-5 h-5 text-ink-muted"
@@ -242,7 +244,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
           {/* Preview */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Preview
+              {t("shareCard.preview")}
             </h3>
             <div className="flex justify-center p-4 rounded-xl border border-surface bg-surface">
               {paramsWithOverrides && (
@@ -258,12 +260,12 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
           {/* Options */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Options
+              {t("shareCard.options")}
             </h3>
             <div className="space-y-4 p-4 rounded-xl border border-surface bg-surface">
               {/* Theme toggle */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">Theme</label>
+                <label className="block text-sm font-medium text-ink mb-2">{t("theme.theme")}</label>
                 <div
                   role="radiogroup"
                   aria-label="Theme"
@@ -299,7 +301,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                           d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
                         />
                       </svg>
-                      Light
+                      {t("theme.light")}
                     </span>
                   </button>
                   <button
@@ -331,7 +333,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                           d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
                         />
                       </svg>
-                      Dark
+                      {t("theme.dark")}
                     </span>
                   </button>
                 </div>
@@ -339,10 +341,10 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
 
               {/* Size selector */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">Size</label>
+                <label className="block text-sm font-medium text-ink mb-2">{t("shareCard.size")}</label>
                 <div
                   role="radiogroup"
-                  aria-label="Share card size"
+                  aria-label={t("shareCard.shareCardSize")}
                   className="flex gap-2"
                   onKeyDown={handleSizeKeyDown}
                 >
@@ -363,7 +365,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                           : "border-surface bg-surface-raised text-ink hover:bg-surface"
                       }`}
                     >
-                      <div className="font-medium">{option.label}</div>
+                      <div className="font-medium">{t(option.labelKey)}</div>
                       <div className="text-xs text-ink-faint">{option.description}</div>
                     </button>
                   ))}
@@ -384,7 +386,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                 {isCopying ? (
                   <>
                     <div className="w-4 h-4 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-                    Copying...
+                    {t("shareCard.copying")}
                   </>
                 ) : (
                   <>
@@ -396,7 +398,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                         d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
                       />
                     </svg>
-                    Copy to Clipboard
+                    {t("shareCard.copyToClipboard")}
                   </>
                 )}
               </button>
@@ -409,7 +411,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                 {isDownloading ? (
                   <>
                     <div className="w-4 h-4 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-                    Downloading...
+                    {t("shareCard.downloading")}
                   </>
                 ) : (
                   <>
@@ -421,7 +423,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                       />
                     </svg>
-                    Download PNG
+                    {t("shareCard.downloadPng")}
                   </>
                 )}
               </button>
@@ -430,7 +432,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
 
           {/* Tip */}
           <p className="text-xs text-ink-faint text-center">
-            Tip: Copy to clipboard and paste directly into Twitter, LinkedIn, or Slack
+            {t("shareCard.tip")}
           </p>
         </div>
       </div>

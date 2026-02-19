@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { ShareState } from "../lib/shareState";
 import { EmbedCodeGenerator } from "./EmbedCodeGenerator";
@@ -14,6 +15,7 @@ interface DataExportCardProps {
 }
 
 function DataExportCard({ label, description, onDownload, disabled }: DataExportCardProps) {
+  const { t } = useTranslation();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -49,7 +51,7 @@ function DataExportCard({ label, description, onDownload, disabled }: DataExport
             />
           </svg>
         )}
-        Download
+        {t("exportModal.download")}
       </button>
     </div>
   );
@@ -82,6 +84,7 @@ export function ExportModal({
   shareState?: ShareState;
   onOpenCitationPanel?: () => void;
 }) {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isRegionsMode = comparisonMode === "regions";
@@ -176,21 +179,21 @@ export function ExportModal({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Export Options"
+        aria-label={t("exportModal.title")}
         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Export Data</h2>
-            <p className="text-sm text-ink-muted">Download data and reports</p>
+            <h2 className="text-lg font-semibold text-ink">{t("exportModal.title")}</h2>
+            <p className="text-sm text-ink-muted">{t("exportModal.subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
-            aria-label="Close export modal"
+            aria-label={t("exportModal.closeExportModal")}
           >
             <svg
               className="w-5 h-5 text-ink-muted"
@@ -212,56 +215,56 @@ export function ExportModal({
           {/* Data section */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Data
+              {t("exportModal.dataSection")}
             </h3>
             <div className="space-y-2">
               <DataExportCard
-                label="Historical Data (CSV)"
+                label={t("exportModal.historicalCsv")}
                 description={
                   isRegionsMode
-                    ? "Recorded values from OECD regional dataset"
-                    : `Actual recorded values from ${resolvedDataSourceName}`
+                    ? t("exportModal.historicalDescRegions")
+                    : t("exportModal.historicalDesc", { source: resolvedDataSourceName })
                 }
                 onDownload={async () => {
                   const filename = await onDownloadObservedCsv?.();
                   toast.success(
                     typeof filename === "string" && filename.length
-                      ? `Downloaded historical data: ${filename}`
-                      : "Downloaded historical data",
+                      ? t("exportModal.downloadedHistoricalFile", { filename })
+                      : t("exportModal.downloadedHistorical"),
                   );
                 }}
                 disabled={!onDownloadObservedCsv}
               />
               <DataExportCard
-                label="Projection Data (CSV)"
+                label={t("exportModal.projectionCsv")}
                 description={
                   isRegionsMode
-                    ? "Calculated future GDP per capita based on growth rates"
-                    : "Calculated future values based on growth rates"
+                    ? t("exportModal.projectionDescRegions")
+                    : t("exportModal.projectionDesc")
                 }
                 onDownload={async () => {
                   const filename = await onDownloadProjectionCsv?.();
                   toast.success(
                     typeof filename === "string" && filename.length
-                      ? `Downloaded projection data: ${filename}`
-                      : "Downloaded projection data",
+                      ? t("exportModal.downloadedProjectionFile", { filename })
+                      : t("exportModal.downloadedProjection"),
                   );
                 }}
                 disabled={!onDownloadProjectionCsv}
               />
               <DataExportCard
-                label="Full Report (JSON)"
+                label={t("exportModal.fullReport")}
                 description={
                   isRegionsMode
-                    ? "Complete report including metadata, observed series, and projections"
-                    : "Complete data including metadata and calculations"
+                    ? t("exportModal.reportDescRegions")
+                    : t("exportModal.reportDesc")
                 }
                 onDownload={async () => {
                   const filename = await onDownloadReportJson?.();
                   toast.success(
                     typeof filename === "string" && filename.length
-                      ? `Downloaded report: ${filename}`
-                      : "Downloaded report",
+                      ? t("exportModal.downloadedReportFile", { filename })
+                      : t("exportModal.downloadedReport"),
                   );
                 }}
                 disabled={!onDownloadReportJson}
@@ -285,7 +288,7 @@ export function ExportModal({
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  Cite This
+                  {t("shareMenu.citeThis")}
                 </button>
               </div>
             )}
@@ -295,7 +298,7 @@ export function ExportModal({
           {shareState && (
             <section>
               <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-                Embed
+                {t("exportModal.embed")}
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
                 <EmbedCodeGenerator shareState={shareState} />
@@ -307,12 +310,11 @@ export function ExportModal({
           {onOpenCitationPanel && (
             <section>
               <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-                Citation
+                {t("exportModal.citation")}
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
                 <p className="text-sm text-ink-muted mb-3">
-                  Generate properly formatted citations for academic papers, blog posts, and
-                  publications.
+                  {t("exportModal.citationDesc")}
                 </p>
                 <button
                   type="button"
@@ -330,7 +332,7 @@ export function ExportModal({
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  Open Citation Panel
+                  {t("exportModal.openCitationPanel")}
                   <span className="text-xs text-ink-faint ml-auto">⌘⇧C</span>
                 </button>
               </div>
@@ -340,7 +342,7 @@ export function ExportModal({
           {/* Settings section */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Settings
+              {t("exportModal.settings")}
             </h3>
             <div className="p-4 rounded-lg border border-surface bg-surface space-y-4">
               <div>
@@ -348,7 +350,7 @@ export function ExportModal({
                   htmlFor="base-year-input"
                   className="block text-sm font-medium text-ink mb-1"
                 >
-                  Base year
+                  {t("exportModal.baseYear")}
                 </label>
                 <input
                   id="base-year-input"
@@ -360,7 +362,7 @@ export function ExportModal({
                   className="w-full max-w-[120px] px-3 py-2 rounded-lg border border-surface bg-surface-raised text-ink text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 />
                 <p className="mt-1 text-xs text-ink-faint">
-                  Affects the projection start year and convergence calculations
+                  {t("exportModal.baseYearHelp")}
                 </p>
               </div>
 
@@ -369,12 +371,12 @@ export function ExportModal({
                   type="button"
                   onClick={() => {
                     onReset?.();
-                    toast.success("Reset to defaults");
+                    toast.success(t("toast.resetToDefaults"));
                   }}
                   disabled={!onReset}
                   className="px-3 py-1.5 rounded-lg border border-surface bg-surface-raised text-ink text-xs font-medium hover:bg-surface transition-default disabled:opacity-50"
                 >
-                  Reset to defaults
+                  {t("exportModal.resetToDefaults")}
                 </button>
                 <button
                   type="button"
@@ -384,7 +386,7 @@ export function ExportModal({
                   }}
                   className="px-3 py-1.5 rounded-lg border border-surface bg-surface-raised text-ink text-xs font-medium hover:bg-surface transition-default"
                 >
-                  Print page
+                  {t("exportModal.printPage")}
                 </button>
               </div>
             </div>

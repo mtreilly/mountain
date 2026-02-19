@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import type { Indicator } from "../types";
 
 function useIsMobile() {
@@ -28,6 +29,7 @@ export function MetricSelector({
   disabled?: boolean;
   dense?: boolean;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -165,7 +167,7 @@ export function MetricSelector({
   const ListContent = (
     <>
       {flatList.length === 0 ? (
-        <div className="px-4 py-12 text-center text-ink-faint text-sm">No metrics found</div>
+        <div className="px-4 py-12 text-center text-ink-faint text-sm">{t("selector.noMetricsFound")}</div>
       ) : (
         (() => {
           let lastCategory: string | null = null;
@@ -217,7 +219,7 @@ export function MetricSelector({
     <div className={dense ? "" : "space-y-1"}>
       {!dense && (
         <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">
-          Metric
+          {t("selector.metric")}
         </label>
       )}
 
@@ -249,13 +251,13 @@ export function MetricSelector({
         <span className="min-w-0 flex-1 flex items-center gap-1.5">
           {dense && (
             <span className="shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold uppercase tracking-wider bg-surface-sunken border border-surface text-ink-muted">
-              Metric
+              {t("selector.metric")}
             </span>
           )}
           <span
             className={`truncate ${dense ? "text-xs" : "text-sm"} ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}
           >
-            {selectedIndicator?.name || "Select..."}
+            {selectedIndicator?.name || t("selector.select")}
           </span>
         </span>
         <svg
@@ -321,7 +323,7 @@ export function MetricSelector({
                     }
                     if (e.key === "Escape") close();
                   }}
-                  placeholder="Search metrics..."
+                  placeholder={t("selector.searchMetrics")}
                   className="w-full pl-10 pr-4 py-2.5 text-sm border border-surface bg-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-ink placeholder:text-ink-faint"
                 />
               </div>
@@ -358,13 +360,13 @@ export function MetricSelector({
               <div className="px-4 py-3 border-b border-surface-subtle bg-amber-50 dark:bg-amber-950/30">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-display font-semibold text-amber-700 dark:text-amber-400">
-                    Select Metric
+                    {t("selector.selectMetric")}
                   </h2>
                   <button
                     type="button"
                     onClick={close}
                     className="p-2 -mr-2 rounded-lg hover:bg-surface-sunken transition-default"
-                    aria-label="Close"
+                    aria-label={t("selector.close")}
                   >
                     <svg
                       className="w-5 h-5 text-ink-muted"
@@ -404,7 +406,7 @@ export function MetricSelector({
                       setSearch(e.target.value);
                       setActiveIndex(0);
                     }}
-                    placeholder="Search metrics..."
+                    placeholder={t("selector.searchMetrics")}
                     className="w-full pl-11 pr-4 py-3 text-base border border-surface bg-surface-raised rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-ink placeholder:text-ink-faint"
                   />
                 </div>

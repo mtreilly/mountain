@@ -1,12 +1,14 @@
+import { useTranslation } from "react-i18next";
 import type { ThemeMode } from "../hooks/useTheme";
 
 export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: () => void }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
       onClick={onToggle}
       className="inline-flex items-center gap-2 rounded-xl border border-surface bg-surface-raised px-3 py-2 text-sm text-ink-muted shadow-sm transition-default hover:bg-surface hover:text-ink hover:border-[var(--color-border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={t("theme.switchTo", { mode: theme === "dark" ? "light" : "dark" })}
     >
       {theme === "dark" ? (
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
@@ -29,7 +31,7 @@ export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: (
           />
         </svg>
       )}
-      <span className="font-medium hidden sm:inline">{theme === "dark" ? "Night" : "Day"}</span>
+      <span className="font-medium hidden sm:inline">{theme === "dark" ? t("theme.night") : t("theme.day")}</span>
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useOECDRegions } from "../hooks/useOECDRegions";
 import { RegionPickerModal } from "./RegionPickerModal";
 
@@ -21,6 +22,7 @@ export function RegionSelector({
   color = "chaser",
   dense = false,
 }: RegionSelectorProps) {
+  const { t } = useTranslation();
   const { regions, getRegionsByCountry, getRegionByCode } = useOECDRegions();
   const [open, setOpen] = useState(false);
 
@@ -50,7 +52,7 @@ export function RegionSelector({
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${label}: ${selectedRegion?.name ?? "Select a region"}`}
+        aria-label={`${label}: ${selectedRegion?.name ?? t("selector.selectRegion")}`}
         className={[
           `w-full rounded border-l-4 ${colorClasses} border border-surface bg-surface text-left text-ink hover:bg-surface-raised transition-default flex items-center justify-between gap-1.5`,
           dense ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm",
@@ -72,7 +74,7 @@ export function RegionSelector({
               </span>
             </>
           ) : (
-            <span className="text-ink-muted">Select region...</span>
+            <span className="text-ink-muted">{t("selector.selectRegionPlaceholder")}</span>
           )}
         </span>
         <svg

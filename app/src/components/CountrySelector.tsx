@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Country } from "../types";
 import { CountryPickerModal } from "./CountryPickerModal";
 
@@ -21,6 +22,7 @@ export function CountrySelector({
   color = "chaser",
   dense = false,
 }: CountrySelectorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const selectedCountry = useMemo(
     () => countries.find((c) => c.iso_alpha3 === value) || null,
@@ -63,7 +65,7 @@ export function CountrySelector({
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${label}: ${selectedCountry?.name ?? "Select a country"}`}
+        aria-label={`${label}: ${selectedCountry?.name ?? t("selector.selectCountry")}`}
         className={[
           "w-full text-left rounded border transition-default",
           "bg-surface-raised flex items-center justify-between gap-1.5",
@@ -92,7 +94,7 @@ export function CountrySelector({
             </span>
           </div>
         ) : (
-          <span className={`text-ink-faint ${dense ? "text-xs" : "text-sm"}`}>Select...</span>
+          <span className={`text-ink-faint ${dense ? "text-xs" : "text-sm"}`}>{t("selector.select")}</span>
         )}
         <svg
           className={`w-3.5 h-3.5 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}

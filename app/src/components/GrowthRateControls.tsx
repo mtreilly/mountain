@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { formatPercent } from "../lib/convergence";
 
 interface GrowthRateControlsProps {
@@ -12,11 +13,11 @@ interface GrowthRateControlsProps {
 }
 
 const PRESETS = [
-  { label: "Stagnant", value: 0.005 },
-  { label: "Slow", value: 0.015 },
-  { label: "Moderate", value: 0.03 },
-  { label: "Fast", value: 0.05 },
-  { label: "Rapid", value: 0.07 },
+  { key: "stagnant" as const, value: 0.005 },
+  { key: "slow" as const, value: 0.015 },
+  { key: "moderate" as const, value: 0.03 },
+  { key: "fast" as const, value: 0.05 },
+  { key: "rapid" as const, value: 0.07 },
 ];
 
 const RATE_RANGE = {
@@ -35,6 +36,7 @@ export function GrowthRateControls({
   targetName,
   compact = false,
 }: GrowthRateControlsProps) {
+  const { t } = useTranslation();
   const netAdvantage = chaserRate - targetRate;
   const lastDynamicTargetRate = useRef(0.015);
   const chaserSliderId = useId();
@@ -49,7 +51,7 @@ export function GrowthRateControls({
     return (
       <div className="card p-3 space-y-3">
         <div className="text-center">
-          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">Growth Rates</h3>
+          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">{t("growth.title")}</h3>
         </div>
 
         {/* Chaser */}
@@ -76,7 +78,7 @@ export function GrowthRateControls({
           <div className="flex flex-wrap gap-1">
             {PRESETS.map((preset) => (
               <button
-                key={`chaser-${preset.label}`}
+                key={`chaser-${preset.key}`}
                 type="button"
                 onClick={() => onChaserRateChange(preset.value)}
                 className={[
@@ -86,7 +88,7 @@ export function GrowthRateControls({
                     : "bg-surface-raised text-chaser hover:bg-surface",
                 ].join(" ")}
               >
-                {preset.label}
+                {t(`growth.${preset.key}`)}
               </button>
             ))}
           </div>
@@ -99,7 +101,7 @@ export function GrowthRateControls({
               {targetName}
             </span>
             <span className="text-sm font-display font-bold text-target tabular-nums">
-              {targetRate === 0 ? "Static" : formatPercent(targetRate)}
+              {targetRate === 0 ? t("growth.static") : formatPercent(targetRate)}
             </span>
           </div>
 
@@ -114,7 +116,7 @@ export function GrowthRateControls({
                   : "border-target bg-target text-white",
               ].join(" ")}
             >
-              Growing
+              {t("growth.growing")}
             </button>
             <button
               type="button"
@@ -126,7 +128,7 @@ export function GrowthRateControls({
                   : "border-surface bg-surface-raised text-ink-muted",
               ].join(" ")}
             >
-              Static
+              {t("growth.static")}
             </button>
           </div>
 
@@ -145,7 +147,7 @@ export function GrowthRateControls({
           <div className="flex flex-wrap gap-1">
             {PRESETS.slice(0, 4).map((preset) => (
               <button
-                key={`target-${preset.label}`}
+                key={`target-${preset.key}`}
                 type="button"
                 onClick={() => onTargetRateChange(preset.value)}
                 className={[
@@ -155,7 +157,7 @@ export function GrowthRateControls({
                     : "bg-surface-raised text-target hover:bg-surface",
                 ].join(" ")}
               >
-                {preset.label}
+                {t(`growth.${preset.key}`)}
               </button>
             ))}
           </div>
@@ -164,7 +166,7 @@ export function GrowthRateControls({
         {/* Net advantage */}
         <div className="pt-3 border-t border-surface-subtle">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-ink-muted">Net advantage</span>
+            <span className="text-ink-muted">{t("growth.netAdvantage")}</span>
             <span
               className={[
                 "font-display font-semibold tabular-nums",
@@ -180,7 +182,7 @@ export function GrowthRateControls({
             </span>
           </div>
           {netAdvantage <= 0 && (
-            <p className="text-[10px] text-ink-faint mt-1">No convergence at these rates</p>
+            <p className="text-[10px] text-ink-faint mt-1">{t("growth.noConvergence")}</p>
           )}
         </div>
       </div>
@@ -192,7 +194,7 @@ export function GrowthRateControls({
     <div className="card p-4 sm:p-4 space-y-4">
       <div className="text-center">
         <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
-          Growth Rate Assumptions
+          {t("growth.fullTitle")}
         </h3>
       </div>
 
@@ -223,7 +225,7 @@ export function GrowthRateControls({
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.map((preset) => (
               <button
-                key={`chaser-${preset.label}`}
+                key={`chaser-${preset.key}`}
                 type="button"
                 onClick={() => onChaserRateChange(preset.value)}
                 className={[
@@ -233,7 +235,7 @@ export function GrowthRateControls({
                     : "bg-surface-raised text-chaser hover:bg-surface border border-transparent hover:border-chaser",
                 ].join(" ")}
               >
-                {preset.label}
+                {t(`growth.${preset.key}`)}
               </button>
             ))}
           </div>
@@ -246,7 +248,7 @@ export function GrowthRateControls({
               {targetName}
             </label>
             <span className="text-lg font-display font-bold text-target tabular-nums">
-              {targetRate === 0 ? "Static" : formatPercent(targetRate)}
+              {targetRate === 0 ? t("growth.static") : formatPercent(targetRate)}
             </span>
           </div>
 
@@ -261,7 +263,7 @@ export function GrowthRateControls({
                   : "border-target bg-target text-white",
               ].join(" ")}
             >
-              Growing
+              {t("growth.growing")}
             </button>
             <button
               type="button"
@@ -273,7 +275,7 @@ export function GrowthRateControls({
                   : "border-surface bg-surface-raised text-ink-muted hover:bg-surface hover:text-ink",
               ].join(" ")}
             >
-              Static
+              {t("growth.static")}
             </button>
           </div>
 
@@ -292,7 +294,7 @@ export function GrowthRateControls({
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.slice(0, 4).map((preset) => (
               <button
-                key={`target-${preset.label}`}
+                key={`target-${preset.key}`}
                 type="button"
                 onClick={() => onTargetRateChange(preset.value)}
                 className={[
@@ -302,7 +304,7 @@ export function GrowthRateControls({
                     : "bg-surface-raised text-target hover:bg-surface border border-transparent hover:border-target",
                 ].join(" ")}
               >
-                {preset.label}
+                {t(`growth.${preset.key}`)}
               </button>
             ))}
           </div>
@@ -312,7 +314,7 @@ export function GrowthRateControls({
       {/* Net advantage indicator */}
       <div className="pt-4 border-t border-surface-subtle">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-ink-muted">Net growth advantage:</span>
+          <span className="text-ink-muted">{t("growth.netGrowthAdvantage")}</span>
           <span
             className={[
               "font-display font-semibold tabular-nums",
@@ -326,7 +328,7 @@ export function GrowthRateControls({
             {netAdvantage > 0 ? "+" : ""}
             {formatPercent(netAdvantage)}
             {netAdvantage <= 0 && (
-              <span className="text-xs font-normal ml-2">· no convergence</span>
+              <span className="text-xs font-normal ml-2">· {t("growth.noConvergenceShort")}</span>
             )}
           </span>
         </div>

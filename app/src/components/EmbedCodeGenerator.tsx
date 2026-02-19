@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { EmbedParams, EmbedTheme, ShareState } from "../lib/shareState";
 import { toEmbedSearchString, toSearchString } from "../lib/shareState";
@@ -15,6 +16,7 @@ interface EmbedCodeGeneratorProps {
 }
 
 export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
+  const { t } = useTranslation();
   const [interactive, setInteractive] = useState(true);
   const [embedTheme, setEmbedTheme] = useState<EmbedTheme>("auto");
   const [height, setHeight] = useState(400);
@@ -79,20 +81,20 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
   const copyEmbedCode = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(iframeCode);
-      toast.success("Embed code copied to clipboard");
+      toast.success(t("embed.embedCodeCopied"));
     } catch {
-      toast.error("Failed to copy embed code");
+      toast.error(t("embed.failedCopyEmbed"));
     }
-  }, [iframeCode]);
+  }, [iframeCode, t]);
 
   const copyImageUrl = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(imageUrl);
-      toast.success("Image URL copied to clipboard");
+      toast.success(t("embed.imageUrlCopied"));
     } catch {
-      toast.error("Failed to copy image URL");
+      toast.error(t("embed.failedCopyImage"));
     }
-  }, [imageUrl]);
+  }, [imageUrl, t]);
 
   const handleInteractivityKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End")
@@ -132,7 +134,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       <div className="grid grid-cols-2 gap-4">
         {/* Interactivity */}
         <div>
-          <label className="block text-xs font-medium text-ink-muted mb-2">Interactivity</label>
+          <label className="block text-xs font-medium text-ink-muted mb-2">{t("embed.interactivity")}</label>
           <div
             role="radiogroup"
             aria-label="Interactivity"
@@ -154,7 +156,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
                   : "bg-surface border-surface text-ink hover:bg-surface-sunken"
               }`}
             >
-              Interactive
+              {t("embed.interactive")}
             </button>
             <button
               type="button"
@@ -171,7 +173,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
                   : "bg-surface border-surface text-ink hover:bg-surface-sunken"
               }`}
             >
-              Static
+              {t("embed.static")}
             </button>
           </div>
         </div>
@@ -185,24 +187,24 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
             className="flex gap-1"
             onKeyDown={handleThemeKeyDown}
           >
-            {(["auto", "light", "dark"] as const).map((t) => (
+            {(["auto", "light", "dark"] as const).map((themeOption) => (
               <button
-                key={t}
+                key={themeOption}
                 type="button"
-                onClick={() => setEmbedTheme(t)}
+                onClick={() => setEmbedTheme(themeOption)}
                 ref={(el) => {
-                  themeButtonRefs.current[t] = el;
+                  themeButtonRefs.current[themeOption] = el;
                 }}
                 role="radio"
-                aria-checked={embedTheme === t}
-                tabIndex={embedTheme === t ? 0 : -1}
+                aria-checked={embedTheme === themeOption}
+                tabIndex={embedTheme === themeOption ? 0 : -1}
                 className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-lg border transition-default capitalize ${
-                  embedTheme === t
+                  embedTheme === themeOption
                     ? "bg-chaser text-white border-chaser"
                     : "bg-surface border-surface text-ink hover:bg-surface-sunken"
                 }`}
               >
-                {t}
+                {themeOption}
               </button>
             ))}
           </div>
@@ -212,7 +214,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       {/* Height input */}
       <div>
         <label htmlFor={heightInputId} className="block text-xs font-medium text-ink-muted mb-2">
-          Height (px)
+          {t("embed.height")}
         </label>
         <input
           id={heightInputId}
@@ -233,7 +235,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
 
       {/* Embed code */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">Embed Code</label>
+        <label className="block text-xs font-medium text-ink-muted mb-2">{t("embed.embedCode")}</label>
         <div className="relative">
           <pre className="p-3 rounded-lg bg-surface-sunken border border-surface text-xs text-ink-muted overflow-x-auto whitespace-pre-wrap break-all font-mono">
             {iframeCode}
@@ -243,7 +245,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
             onClick={copyEmbedCode}
             className="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded bg-surface-raised border border-surface text-ink hover:bg-surface transition-default"
           >
-            Copy
+            {t("embed.copy")}
           </button>
         </div>
       </div>
@@ -251,11 +253,10 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       {/* Platform compatibility note */}
       <div className="p-3 rounded-lg bg-surface-sunken border border-surface">
         <p className="text-xs text-ink-muted">
-          <strong className="text-ink">Works on:</strong> Substack, WordPress, Ghost, Notion
+          <strong className="text-ink">{t("embed.worksOn")}</strong> {t("embed.worksOnPlatforms")}
         </p>
         <p className="text-xs text-ink-muted mt-1">
-          <strong className="text-ink">For Medium:</strong> Use the static image below instead
-          (iframes not supported)
+          <strong className="text-ink">{t("embed.forMedium")}</strong> {t("embed.forMediumNote")}
         </p>
       </div>
 
@@ -263,7 +264,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       {imageUrl && (
         <div className="pt-3 border-t border-surface">
           <label className="block text-xs font-medium text-ink-muted mb-2">
-            Static Image (for Medium, LinkedIn, etc.)
+            {t("embed.staticImage")}
           </label>
           <div className="flex gap-2">
             <button
@@ -279,7 +280,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
                   d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
                 />
               </svg>
-              Copy Image URL
+              {t("embed.copyImageUrl")}
             </button>
             <a
               href={imageUrl}
@@ -294,7 +295,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              Download Image
+              {t("embed.downloadImage")}
             </a>
           </div>
         </div>

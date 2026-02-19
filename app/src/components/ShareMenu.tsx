@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import type { HeadlineData } from "../lib/headlineGenerator";
 import { ShareHeadline } from "./ShareHeadline";
 
@@ -18,6 +19,7 @@ export function ShareMenu({
   theme?: "light" | "dark";
   onToggleTheme?: () => void;
 }) {
+  const { t } = useTranslation();
   const menuId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [popover, setPopover] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -124,7 +126,7 @@ export function ShareMenu({
         type="button"
         onClick={() => (isOpen ? close({ restoreFocus: true }) : open())}
         disabled={disabled}
-        aria-label="More options"
+        aria-label={t("shareMenu.moreOptions")}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
@@ -165,7 +167,7 @@ export function ShareMenu({
             ref={popoverRef}
             id={menuId}
             role="menu"
-            aria-label="More options"
+            aria-label={t("shareMenu.moreOptions")}
             onKeyDown={(e) => {
               if (
                 e.key !== "ArrowDown" &&
@@ -248,7 +250,7 @@ export function ShareMenu({
                     />
                   </svg>
                 )}
-                {theme === "dark" ? "Light mode" : "Dark mode"}
+                {theme === "dark" ? t("theme.lightMode") : t("theme.darkMode")}
               </button>
             )}
 
@@ -276,7 +278,7 @@ export function ShareMenu({
                     d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                Data / Embed
+                {t("shareMenu.dataEmbed")}
               </button>
             )}
 
@@ -304,7 +306,7 @@ export function ShareMenu({
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                Cite This
+                {t("shareMenu.citeThis")}
               </button>
             )}
 

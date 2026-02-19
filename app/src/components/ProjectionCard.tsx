@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 import type { Milestone } from "../lib/convergence";
 import type { ShareState } from "../lib/shareState";
 import { ConvergenceChartInteractive } from "./ConvergenceChartInteractive";
@@ -39,6 +40,7 @@ export function ProjectionCard({
   onShareCard?: () => void;
   onExport?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="card p-3 sm:p-4 animate-fade-in-up stagger-3">
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -51,7 +53,7 @@ export function ProjectionCard({
               onChange={(e) => onShowMilestonesChange(e.target.checked)}
               className="accent-[var(--color-accent)]"
             />
-            Milestones
+            {t("projection.milestones")}
           </label>
           <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
             <button
@@ -64,7 +66,7 @@ export function ProjectionCard({
                   : "text-ink-muted hover:bg-surface-raised/60",
               ].join(" ")}
             >
-              Chart
+              {t("projection.chart")}
             </button>
             <button
               type="button"
@@ -76,7 +78,7 @@ export function ProjectionCard({
                   : "text-ink-muted hover:bg-surface-raised/60",
               ].join(" ")}
             >
-              Table
+              {t("projection.table")}
             </button>
           </div>
           {unit && <span className="text-xs text-ink-faint truncate">{unit}</span>}
@@ -90,13 +92,13 @@ export function ProjectionCard({
                 type="button"
                 onClick={onShareCard}
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-ink-muted hover:bg-surface-raised/60 transition-default focus-ring"
-                aria-label="Share as card"
+                aria-label={t("projection.shareAsCard")}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Share
+                {t("projection.share")}
               </button>
             )}
             {onExport && (
@@ -104,12 +106,12 @@ export function ProjectionCard({
                 type="button"
                 onClick={onExport}
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-ink-muted hover:bg-surface-raised/60 transition-default focus-ring"
-                aria-label="Export data"
+                aria-label={t("projection.exportData")}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Export
+                {t("projection.export")}
               </button>
             )}
           </div>

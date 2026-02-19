@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 // Minimal indicator info needed for citations
@@ -24,11 +25,11 @@ import {
 } from "../lib/dataSourceUrls";
 import type { ShareState } from "../lib/shareState";
 
-const FORMATS: { key: CitationFormat; label: string }[] = [
-  { key: "bibtex", label: "BibTeX" },
-  { key: "apa", label: "APA" },
-  { key: "chicago", label: "Chicago" },
-  { key: "plaintext", label: "Plain" },
+const FORMAT_KEYS: { key: CitationFormat; labelKey: string }[] = [
+  { key: "bibtex", labelKey: "citation.bibtex" },
+  { key: "apa", labelKey: "citation.apa" },
+  { key: "chicago", labelKey: "citation.chicago" },
+  { key: "plaintext", labelKey: "citation.plain" },
 ];
 
 interface CitationPanelProps {
@@ -48,6 +49,7 @@ export function CitationPanel({
   chaserName,
   targetName,
 }: CitationPanelProps) {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [selectedFormat, setSelectedFormat] = useState<CitationFormat>("bibtex");
@@ -118,17 +120,17 @@ export function CitationPanel({
 
       // Arrow key navigation between format tabs
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const currentIndex = FORMATS.findIndex((f) => f.key === selectedFormat);
+        const currentIndex = FORMAT_KEYS.findIndex((f) => f.key === selectedFormat);
         if (currentIndex === -1) return;
 
         let newIndex: number;
         if (e.key === "ArrowLeft") {
-          newIndex = currentIndex === 0 ? FORMATS.length - 1 : currentIndex - 1;
+          newIndex = currentIndex === 0 ? FORMAT_KEYS.length - 1 : currentIndex - 1;
         } else {
-          newIndex = currentIndex === FORMATS.length - 1 ? 0 : currentIndex + 1;
+          newIndex = currentIndex === FORMAT_KEYS.length - 1 ? 0 : currentIndex + 1;
         }
 
-        setSelectedFormat(FORMATS[newIndex].key);
+        setSelectedFormat(FORMAT_KEYS[newIndex].key);
         formatRefs.current[newIndex]?.focus();
       }
     };
@@ -200,19 +202,19 @@ export function CitationPanel({
 
   const handleCopyToolCitation = useCallback(async () => {
     await copyTextToClipboard(toolCitation);
-    toast.success("Citation copied to clipboard");
-  }, [toolCitation]);
+    toast.success(t("citation.citationCopied"));
+  }, [toolCitation, t]);
 
   const handleCopyDataCitation = useCallback(async () => {
     await copyTextToClipboard(dataSourceCitation);
-    toast.success("Data source citation copied");
-  }, [dataSourceCitation]);
+    toast.success(t("citation.dataSourceCitationCopied"));
+  }, [dataSourceCitation, t]);
 
   const handleCopyBoth = useCallback(async () => {
     const combined = dataSourceCitation ? `${toolCitation}\n\n${dataSourceCitation}` : toolCitation;
     await copyTextToClipboard(combined);
-    toast.success("Both citations copied");
-  }, [toolCitation, dataSourceCitation]);
+    toast.success(t("citation.bothCitationsCopied"));
+  }, [toolCitation, dataSourceCitation, t]);
 
   if (!isOpen) return null;
 
@@ -222,13 +224,13 @@ export function CitationPanel({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Cite this comparison"
+        aria-label={t("citation.title")}
         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Cite This</h2>
+            <h2 className="text-lg font-semibold text-ink">{t("citation.title")}</h2>
             <p className="text-sm text-ink-muted">
               {chaserName} → {targetName}
             </p>
@@ -238,7 +240,7 @@ export function CitationPanel({
             onClick={handleClose}
             ref={closeButtonRef}
             className="p-2 rounded-lg hover:bg-surface transition-default"
-            aria-label="Close citation panel"
+            aria-label={t("citation.closeCitationPanel")}
           >
             <svg
               className="w-5 h-5 text-ink-muted"
@@ -260,14 +262,14 @@ export function CitationPanel({
           {/* Format selector tabs */}
           <div>
             <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Format
+              {t("citation.format")}
             </label>
             <div
               className="flex gap-1 p-1 rounded-lg bg-surface-sunken"
               role="tablist"
-              aria-label="Citation format"
+              aria-label={t("citation.citationFormat")}
             >
-              {FORMATS.map((format, index) => (
+              {FORMAT_KEYS.map((format, index) => (
                 <button
                   key={format.key}
                   ref={(el) => {
@@ -284,17 +286,17 @@ export function CitationPanel({
                       : "text-ink-muted hover:text-ink hover:bg-surface/50"
                   }`}
                 >
-                  {format.label}
+                  {t(format.labelKey)}
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-ink-faint">Use arrow keys to switch formats</p>
+            <p className="mt-2 text-xs text-ink-faint">{t("citation.arrowKeysHint")}</p>
           </div>
 
           {/* Tool citation */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              Tool Citation
+              {t("citation.toolCitation")}
             </h3>
             <div className="relative">
               <pre
@@ -316,7 +318,7 @@ export function CitationPanel({
                     d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
                   />
                 </svg>
-                Copy
+                {t("citation.copy")}
               </button>
             </div>
           </section>
@@ -325,7 +327,7 @@ export function CitationPanel({
           {indicator?.source && (
             <section>
               <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-                Data Source
+                {t("citation.dataSource")}
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface space-y-3">
                 {/* Source info */}
@@ -347,7 +349,7 @@ export function CitationPanel({
                       rel="noopener noreferrer"
                       className="shrink-0 px-2 py-1 text-xs font-medium rounded border border-surface bg-surface-raised text-ink hover:bg-surface transition-default inline-flex items-center gap-1"
                     >
-                      View
+                      {t("citation.view")}
                       <svg
                         className="w-3 h-3"
                         fill="none"
@@ -386,7 +388,7 @@ export function CitationPanel({
                         d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
                       />
                     </svg>
-                    Copy
+                    {t("citation.copy")}
                   </button>
                 </div>
               </div>
@@ -396,7 +398,7 @@ export function CitationPanel({
           {/* License info */}
           <section>
             <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
-              License
+              {t("citation.license")}
             </h3>
             <div className="p-4 rounded-lg border border-surface bg-surface space-y-2">
               <div className="flex items-center gap-2">
@@ -414,7 +416,7 @@ export function CitationPanel({
                   />
                 </svg>
                 <span className="text-sm text-ink">
-                  Visualizations: <span className="font-medium">CC-BY 4.0</span>
+                  {t("citation.visualizations")} <span className="font-medium">{t("citation.ccBy40")}</span>
                 </span>
               </div>
               {license && (
@@ -433,7 +435,7 @@ export function CitationPanel({
                     />
                   </svg>
                   <span className="text-sm text-ink">
-                    Data:{" "}
+                    {t("citation.dataLabel")}{" "}
                     <a
                       href={license.url}
                       target="_blank"
@@ -446,7 +448,7 @@ export function CitationPanel({
                 </div>
               )}
               <p className="text-xs text-ink-faint mt-2">
-                Attribution required when sharing or publishing.
+                {t("citation.attributionRequired")}
               </p>
             </div>
           </section>
@@ -466,7 +468,7 @@ export function CitationPanel({
                   d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
                 />
               </svg>
-              Copy All Citations
+              {t("citation.copyAllCitations")}
             </button>
           </div>
         </div>

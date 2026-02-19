@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { formatMetricValue } from "../lib/convergence";
 
 export function ProjectionTable({
@@ -11,11 +12,12 @@ export function ProjectionTable({
   targetName: string;
   unit?: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="card p-3 sm:p-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
-          Projection Data
+          {t("projection.projectionData")}
         </h3>
         {unit && <span className="text-xs text-ink-faint">{unit}</span>}
       </div>
@@ -24,7 +26,7 @@ export function ProjectionTable({
         <table className="min-w-full text-sm">
           <thead className="bg-surface-sunken">
             <tr className="text-left text-xs text-ink-muted">
-              <th className="px-3 py-2 font-semibold">Year</th>
+              <th className="px-3 py-2 font-semibold">{t("projection.year")}</th>
               <th className="px-3 py-2 font-semibold">{chaserName}</th>
               <th className="px-3 py-2 font-semibold">{targetName}</th>
             </tr>
@@ -45,9 +47,7 @@ export function ProjectionTable({
         </table>
       </div>
 
-      <p className="mt-2 text-[11px] text-ink-faint">
-        Tip: use “Projection Data (CSV)” in More options → Data / Embed for a file download.
-      </p>
+      <p className="mt-2 text-[11px] text-ink-faint">{t("projection.tableTip")}</p>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 export function AppErrorScreen({
   title = "Connection Error",
   message,
@@ -7,6 +9,7 @@ export function AppErrorScreen({
   message: string;
   onRetry: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-surface grain flex items-center justify-center p-4">
       <div className="text-center max-w-sm p-6 card animate-fade-in-up">
@@ -32,7 +35,7 @@ export function AppErrorScreen({
           onClick={onRetry}
           className="px-4 py-2 bg-[var(--color-accent)] text-white text-sm rounded-lg font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring"
         >
-          Retry
+          {t("app.retry")}
         </button>
       </div>
     </div>

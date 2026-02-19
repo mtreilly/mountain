@@ -35,9 +35,13 @@
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2",
+    "i18next": "^25.8.11",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "i18next-http-backend": "^3.0.2",
     "jszip": "^3.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^16.5.4",
     "sonner": "^2.0.7"
   },
   "devDependencies": {
