@@ -44,6 +44,9 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
     [],
   );
 
+  const vintageCountries = useMemo(() => [chaserIso], [chaserIso]);
+  const vintageIndicators = useMemo(() => ["ELECTRICITY_GEN_TOTAL"], []);
+
   const { data, indicatorByCode, loading, error, getLatestValue } = useBatchData({
     countries,
     indicators,
@@ -52,8 +55,8 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
   });
 
   const { data: dataWithVintage } = useBatchData({
-    countries: [chaserIso],
-    indicators: ["ELECTRICITY_GEN_TOTAL"],
+    countries: vintageCountries,
+    indicators: vintageIndicators,
     startYear: 1990,
     enabled,
     includeSourceVintage: true,
