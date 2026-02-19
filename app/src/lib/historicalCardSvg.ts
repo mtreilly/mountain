@@ -72,7 +72,7 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
     targetName,
     historicalData,
     theme,
-    siteUrl = "convergence-explorer.com",
+    siteUrl = "mountaintoclimb.com",
     dataSource = "World Bank",
   } = params;
 

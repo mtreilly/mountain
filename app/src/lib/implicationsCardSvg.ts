@@ -79,7 +79,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     implicationsData,
     horizonYear,
     theme,
-    siteUrl = "convergence-explorer.com",
+    siteUrl = "mountaintoclimb.com",
     dataSource = "World Bank",
   } = params;
 

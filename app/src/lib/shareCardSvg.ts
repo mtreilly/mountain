@@ -180,7 +180,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     targetGrowth,
     targetMode,
     theme,
-    siteUrl = "convergence-explorer.com",
+    siteUrl = "mountaintoclimb.com",
     dataSource = "World Bank",
   } = params;
 

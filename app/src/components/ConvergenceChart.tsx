@@ -374,6 +374,19 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
           ))}
         </g>
 
+        {/* Attribution */}
+        <text
+          x={width - padding.right}
+          y={height - 4}
+          textAnchor="end"
+          fill={palette.inkFaint}
+          fontSize={9}
+          fontFamily={fontFamily}
+          opacity={0.7}
+        >
+          mountaintoclimb.com
+        </text>
+
         {/* Legend */}
         <g transform={`translate(${width - padding.right + 14}, ${padding.top + 10})`}>
           <g>

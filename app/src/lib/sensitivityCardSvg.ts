@@ -155,7 +155,7 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
     sensitivity,
     baseYear,
     theme,
-    siteUrl = "convergence-explorer.com",
+    siteUrl = "mountaintoclimb.com",
     dataSource = "World Bank",
   } = params;
 
