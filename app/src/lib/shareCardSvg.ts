@@ -7,6 +7,7 @@ export interface ShareCardParams {
   targetCode: string;
   metricLabel: string;
   metricUnit?: string | null;
+  observed?: Array<{ year: number; chaser: number; target: number }>;
   projection: Array<{ year: number; chaser: number; target: number }>;
   convergenceYear: number | null;
   yearsToConvergence: number | null;
@@ -92,11 +93,17 @@ interface ChartGeometry {
 }
 
 function buildChartPaths(
+  observed: ShareCardParams["observed"],
   projection: ShareCardParams["projection"],
   geometry: ChartGeometry,
 ): {
+  observedChaserPath: string;
+  observedTargetPath: string;
   chaserPath: string;
   targetPath: string;
+  connectorChaserPath: string;
+  connectorTargetPath: string;
+  projectionStartYear: number | null;
   scales: {
     x: (year: number) => number;
     y: (value: number) => number;
@@ -109,8 +116,10 @@ function buildChartPaths(
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
-  const years = projection.map((d) => d.year);
-  const values = projection.flatMap((d) => [d.chaser, d.target]);
+  // Merge observed + projection to compute scales from the full range
+  const allPoints = [...(observed ?? []), ...projection];
+  const years = allPoints.map((d) => d.year);
+  const values = allPoints.flatMap((d) => [d.chaser, d.target]);
 
   const xMin = Math.min(...years);
   const xMax = Math.max(...years);
@@ -127,21 +136,44 @@ function buildChartPaths(
     yMax,
   };
 
-  const chaserPath = projection
-    .map(
-      (d, i) =>
-        `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.chaser).toFixed(1)}`,
-    )
-    .join(" ");
+  const toPath = (data: typeof projection, prop: "chaser" | "target") =>
+    data
+      .map(
+        (d, i) =>
+          `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d[prop]).toFixed(1)}`,
+      )
+      .join(" ");
 
-  const targetPath = projection
-    .map(
-      (d, i) =>
-        `${i === 0 ? "M" : "L"} ${scales.x(d.year).toFixed(1)} ${scales.y(d.target).toFixed(1)}`,
-    )
-    .join(" ");
+  const obs = observed ?? [];
+  const observedChaserPath = obs.length >= 2 ? toPath(obs, "chaser") : "";
+  const observedTargetPath = obs.length >= 2 ? toPath(obs, "target") : "";
+  const chaserPath = toPath(projection, "chaser");
+  const targetPath = toPath(projection, "target");
 
-  return { chaserPath, targetPath, scales };
+  // Connector lines bridging last observed → first projected
+  let connectorChaserPath = "";
+  let connectorTargetPath = "";
+  if (obs.length > 0 && projection.length > 0) {
+    const last = obs[obs.length - 1];
+    const first = projection[0];
+    const lx = scales.x(last.year).toFixed(1);
+    const fx = scales.x(first.year).toFixed(1);
+    connectorChaserPath = `M ${lx} ${scales.y(last.chaser).toFixed(1)} L ${fx} ${scales.y(first.chaser).toFixed(1)}`;
+    connectorTargetPath = `M ${lx} ${scales.y(last.target).toFixed(1)} L ${fx} ${scales.y(first.target).toFixed(1)}`;
+  }
+
+  const projectionStartYear = projection[0]?.year ?? null;
+
+  return {
+    observedChaserPath,
+    observedTargetPath,
+    chaserPath,
+    targetPath,
+    connectorChaserPath,
+    connectorTargetPath,
+    projectionStartYear,
+    scales,
+  };
 }
 
 function generateHeadlineText(params: ShareCardParams): { main: string; sub: string } {
@@ -173,6 +205,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     targetName,
     metricLabel,
     metricUnit,
+    observed,
     projection,
     convergenceYear,
     currentGap,
@@ -205,10 +238,28 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     padding: { top: 30, right: 60, bottom: 40, left: 60 },
   };
 
-  const { chaserPath, targetPath, scales } =
-    projection.length >= 2
-      ? buildChartPaths(projection, chartGeometry)
-      : { chaserPath: "", targetPath: "", scales: null };
+  const hasEnoughData = projection.length >= 2 || (observed?.length ?? 0) >= 2;
+  const {
+    observedChaserPath,
+    observedTargetPath,
+    chaserPath,
+    targetPath,
+    connectorChaserPath,
+    connectorTargetPath,
+    projectionStartYear,
+    scales,
+  } = hasEnoughData
+    ? buildChartPaths(observed, projection, chartGeometry)
+    : {
+        observedChaserPath: "",
+        observedTargetPath: "",
+        chaserPath: "",
+        targetPath: "",
+        connectorChaserPath: "",
+        connectorTargetPath: "",
+        projectionStartYear: null,
+        scales: null,
+      };
 
   // Generate Y-axis ticks
   const yTicks: number[] = [];
@@ -311,6 +362,31 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     ${xTicks.map((year) => `<text x="${scales.x(year)}" y="${chartGeometry.y + chartGeometry.height - chartGeometry.padding.bottom + 18}" text-anchor="middle">${year}</text>`).join("\n    ")}
   </g>
 
+  <!-- Phase split backgrounds -->
+  ${
+    projectionStartYear != null &&
+    observed &&
+    observed.length > 0 &&
+    projectionStartYear > scales.xMin &&
+    projectionStartYear <= scales.xMax
+      ? (
+          () => {
+            const breakX = scales.x(projectionStartYear).toFixed(1);
+            const chartLeft = chartGeometry.x + chartGeometry.padding.left;
+            const chartRight = chartGeometry.x + chartGeometry.width - chartGeometry.padding.right;
+            const chartTop = chartGeometry.y + chartGeometry.padding.top;
+            const chartBot = chartGeometry.y + chartGeometry.height - chartGeometry.padding.bottom;
+            const chartH = chartBot - chartTop;
+            return `
+  <rect x="${chartLeft}" y="${chartTop}" width="${(Number(breakX) - chartLeft).toFixed(1)}" height="${chartH}" fill="#059669" opacity="${theme === "dark" ? 0.035 : 0.025}" rx="4"/>
+  <rect x="${breakX}" y="${chartTop}" width="${(chartRight - Number(breakX)).toFixed(1)}" height="${chartH}" fill="#8b5cf6" opacity="${theme === "dark" ? 0.04 : 0.025}" rx="4"/>
+  <line x1="${breakX}" y1="${chartTop}" x2="${breakX}" y2="${chartBot}" stroke="${palette.faint}" stroke-dasharray="2,6" stroke-width="1" opacity="0.4"/>
+  `;
+          }
+        )()
+      : ""
+  }
+
   <!-- Convergence marker -->
   ${
     convergenceYear && convergenceYear <= scales.xMax
@@ -322,10 +398,20 @@ export function generateShareCardSvg(params: ShareCardParams): string {
       : ""
   }
 
-  <!-- Target line (dashed) -->
+  <!-- Observed target line (dashed, faded) -->
+  ${observedTargetPath ? `<path d="${observedTargetPath}" fill="none" stroke="${palette.target}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,4" opacity="0.45"/>` : ""}
+
+  <!-- Observed chaser line (solid, faded) -->
+  ${observedChaserPath ? `<path d="${observedChaserPath}" fill="none" stroke="${palette.chaser}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>` : ""}
+
+  <!-- Connector lines bridging observed → projected -->
+  ${connectorTargetPath ? `<path d="${connectorTargetPath}" fill="none" stroke="${palette.target}" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4,4" opacity="0.6"/>` : ""}
+  ${connectorChaserPath ? `<path d="${connectorChaserPath}" fill="none" stroke="${palette.chaser}" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>` : ""}
+
+  <!-- Projected target line (dashed) -->
   <path d="${targetPath}" fill="none" stroke="${palette.target}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
 
-  <!-- Chaser line (solid) -->
+  <!-- Projected chaser line (solid) -->
   <path d="${chaserPath}" fill="none" stroke="${palette.chaser}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- End point dots -->

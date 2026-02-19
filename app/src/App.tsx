@@ -615,6 +615,7 @@ export default function App() {
         targetCode: comparisonMode === "regions" ? targetRegionCode : targetIso,
         metricLabel: displayMetricName,
         metricUnit: displayMetricUnit,
+        observed: observedSeriesForChart,
         projection,
         convergenceYear,
         yearsToConvergence,
@@ -624,8 +625,7 @@ export default function App() {
         targetMode: targetGrowthRate === 0 ? "static" : "growing",
         theme,
         siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
-        dataSource:
-          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "Penn World Table"),
+        dataSource: comparisonMode === "regions" ? "OECD" : "Penn World Table",
       };
 
   // Historical data for thread generator
@@ -1127,7 +1127,7 @@ export default function App() {
                           Development Implications
                         </h3>
                         <p className="text-sm text-ink-muted mt-1">
-                          Explore electricity, urbanization, emissions and more
+                          Explore economic output and electricity needs
                         </p>
                       </div>
                       <svg
@@ -1228,7 +1228,9 @@ export default function App() {
                           <h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
                             Implications
                           </h3>
-                          <p className="text-xs text-ink-muted truncate">Electricity, urban, CO2</p>
+                          <p className="text-xs text-ink-muted truncate">
+                            Economic output + electricity
+                          </p>
                         </div>
                         <svg
                           className="w-4 h-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
