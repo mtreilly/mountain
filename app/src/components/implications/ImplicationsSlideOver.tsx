@@ -69,6 +69,43 @@ function formatCountCompact(value: number | null) {
   return Math.round(abs).toString();
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function AssumptionInput(props: {
+  label: string;
+  value: number;
+  unit: string;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}) {
+  const { label, value, unit, min, max, step, onChange } = props;
+  return (
+    <label className="block">
+      <span className="text-[11px] text-ink-faint">{label}</span>
+      <div className="mt-1 flex items-center gap-1">
+        <input
+          type="number"
+          value={Number.isFinite(value) ? value : 0}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => {
+            const next = Number(e.target.value);
+            if (!Number.isFinite(next)) return;
+            onChange(clamp(next, min, max));
+          }}
+          className="w-full px-2 py-1 rounded-md bg-surface-raised border border-surface text-ink text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+        />
+        <span className="text-[11px] text-ink-faint shrink-0">{unit}</span>
+      </div>
+    </label>
+  );
+}
+
 export function ImplicationsSlideOver({
   isOpen,
   onClose,
@@ -138,6 +175,9 @@ export function ImplicationsSlideOver({
 
   const electricityDelta = macro.electricity.buildoutDeltaTWh;
   const electricityEquivalents = macro.electricity.equivalents;
+  const solarPanelKwhPerYear = (assumptions.panelWatts / 1000) * assumptions.solarCf * 8760;
+  const windTurbineGwhPerYear = assumptions.windTurbineMw * assumptions.windCf * 8.76;
+  const nuclearPlantTwhPerYear = assumptions.nuclearPlantGw * assumptions.nuclearCf * 8.76;
 
   const templateFlags: Record<TemplateId, string> = {
     china: "🇨🇳",
@@ -388,6 +428,86 @@ export function ImplicationsSlideOver({
                     </div>
                   </div>
                 )}
+
+                <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-ink">Equivalent assumptions</span>
+                    <span className="text-[11px] text-ink-faint">Editable</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <AssumptionInput
+                      label="Panel size"
+                      value={assumptions.panelWatts}
+                      unit="W"
+                      min={100}
+                      max={1000}
+                      step={10}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, panelWatts: value }))
+                      }
+                    />
+                    <AssumptionInput
+                      label="Solar CF"
+                      value={assumptions.solarCf * 100}
+                      unit="%"
+                      min={5}
+                      max={50}
+                      step={1}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, solarCf: value / 100 }))
+                      }
+                    />
+                    <AssumptionInput
+                      label="Turbine size"
+                      value={assumptions.windTurbineMw}
+                      unit="MW"
+                      min={0.5}
+                      max={20}
+                      step={0.1}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, windTurbineMw: value }))
+                      }
+                    />
+                    <AssumptionInput
+                      label="Wind CF"
+                      value={assumptions.windCf * 100}
+                      unit="%"
+                      min={5}
+                      max={70}
+                      step={1}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, windCf: value / 100 }))
+                      }
+                    />
+                    <AssumptionInput
+                      label="Nuclear unit"
+                      value={assumptions.nuclearPlantGw}
+                      unit="GW"
+                      min={0.3}
+                      max={2}
+                      step={0.1}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, nuclearPlantGw: value }))
+                      }
+                    />
+                    <AssumptionInput
+                      label="Nuclear CF"
+                      value={assumptions.nuclearCf * 100}
+                      unit="%"
+                      min={5}
+                      max={98}
+                      step={1}
+                      onChange={(value) =>
+                        setAssumptions((prev) => ({ ...prev, nuclearCf: value / 100 }))
+                      }
+                    />
+                  </div>
+                  <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
+                    Per unit output used: 1 panel = {solarPanelKwhPerYear.toFixed(0)} kWh/yr, 1 wind
+                    turbine = {windTurbineGwhPerYear.toFixed(2)} GWh/yr, 1 nuclear plant ={" "}
+                    {nuclearPlantTwhPerYear.toFixed(2)} TWh/yr.
+                  </div>
+                </div>
 
                 {observedElectricity && (
                   <div className="flex items-center gap-3 pt-2 border-t border-surface">

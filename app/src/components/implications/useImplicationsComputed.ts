@@ -28,6 +28,7 @@ export type ImplicationAssumptions = {
   windCf: number;
   nuclearCf: number;
   coalCf: number;
+  nuclearPlantGw: number;
   panelWatts: number;
   windTurbineMw: number;
   householdSize: number;
@@ -40,6 +41,7 @@ export const DEFAULT_ASSUMPTIONS: ImplicationAssumptions = {
   windCf: 0.35,
   nuclearCf: 0.9,
   coalCf: 0.6,
+  nuclearPlantGw: 1,
   panelWatts: 400,
   windTurbineMw: 3,
   householdSize: 4,
@@ -369,6 +371,7 @@ export function useImplicationsComputed({
     const coalCf = clamp(assumptions.coalCf, 0.05, 0.95);
     const solarCf = clamp(assumptions.solarCf, 0.05, 0.5);
     const windCf = clamp(assumptions.windCf, 0.05, 0.7);
+    const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
     const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
     const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
 
@@ -380,7 +383,7 @@ export function useImplicationsComputed({
             deltaTWh: buildoutDeltaTWh,
             deltaAvgGW: buildoutDeltaAvgGW,
             nuclear: {
-              plants: buildoutDeltaTWh / twhPerYearPerGW(nuclearCf),
+              plants: buildoutDeltaTWh / (twhPerYearPerGW(nuclearCf) * nuclearPlantGw),
               gw: gwFromTWhPerYear(buildoutDeltaTWh, nuclearCf),
             },
             coal: {
@@ -403,6 +406,7 @@ export function useImplicationsComputed({
               coalCf,
               solarCf,
               windCf,
+              nuclearPlantGw,
               panelWatts,
               windTurbineMw,
             },
@@ -574,6 +578,7 @@ export function useImplicationsComputed({
     const windCf = cf.wind;
     const nuclearCf = cf.nuclear;
     const coalCf = cf.coal;
+    const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
 
     const capFromTWh = (twh: number, key: PowerMixKey) => twh / twhPerYearPerGW(cf[key]);
 
@@ -682,7 +687,7 @@ export function useImplicationsComputed({
           gw: gw / horizonYears,
         },
         equivalents: {
-          plants: key === "nuclear" || key === "coal" ? gw : null,
+          plants: key === "nuclear" ? gw / nuclearPlantGw : key === "coal" ? gw : null,
           panels: key === "solar" ? (gw * 1e9) / clamp(assumptions.panelWatts, 100, 1000) : null,
           turbines: key === "wind" ? (gw * 1000) / clamp(assumptions.windTurbineMw, 0.5, 20) : null,
         },
@@ -734,6 +739,7 @@ export function useImplicationsComputed({
         windCf,
         nuclearCf,
         coalCf,
+        nuclearPlantGw,
         panelWatts: clamp(assumptions.panelWatts, 100, 1000),
         windTurbineMw: clamp(assumptions.windTurbineMw, 0.5, 20),
       },

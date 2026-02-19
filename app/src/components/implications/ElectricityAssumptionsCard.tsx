@@ -106,6 +106,17 @@ export function ElectricityAssumptionsCard({
             }
           />
           <AssumptionField
+            label="Nuclear unit"
+            value={assumptions.nuclearPlantGw}
+            unit="GW"
+            step={0.1}
+            min={0.3}
+            max={2}
+            onChange={(next) =>
+              onAssumptionsChange({ ...assumptions, nuclearPlantGw: clamp(next, 0.3, 2) })
+            }
+          />
+          <AssumptionField
             label="Coal CF"
             value={assumptions.coalCf * 100}
             unit="%"

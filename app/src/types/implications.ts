@@ -68,6 +68,7 @@ export interface TechEquivalents {
     coalCf: number;
     solarCf: number;
     windCf: number;
+    nuclearPlantGw: number;
     panelWatts: number;
     windTurbineMw: number;
   };
@@ -122,6 +123,7 @@ export interface MixBuildout {
     windCf: number;
     nuclearCf: number;
     coalCf: number;
+    nuclearPlantGw: number;
     panelWatts: number;
     windTurbineMw: number;
   };
@@ -139,6 +141,7 @@ export interface ElectricityAssumption {
   windCf: number;
   nuclearCf: number;
   coalCf: number;
+  nuclearPlantGw: number;
   panelWatts: number;
   windTurbineMw: number;
   householdSize: number;
