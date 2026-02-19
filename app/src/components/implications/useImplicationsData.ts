@@ -24,7 +24,7 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
       out.push(cleaned);
     }
     return out;
-  }, [chaserIso, templateDef.iso3]);
+  }, [chaserIso, template]);
 
   const indicators = useMemo(
     () => [
