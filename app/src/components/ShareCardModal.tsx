@@ -265,7 +265,9 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
             <div className="space-y-4 p-4 rounded-xl border border-surface bg-surface">
               {/* Theme toggle */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">{t("theme.theme")}</label>
+                <label className="block text-sm font-medium text-ink mb-2">
+                  {t("theme.theme")}
+                </label>
                 <div
                   role="radiogroup"
                   aria-label="Theme"
@@ -341,7 +343,9 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
 
               {/* Size selector */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-2">{t("shareCard.size")}</label>
+                <label className="block text-sm font-medium text-ink mb-2">
+                  {t("shareCard.size")}
+                </label>
                 <div
                   role="radiogroup"
                   aria-label={t("shareCard.shareCardSize")}
@@ -431,9 +435,7 @@ export function ShareCardModal({ isOpen, onClose, shareCardParams }: ShareCardMo
           </section>
 
           {/* Tip */}
-          <p className="text-xs text-ink-faint text-center">
-            {t("shareCard.tip")}
-          </p>
+          <p className="text-xs text-ink-faint text-center">{t("shareCard.tip")}</p>
         </div>
       </div>
     </div>,

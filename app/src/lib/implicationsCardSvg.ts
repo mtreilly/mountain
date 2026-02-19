@@ -80,7 +80,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     horizonYear,
     theme,
     siteUrl = "mountaintoclimb.com",
-    dataSource = "World Bank",
+    dataSource = "Penn World Table",
   } = params;
 
   const width = 1200;

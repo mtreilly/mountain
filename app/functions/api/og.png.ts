@@ -167,7 +167,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     targetValue = byIso[state.target]?.value ?? null;
     metricName = indicator?.name || state.indicator;
     metricUnit = indicator?.unit || null;
-    source = indicator?.source || "World Bank";
+    source = indicator?.source || "Penn World Table";
   }
 
   const title = `${truncateName(chaserName, 18)} → ${truncateName(targetName, 18)}`;

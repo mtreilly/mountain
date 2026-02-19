@@ -167,7 +167,9 @@ export function MetricSelector({
   const ListContent = (
     <>
       {flatList.length === 0 ? (
-        <div className="px-4 py-12 text-center text-ink-faint text-sm">{t("selector.noMetricsFound")}</div>
+        <div className="px-4 py-12 text-center text-ink-faint text-sm">
+          {t("selector.noMetricsFound")}
+        </div>
       ) : (
         (() => {
           let lastCategory: string | null = null;

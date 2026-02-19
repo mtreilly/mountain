@@ -19,7 +19,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   // Get indicator info
-  const indicator = await DB.prepare(`SELECT code, name, unit FROM indicators WHERE code = ?`)
+  const indicator = await DB.prepare(
+    `SELECT code, name, unit, source, source_code FROM indicators WHERE code = ?`,
+  )
     .bind(indicatorCode)
     .first();
 

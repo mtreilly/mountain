@@ -31,7 +31,9 @@ export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: (
           />
         </svg>
       )}
-      <span className="font-medium hidden sm:inline">{theme === "dark" ? t("theme.night") : t("theme.day")}</span>
+      <span className="font-medium hidden sm:inline">
+        {theme === "dark" ? t("theme.night") : t("theme.day")}
+      </span>
     </button>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import type { OECDRegion } from "../lib/oecdRegions";
 
 export function RegionPickerModal({
@@ -191,7 +191,9 @@ export function RegionPickerModal({
         <div className="p-4 sm:p-5">
           <div className="max-h-[65vh] overflow-auto">
             {filtered.length === 0 ? (
-              <div className="py-16 text-center text-ink-faint text-sm">{t("selector.noRegionsFound")}</div>
+              <div className="py-16 text-center text-ink-faint text-sm">
+                {t("selector.noRegionsFound")}
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {filtered.map((r) => {

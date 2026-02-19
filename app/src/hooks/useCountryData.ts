@@ -10,6 +10,7 @@ interface IndicatorInfo {
   name: string;
   unit: string | null;
   source?: string | null;
+  source_code?: string | null;
 }
 
 interface UseCountryDataParams {

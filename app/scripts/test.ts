@@ -866,6 +866,10 @@ function testDataSourceUrls() {
   const undpUrl = getDataSourceUrl("UNDP", null);
   assert.equal(undpUrl, "https://hdr.undp.org/data-center/human-development-index");
 
+  // Penn World Table
+  const pwtUrl = getDataSourceUrl("Penn World Table", "pwt11.0:rgdpe/pop");
+  assert.equal(pwtUrl, "https://doi.org/10.34894/FABVLR");
+
   // Our World in Data with special format
   const owidUrl = getDataSourceUrl("Our World in Data", "owid-co2-data:co2_per_capita");
   assert.equal(owidUrl, "https://github.com/owid/co2-data");
@@ -877,6 +881,7 @@ function testDataSourceUrls() {
 
 function testDataSourceBaseUrls() {
   assert.equal(getDataSourceBaseUrl("World Bank"), "https://data.worldbank.org");
+  assert.equal(getDataSourceBaseUrl("Penn World Table"), "https://doi.org/10.34894/FABVLR");
   assert.equal(getDataSourceBaseUrl("UNDP"), "https://hdr.undp.org/data-center");
   assert.equal(getDataSourceBaseUrl("Our World in Data"), "https://ourworldindata.org");
   assert.equal(getDataSourceBaseUrl("Unknown"), null);
@@ -900,6 +905,10 @@ function testDataSourceLicenses() {
 
   const undpLicense = getDataSourceLicense("UNDP");
   assert.equal(undpLicense?.name, "CC-BY 3.0 IGO");
+
+  const pwtLicense = getDataSourceLicense("Penn World Table");
+  assert.equal(pwtLicense?.name, "CC-BY 4.0");
+  assert.ok(pwtLicense?.url.includes("creativecommons.org"));
 
   const owidLicense = getDataSourceLicense("Our World in Data");
   assert.equal(owidLicense?.name, "CC-BY 4.0");

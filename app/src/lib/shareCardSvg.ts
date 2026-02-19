@@ -181,7 +181,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
     targetMode,
     theme,
     siteUrl = "mountaintoclimb.com",
-    dataSource = "World Bank",
+    dataSource = "Penn World Table",
   } = params;
 
   const { width, height } = params.dimensions ?? SHARE_CARD_SIZES.twitter;

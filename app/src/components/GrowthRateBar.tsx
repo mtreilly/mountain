@@ -38,8 +38,8 @@ export function GrowthRateBar({
   }, [targetRate]);
 
   return (
-    <div className="card px-3 py-2.5">
-      <div className="flex items-center gap-3">
+    <div className="card px-2.5 py-2">
+      <div className="flex items-center gap-2.5">
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 text-[11px]">
             <span className="font-medium text-chaser truncate">{chaserName}</span>
@@ -76,7 +76,7 @@ export function GrowthRateBar({
           </div>
         </div>
 
-        <div className="w-px h-10 bg-surface-subtle" />
+        <div className="w-px h-8 bg-surface-subtle" />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -121,7 +121,7 @@ export function GrowthRateBar({
               onClick={() => onTargetRateChange(lastDynamicTargetRate.current || 0.015)}
               aria-pressed={targetRate !== 0}
               className={[
-                "px-2.5 py-2 text-[11px] font-medium transition-default focus-ring",
+                "px-2.5 py-1.5 text-[11px] font-medium transition-default focus-ring",
                 targetRate !== 0
                   ? "bg-surface-raised text-ink shadow-sm"
                   : "text-ink-muted hover:bg-surface-raised/60",
@@ -134,7 +134,7 @@ export function GrowthRateBar({
               onClick={() => onTargetRateChange(0)}
               aria-pressed={targetRate === 0}
               className={[
-                "px-2.5 py-2 text-[11px] font-medium transition-default focus-ring",
+                "px-2.5 py-1.5 text-[11px] font-medium transition-default focus-ring",
                 targetRate === 0
                   ? "bg-surface-raised text-ink shadow-sm"
                   : "text-ink-muted hover:bg-surface-raised/60",

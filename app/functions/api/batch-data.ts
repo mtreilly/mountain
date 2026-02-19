@@ -43,7 +43,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const indicatorPlaceholders = indicators.map(() => "?").join(",");
 
   const indicatorRows = await DB.prepare(
-    `SELECT code, name, description, unit, source, category
+    `SELECT code, name, description, unit, source, source_code, category
      FROM indicators
      WHERE code IN (${indicatorPlaceholders})`,
   )
@@ -54,6 +54,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       description: string | null;
       unit: string | null;
       source: string | null;
+      source_code: string | null;
       category: string | null;
     }>();
 
@@ -65,6 +66,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       description: string | null;
       unit: string | null;
       source: string | null;
+      source_code: string | null;
       category: string | null;
     }
   > = {};

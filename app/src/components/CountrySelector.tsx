@@ -94,7 +94,9 @@ export function CountrySelector({
             </span>
           </div>
         ) : (
-          <span className={`text-ink-faint ${dense ? "text-xs" : "text-sm"}`}>{t("selector.select")}</span>
+          <span className={`text-ink-faint ${dense ? "text-xs" : "text-sm"}`}>
+            {t("selector.select")}
+          </span>
         )}
         <svg
           className={`w-3.5 h-3.5 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}

@@ -10,6 +10,7 @@ import { getDataSourceLicense, WORLD_BANK_INDICATOR_CODES } from "./dataSourceUr
 import type { ShareState } from "./shareState";
 
 type SeriesPoint = { year: number; value: number };
+const DEFAULT_COUNTRY_DATA_SOURCE = "Penn World Table";
 
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -19,6 +20,24 @@ function csvEscape(value: string) {
 function sanitizeHeaderValue(value: string) {
   // Keep comment headers single-line even if names contain newlines.
   return value.replace(/[\r\n]+/g, " ").trim();
+}
+
+function resolveSourceName(indicator: Indicator | null): string {
+  return indicator?.source || DEFAULT_COUNTRY_DATA_SOURCE;
+}
+
+function resolveSourceCode(state: ShareState, indicator: Indicator | null): string | null {
+  if (typeof indicator?.source_code === "string" && indicator.source_code.trim().length > 0) {
+    return indicator.source_code;
+  }
+
+  const source = indicator?.source ?? null;
+  const indicatorCode = indicator?.code || state.indicator;
+  if (source === "World Bank") {
+    return WORLD_BANK_INDICATOR_CODES[indicatorCode] ?? null;
+  }
+
+  return null;
 }
 
 /**
@@ -40,8 +59,8 @@ function generateCsvHeader(params: {
   } = params;
   const now = new Date();
   const permalink = buildPermalink(toolUrl, state);
-  const source = indicator?.source || "World Bank";
-  const sourceCode = WORLD_BANK_INDICATOR_CODES[indicator?.code || state.indicator] || null;
+  const source = resolveSourceName(indicator);
+  const sourceCode = resolveSourceCode(state, indicator);
   const license = getDataSourceLicense(source);
 
   const lines = [
@@ -103,7 +122,7 @@ export function toObservedCsv(params: {
           String(point.year),
           String(point.value),
           csvEscape(indicator?.unit || ""),
-          csvEscape(indicator?.source || ""),
+          csvEscape(resolveSourceName(indicator)),
         ].join(","),
       );
     }
@@ -195,7 +214,12 @@ export function toReportJson(params: {
   const citationContext = createCitationContext({
     state,
     indicator: indicator
-      ? { code: indicator.code, name: indicator.name, source: indicator.source }
+      ? {
+          code: indicator.code,
+          name: indicator.name,
+          source: indicator.source,
+          source_code: indicator.source_code,
+        }
       : null,
     chaserName,
     targetName,
@@ -211,8 +235,8 @@ export function toReportJson(params: {
   };
 
   // Data source citation
-  const source = indicator?.source || "World Bank";
-  const sourceCode = WORLD_BANK_INDICATOR_CODES[indicator?.code || state.indicator] || null;
+  const source = resolveSourceName(indicator);
+  const sourceCode = resolveSourceCode(state, indicator);
   const indicatorName = indicator?.name || state.indicator;
   const indicatorCode = indicator?.code || state.indicator;
 
@@ -278,6 +302,7 @@ export function toReportJson(params: {
             name: indicator.name,
             unit: indicator.unit,
             source: indicator.source,
+            source_code: indicator.source_code ?? null,
             category: indicator.category,
           }
         : { code: state.indicator },

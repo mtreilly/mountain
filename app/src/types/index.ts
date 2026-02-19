@@ -12,6 +12,7 @@ export interface Indicator {
   description: string | null;
   unit: string | null;
   source: string | null;
+  source_code?: string | null;
   category: string | null;
 }
 

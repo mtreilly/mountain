@@ -4,7 +4,13 @@
  * Maps data sources to their original URLs for proper attribution
  */
 
-export type DataSourceName = "World Bank" | "UNDP" | "Our World in Data" | "OECD" | string;
+export type DataSourceName =
+  | "World Bank"
+  | "Penn World Table"
+  | "UNDP"
+  | "Our World in Data"
+  | "OECD"
+  | string;
 
 /**
  * URL generators for each data source
@@ -14,6 +20,10 @@ const DATA_SOURCE_URL_GENERATORS: Record<string, (sourceCode: string | null) => 
   "World Bank": (sourceCode) => {
     if (!sourceCode) return "https://data.worldbank.org";
     return `https://data.worldbank.org/indicator/${sourceCode}`;
+  },
+
+  "Penn World Table": () => {
+    return "https://doi.org/10.34894/FABVLR";
   },
 
   UNDP: () => {
@@ -64,6 +74,7 @@ export function getDataSourceBaseUrl(source: string | null): string | null {
 
   const baseUrls: Record<string, string> = {
     "World Bank": "https://data.worldbank.org",
+    "Penn World Table": "https://doi.org/10.34894/FABVLR",
     UNDP: "https://hdr.undp.org/data-center",
     "Our World in Data": "https://ourworldindata.org",
   };
@@ -116,6 +127,10 @@ export const DATA_SOURCE_LICENSES: Record<string, { name: string; url: string }>
   "World Bank": {
     name: "CC-BY 4.0",
     url: "https://datacatalog.worldbank.org/public-licenses#cc-by",
+  },
+  "Penn World Table": {
+    name: "CC-BY 4.0",
+    url: "https://creativecommons.org/licenses/by/4.0/",
   },
   UNDP: {
     name: "CC-BY 3.0 IGO",

@@ -74,7 +74,9 @@ export function SelectorsPanel({
           </button>
         </div>
         {comparisonMode === "regions" && (
-          <span className="text-xs text-ink-faint">{t("selector.gdpPerCapita")} ({t("selector.usdPppOecdData")})</span>
+          <span className="text-xs text-ink-faint">
+            {t("selector.gdpPerCapita")} ({t("selector.usdPppOecdData")})
+          </span>
         )}
       </div>
 

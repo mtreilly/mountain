@@ -90,7 +90,7 @@ export function ExportModal({
   const isRegionsMode = comparisonMode === "regions";
   const resolvedDataSourceName =
     (dataSourceName?.trim() ? dataSourceName.trim() : null) ??
-    (isRegionsMode ? "OECD" : "World Bank");
+    (isRegionsMode ? "OECD" : "Penn World Table");
 
   const handleClose = useCallback(() => {
     onClose();
@@ -255,9 +255,7 @@ export function ExportModal({
               <DataExportCard
                 label={t("exportModal.fullReport")}
                 description={
-                  isRegionsMode
-                    ? t("exportModal.reportDescRegions")
-                    : t("exportModal.reportDesc")
+                  isRegionsMode ? t("exportModal.reportDescRegions") : t("exportModal.reportDesc")
                 }
                 onDownload={async () => {
                   const filename = await onDownloadReportJson?.();
@@ -313,9 +311,7 @@ export function ExportModal({
                 {t("exportModal.citation")}
               </h3>
               <div className="p-4 rounded-lg border border-surface bg-surface">
-                <p className="text-sm text-ink-muted mb-3">
-                  {t("exportModal.citationDesc")}
-                </p>
+                <p className="text-sm text-ink-muted mb-3">{t("exportModal.citationDesc")}</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -361,9 +357,7 @@ export function ExportModal({
                   onChange={(e) => onBaseYearChange(Number.parseInt(e.target.value || "0", 10))}
                   className="w-full max-w-[120px] px-3 py-2 rounded-lg border border-surface bg-surface-raised text-ink text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 />
-                <p className="mt-1 text-xs text-ink-faint">
-                  {t("exportModal.baseYearHelp")}
-                </p>
+                <p className="mt-1 text-xs text-ink-faint">{t("exportModal.baseYearHelp")}</p>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-2 border-t border-surface">

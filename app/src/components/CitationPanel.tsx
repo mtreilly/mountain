@@ -9,6 +9,7 @@ interface IndicatorInfo {
   name: string;
   unit?: string | null;
   source?: string | null;
+  source_code?: string | null;
 }
 
 import {
@@ -174,9 +175,10 @@ export function CitationPanel({
   const dataSourceCitation = useMemo(() => {
     if (!indicator?.source) return "";
     const sourceCode =
-      indicator.source === "World Bank"
+      indicator.source_code ??
+      (indicator.source === "World Bank"
         ? (WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null)
-        : null;
+        : null);
     return generateDataSourceCitation(
       indicator.source,
       sourceCode,
@@ -190,9 +192,10 @@ export function CitationPanel({
   const dataSourceUrl = useMemo(() => {
     if (!indicator?.source) return null;
     const sourceCode =
-      indicator.source === "World Bank"
+      indicator.source_code ??
+      (indicator.source === "World Bank"
         ? (WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null)
-        : null;
+        : null);
     return getDataSourceUrl(indicator.source, sourceCode);
   }, [indicator]);
 
@@ -416,7 +419,8 @@ export function CitationPanel({
                   />
                 </svg>
                 <span className="text-sm text-ink">
-                  {t("citation.visualizations")} <span className="font-medium">{t("citation.ccBy40")}</span>
+                  {t("citation.visualizations")}{" "}
+                  <span className="font-medium">{t("citation.ccBy40")}</span>
                 </span>
               </div>
               {license && (
@@ -447,9 +451,7 @@ export function CitationPanel({
                   </span>
                 </div>
               )}
-              <p className="text-xs text-ink-faint mt-2">
-                {t("citation.attributionRequired")}
-              </p>
+              <p className="text-xs text-ink-faint mt-2">{t("citation.attributionRequired")}</p>
             </div>
           </section>
 

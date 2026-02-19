@@ -525,7 +525,7 @@ export default function App() {
         theme,
         siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
         dataSource:
-          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank"),
+          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "Penn World Table"),
       };
 
   // Historical data for thread generator
@@ -879,7 +879,7 @@ export default function App() {
     <>
       {toaster}
       <div className="min-h-screen bg-surface grain">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="app-shell max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-6">
           {/* Header - Compact */}
           <AppHeader
             comparisonMode={comparisonMode}
@@ -901,28 +901,30 @@ export default function App() {
           {/* Main two-column layout for large screens */}
           <div className="layout-two-col">
             {/* Left column - Main content */}
-            <div className="min-w-0 space-y-2.5 sm:space-y-3">
+            <div className="main-stack min-w-0 flex flex-col gap-2.5 sm:gap-3">
               {/* Mode toggle and Selectors */}
-              <SelectorsPanel
-                comparisonMode={comparisonMode}
-                onComparisonModeChange={setComparisonMode}
-                countries={countries}
-                indicators={indicators}
-                indicatorsLoading={indicatorsLoading}
-                chaserIso={chaserIso}
-                targetIso={targetIso}
-                onChaserIsoChange={setChaserIso}
-                onTargetIsoChange={setTargetIso}
-                onSwapCountries={swapCountries}
-                indicatorCode={indicatorCode}
-                onIndicatorCodeChange={setIndicatorCode}
-                chaserRegionCode={chaserRegionCode}
-                targetRegionCode={targetRegionCode}
-                onChaserRegionCodeChange={setChaserRegionCode}
-                onTargetRegionCodeChange={setTargetRegionCode}
-                onSwapRegions={swapRegions}
-              />
-              <div className="hidden lg:block no-print">
+              <div className="selectors-block">
+                <SelectorsPanel
+                  comparisonMode={comparisonMode}
+                  onComparisonModeChange={setComparisonMode}
+                  countries={countries}
+                  indicators={indicators}
+                  indicatorsLoading={indicatorsLoading}
+                  chaserIso={chaserIso}
+                  targetIso={targetIso}
+                  onChaserIsoChange={setChaserIso}
+                  onTargetIsoChange={setTargetIso}
+                  onSwapCountries={swapCountries}
+                  indicatorCode={indicatorCode}
+                  onIndicatorCodeChange={setIndicatorCode}
+                  chaserRegionCode={chaserRegionCode}
+                  targetRegionCode={targetRegionCode}
+                  onChaserRegionCodeChange={setChaserRegionCode}
+                  onTargetRegionCodeChange={setTargetRegionCode}
+                  onSwapRegions={swapRegions}
+                />
+              </div>
+              <div className="growth-bar-block hidden lg:block no-print">
                 <GrowthRateBar
                   chaserName={displayChaserName}
                   targetName={displayTargetName}
@@ -932,23 +934,25 @@ export default function App() {
                   onTargetRateChange={setTargetGrowthRate}
                 />
               </div>
-              <DataStates
-                loading={dataLoading || indicatorsLoading}
-                error={dataError}
-                metricName={metricName}
-                showMissingData={
-                  comparisonMode === "countries" &&
-                  dataHasLoaded &&
-                  !indicatorsLoading &&
-                  chaserCountry != null &&
-                  targetCountry != null &&
-                  (chaserValueRaw == null || targetValueRaw == null)
-                }
-              />
+              <div className="data-states-block">
+                <DataStates
+                  loading={dataLoading || indicatorsLoading}
+                  error={dataError}
+                  metricName={metricName}
+                  showMissingData={
+                    comparisonMode === "countries" &&
+                    dataHasLoaded &&
+                    !indicatorsLoading &&
+                    chaserCountry != null &&
+                    targetCountry != null &&
+                    (chaserValueRaw == null || targetValueRaw == null)
+                  }
+                />
+              </div>
 
               {/* Result summary - compact */}
               {hasData && (
-                <div className="animate-fade-in-up stagger-2">
+                <div className="summary-block animate-fade-in-up stagger-2">
                   <ResultSummary
                     chaserName={displayChaserName}
                     targetName={displayTargetName}
@@ -978,28 +982,34 @@ export default function App() {
 
               {/* Chart */}
               {hasData && (
-                <ProjectionCard
-                  view={view}
-                  onViewChange={setView}
-                  showMilestones={showMilestones}
-                  onShowMilestonesChange={setShowMilestones}
-                  projection={projection}
-                  chaserName={displayChaserName}
-                  targetName={displayTargetName}
-                  convergenceYear={convergenceYear}
-                  milestones={milestones}
-                  unit={displayMetricUnit}
-                  theme={theme}
-                  svgRef={chartSvgRef}
-                  chaserHasNote={
-                    comparisonMode === "countries" && chaserAdjustment != null && useChaserAdjusted
-                  }
-                  targetHasNote={
-                    comparisonMode === "countries" && targetAdjustment != null && useTargetAdjusted
-                  }
-                  onShareCard={() => setIsShareCardModalOpen(true)}
-                  onExport={() => setIsExportModalOpen(true)}
-                />
+                <div className="projection-block">
+                  <ProjectionCard
+                    view={view}
+                    onViewChange={setView}
+                    showMilestones={showMilestones}
+                    onShowMilestonesChange={setShowMilestones}
+                    projection={projection}
+                    chaserName={displayChaserName}
+                    targetName={displayTargetName}
+                    convergenceYear={convergenceYear}
+                    milestones={milestones}
+                    unit={displayMetricUnit}
+                    theme={theme}
+                    svgRef={chartSvgRef}
+                    chaserHasNote={
+                      comparisonMode === "countries" &&
+                      chaserAdjustment != null &&
+                      useChaserAdjusted
+                    }
+                    targetHasNote={
+                      comparisonMode === "countries" &&
+                      targetAdjustment != null &&
+                      useTargetAdjusted
+                    }
+                    onShareCard={() => setIsShareCardModalOpen(true)}
+                    onExport={() => setIsExportModalOpen(true)}
+                  />
+                </div>
               )}
 
               {/* Implications trigger button (mobile only - desktop is in sidebar) */}
@@ -1143,7 +1153,9 @@ export default function App() {
           <AppFooter
             comparisonMode={comparisonMode}
             dataSourceName={
-              comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
+              comparisonMode === "regions"
+                ? "OECD"
+                : (selectedIndicator?.source ?? "Penn World Table")
             }
             countriesCount={countries.length}
             regionsCount={ALL_TL2_REGIONS.length}
@@ -1162,7 +1174,9 @@ export default function App() {
           onReset={resetToDefaults}
           comparisonMode={comparisonMode}
           dataSourceName={
-            comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
+            comparisonMode === "regions"
+              ? "OECD"
+              : (selectedIndicator?.source ?? "Penn World Table")
           }
           onDownloadObservedCsv={onDownloadObservedCsv}
           onDownloadProjectionCsv={onDownloadProjectionCsv}

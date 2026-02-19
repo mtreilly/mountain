@@ -37,14 +37,16 @@ export function AppHeader({
 }) {
   const { t } = useTranslation();
   return (
-    <header className="mb-4 lg:mb-6 animate-fade-in-up">
+    <header className="app-header mb-4 lg:mb-4 animate-fade-in-up">
       <div className="flex items-center justify-between gap-3 min-w-0">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-semibold tracking-tight text-ink truncate">
             {t("app.title")}
           </h1>
           <p className="mt-0.5 text-xs sm:text-sm text-ink-muted truncate">
-            {t("app.subtitle", { mode: comparisonMode === "regions" ? t("mode.regions") : t("mode.countries") })}
+            {t("app.subtitle", {
+              mode: comparisonMode === "regions" ? t("mode.regions") : t("mode.countries"),
+            })}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 no-print">

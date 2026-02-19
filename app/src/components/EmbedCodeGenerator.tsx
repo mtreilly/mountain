@@ -134,7 +134,9 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       <div className="grid grid-cols-2 gap-4">
         {/* Interactivity */}
         <div>
-          <label className="block text-xs font-medium text-ink-muted mb-2">{t("embed.interactivity")}</label>
+          <label className="block text-xs font-medium text-ink-muted mb-2">
+            {t("embed.interactivity")}
+          </label>
           <div
             role="radiogroup"
             aria-label="Interactivity"
@@ -235,7 +237,9 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
 
       {/* Embed code */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">{t("embed.embedCode")}</label>
+        <label className="block text-xs font-medium text-ink-muted mb-2">
+          {t("embed.embedCode")}
+        </label>
         <div className="relative">
           <pre className="p-3 rounded-lg bg-surface-sunken border border-surface text-xs text-ink-muted overflow-x-auto whitespace-pre-wrap break-all font-mono">
             {iframeCode}

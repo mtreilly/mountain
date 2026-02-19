@@ -56,7 +56,10 @@ export function ResultSummary({
         {formatYears(yearsToConvergence)}
       </span>
       {convergenceYear && (
-        <span className="text-ink-muted text-sm sm:text-base font-sans"> {t("result.by", { year: convergenceYear })}</span>
+        <span className="text-ink-muted text-sm sm:text-base font-sans">
+          {" "}
+          {t("result.by", { year: convergenceYear })}
+        </span>
       )}
     </>
   ) : chaserAlreadyAhead ? (
@@ -67,20 +70,25 @@ export function ResultSummary({
   ) : (
     <>
       <span className="font-bold text-chaser">{chaserName}</span>{" "}
-      <span className="font-bold text-amber-600 dark:text-amber-400">{t("result.wontCatchUp")}</span> {t("result.to")}{" "}
-      <span className="font-bold text-target">{targetName}</span>
+      <span className="font-bold text-amber-600 dark:text-amber-400">
+        {t("result.wontCatchUp")}
+      </span>{" "}
+      {t("result.to")} <span className="font-bold text-target">{targetName}</span>
     </>
   );
 
   return (
-    <div className="card p-4 sm:p-5">
+    <div className="card p-3 sm:p-4">
       {/* Main headline - more compact */}
-      <p className="text-lg sm:text-xl lg:text-2xl font-display leading-snug text-ink">{headline}</p>
+      <p className="text-lg sm:text-xl xl:text-2xl font-display leading-snug text-ink">
+        {headline}
+      </p>
 
       {/* Growth rate comparison - inline and compact */}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-ink-muted">
         <span>
-          {t("result.at")} <span className="font-medium text-chaser">{formatPercent(chaserGrowthRate)}</span>
+          {t("result.at")}{" "}
+          <span className="font-medium text-chaser">{formatPercent(chaserGrowthRate)}</span>
           {t("result.perYear")}
           {targetGrowthRate !== 0 ? (
             <>
@@ -97,7 +105,9 @@ export function ResultSummary({
         {milestoneText && willConverge && (
           <>
             <span className="text-ink-faint">·</span>
-            <span className="text-ink-faint">{t("result.milestones")} {milestoneText}</span>
+            <span className="text-ink-faint">
+              {t("result.milestones")} {milestoneText}
+            </span>
           </>
         )}
       </div>
@@ -109,7 +119,9 @@ export function ResultSummary({
             <div className="text-base sm:text-lg font-display font-bold text-ink tabular-nums">
               {gap.toFixed(1)}×
             </div>
-            <div className="text-[10px] text-ink-faint uppercase tracking-wider">{t("result.gap")}</div>
+            <div className="text-[10px] text-ink-faint uppercase tracking-wider">
+              {t("result.gap")}
+            </div>
           </div>
           <div className="min-w-0">
             <div className="text-base sm:text-lg font-display font-bold text-chaser tabular-nums">

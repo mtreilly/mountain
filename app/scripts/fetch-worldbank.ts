@@ -24,7 +24,6 @@ interface WBDataPoint {
 
 // Indicators to fetch
 const INDICATORS: Array<{ code: string; name: string; source?: string }> = [
-  { code: "NY.GDP.PCAP.PP.KD", name: "GDP_PCAP_PPP" },
   { code: "NY.GDP.PCAP.CD", name: "GDP_PCAP_USD" },
   { code: "SP.POP.TOTL", name: "POPULATION" },
   { code: "SP.DYN.LE00.IN", name: "LIFE_EXPECT" },

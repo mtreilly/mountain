@@ -1,4 +1,4 @@
-import { getDataSourceUrl } from "./dataSourceUrls";
+import { getDataSourceUrl, WORLD_BANK_INDICATOR_CODES } from "./dataSourceUrls";
 import type { ShareState } from "./shareState";
 import { toSearchString } from "./shareState";
 
@@ -8,6 +8,7 @@ interface IndicatorInfo {
   name: string;
   unit?: string | null;
   source?: string | null;
+  source_code?: string | null;
 }
 
 export type CitationFormat = "bibtex" | "apa" | "chicago" | "plaintext";
@@ -239,14 +240,16 @@ export function createCitationContext(params: {
 }
 
 /**
- * Extract source_code from indicator (stored in description or as separate field)
- * This handles the current schema where source_code may be in the indicator
+ * Extract source_code from indicator; falls back to known World Bank mappings when needed.
  */
 function getSourceCode(indicator: IndicatorInfo | null): string | null {
   if (!indicator) return null;
-  // The source_code field is stored in the database but not in the TypeScript type
-  // For now, we can derive it from common patterns or return null
-  // TODO: Add source_code to Indicator type when available
+  if (typeof indicator.source_code === "string" && indicator.source_code.trim().length > 0) {
+    return indicator.source_code;
+  }
+  if (indicator.source === "World Bank") {
+    return WORLD_BANK_INDICATOR_CODES[indicator.code] ?? null;
+  }
   return null;
 }
 

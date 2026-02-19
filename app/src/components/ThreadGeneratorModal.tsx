@@ -406,9 +406,7 @@ export function ThreadGeneratorModal({
           </section>
 
           {/* Tips */}
-          <p className="text-xs text-ink-faint text-center">
-            {t("thread.tip")}
-          </p>
+          <p className="text-xs text-ink-faint text-center">{t("thread.tip")}</p>
         </div>
       </div>
     </div>,

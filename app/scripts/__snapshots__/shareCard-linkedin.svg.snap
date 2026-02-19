@@ -13,15 +13,12 @@
   <!-- Background -->
   <rect width="1200" height="627" fill="url(#bg)"/>
 
-  <!-- Header -->
-  <text x="48" y="50" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="36" font-weight="800" fill="#1a1815">
-    Nigeria → United States
-  </text>
-  <text x="48" y="78" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#5c574f">
-    GDP per capita (PPP) · constant 2021 int$
-  </text>
-  <text x="48" y="108" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#8b5cf6">
+  <!-- Header: Hero headline + subtitle -->
+  <text x="48" y="56" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="32" font-weight="800" fill="#1a1815">
     Nigeria catches United States in 97 years
+  </text>
+  <text x="48" y="92" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#5c574f">
+    By 2120 · GDP per capita (PPP) · constant 2021 int$ · Nigeria → United States
   </text>
 
   <!-- Data source pill -->
@@ -33,25 +30,25 @@
   </g>
 
   <!-- Chart area -->
-  <rect x="48" y="130" width="1104" height="357" rx="12" fill="url(#chartBg)" stroke="#e5e0d8" stroke-opacity="0.5"/>
+  <rect x="48" y="150" width="1104" height="337" rx="12" fill="url(#chartBg)" stroke="#e5e0d8" stroke-opacity="0.5"/>
 
   
   <!-- Grid lines -->
   <g stroke="#e5e0d8" stroke-dasharray="3,3" stroke-opacity="0.6">
     <line x1="108" y1="447" x2="1092" y2="447"/>
-    <line x1="108" y1="375.2484914143689" x2="1092" y2="375.2484914143689"/>
-    <line x1="108" y1="303.5001587984875" x2="1092" y2="303.5001587984875"/>
-    <line x1="108" y1="231.74865021285638" x2="1092" y2="231.74865021285638"/>
-    <line x1="108" y1="160.00031759697498" x2="1092" y2="160.00031759697498"/>
+    <line x1="108" y1="380.24859654228743" x2="1092" y2="380.24859654228743"/>
+    <line x1="108" y1="313.5001477323908" x2="1092" y2="313.5001477323908"/>
+    <line x1="108" y1="246.74874427467822" x2="1092" y2="246.74874427467822"/>
+    <line x1="108" y1="180.00029546478163" x2="1092" y2="180.00029546478163"/>
   </g>
 
   <!-- Y-axis labels -->
   <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">
     <text x="100" y="447" text-anchor="end" dominant-baseline="middle">$0</text>
-    <text x="100" y="375.2484914143689" text-anchor="end" dominant-baseline="middle">$22.6K</text>
-    <text x="100" y="303.5001587984875" text-anchor="end" dominant-baseline="middle">$45.2K</text>
-    <text x="100" y="231.74865021285638" text-anchor="end" dominant-baseline="middle">$67.8K</text>
-    <text x="100" y="160.00031759697498" text-anchor="end" dominant-baseline="middle">$90.4K</text>
+    <text x="100" y="380.24859654228743" text-anchor="end" dominant-baseline="middle">$22.6K</text>
+    <text x="100" y="313.5001477323908" text-anchor="end" dominant-baseline="middle">$45.2K</text>
+    <text x="100" y="246.74874427467822" text-anchor="end" dominant-baseline="middle">$67.8K</text>
+    <text x="100" y="180.00029546478163" text-anchor="end" dominant-baseline="middle">$90.4K</text>
   </g>
 
   <!-- X-axis labels -->
@@ -66,19 +63,19 @@
   
 
   <!-- Target line (dashed) -->
-  <path d="M 108.0 231.0 L 159.8 228.9 L 211.6 226.7 L 263.4 224.5 L 315.2 222.3 L 366.9 220.0 L 418.7 217.7 L 470.5 215.5 L 522.3 213.1 L 574.1 210.8 L 625.9 208.4 L 677.7 206.1 L 729.5 203.6 L 781.3 201.2 L 833.1 198.8 L 884.8 196.3 L 936.6 193.8 L 988.4 191.2 L 1040.2 188.7 L 1092.0 186.1" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
+  <path d="M 108.0 246.1 L 159.8 244.1 L 211.6 242.0 L 263.4 240.0 L 315.2 237.9 L 366.9 235.8 L 418.7 233.7 L 470.5 231.6 L 522.3 229.4 L 574.1 227.3 L 625.9 225.1 L 677.7 222.8 L 729.5 220.6 L 781.3 218.3 L 833.1 216.1 L 884.8 213.7 L 936.6 211.4 L 988.4 209.1 L 1040.2 206.7 L 1092.0 204.3" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
 
   <!-- Chaser line (solid) -->
-  <path d="M 108.0 429.8 L 159.8 429.3 L 211.6 428.8 L 263.4 428.3 L 315.2 427.7 L 366.9 427.1 L 418.7 426.5 L 470.5 425.9 L 522.3 425.3 L 574.1 424.6 L 625.9 424.0 L 677.7 423.3 L 729.5 422.5 L 781.3 421.8 L 833.1 421.1 L 884.8 420.3 L 936.6 419.5 L 988.4 418.7 L 1040.2 417.8 L 1092.0 416.9" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 108.0 431.0 L 159.8 430.6 L 211.6 430.1 L 263.4 429.6 L 315.2 429.0 L 366.9 428.5 L 418.7 427.9 L 470.5 427.4 L 522.3 426.8 L 574.1 426.2 L 625.9 425.6 L 677.7 424.9 L 729.5 424.3 L 781.3 423.6 L 833.1 422.9 L 884.8 422.1 L 936.6 421.4 L 988.4 420.6 L 1040.2 419.8 L 1092.0 419.0" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- End point dots -->
   
-  <circle cx="1092" cy="416.9267424399194" r="5" fill="#ea580c"/>
-  <circle cx="1092" cy="186.09090909090912" r="5" fill="#059669"/>
+  <circle cx="1092" cy="419.0224398308658" r="5" fill="#ea580c"/>
+  <circle cx="1092" cy="204.27272727272728" r="5" fill="#059669"/>
   
 
   <!-- Legend -->
-  <g transform="translate(1100, 160)">
+  <g transform="translate(1100, 180)">
     <rect x="-4" y="-6" width="52" height="48" rx="6" fill="#fffffe" fill-opacity="0.9" stroke="#e5e0d8" stroke-opacity="0.5"/>
     <circle cx="6" cy="8" r="4" fill="#ea580c"/>
     <text x="16" y="12" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#5c574f">Niger…</text>

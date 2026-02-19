@@ -51,7 +51,9 @@ export function GrowthRateControls({
     return (
       <div className="card p-3 space-y-3">
         <div className="text-center">
-          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">{t("growth.title")}</h3>
+          <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+            {t("growth.title")}
+          </h3>
         </div>
 
         {/* Chaser */}

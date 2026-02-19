@@ -18,7 +18,7 @@ export function AppFooter({
     ? "OECD"
     : dataSourceName?.trim()
       ? dataSourceName.trim()
-      : "World Bank";
+      : "Penn World Table";
   const resolvedSourceUrl = isRegions
     ? "https://www.oecd.org/"
     : (getDataSourceBaseUrl(resolvedSourceName) ?? null);
@@ -60,7 +60,9 @@ export function AppFooter({
             Global Developments
           </a>
           {" · "}
-          {isRegions ? t("footer.regionsCount", { count: regionsCount ?? 0 }) : t("footer.countriesCount", { count: countriesCount })}
+          {isRegions
+            ? t("footer.regionsCount", { count: regionsCount ?? 0 })
+            : t("footer.countriesCount", { count: countriesCount })}
         </p>
         <p className="flex items-center gap-1.5">
           <span>{t("footer.builtBy")}</span>

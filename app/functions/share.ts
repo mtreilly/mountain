@@ -100,7 +100,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     chaserValue = byIso[state.chaser]?.value ?? null;
     targetValue = byIso[state.target]?.value ?? null;
     metricName = indicator?.name || state.indicator;
-    source = indicator?.source || "World Bank";
+    source = indicator?.source || "Penn World Table";
   }
 
   const title = `${chaserName} → ${targetName} · ${metricName}`;

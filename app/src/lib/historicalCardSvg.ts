@@ -73,7 +73,7 @@ export function generateHistoricalCardSvg(params: HistoricalCardParams): string 
     historicalData,
     theme,
     siteUrl = "mountaintoclimb.com",
-    dataSource = "World Bank",
+    dataSource = "Penn World Table",
   } = params;
 
   const width = 1200;

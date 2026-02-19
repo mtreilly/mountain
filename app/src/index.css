@@ -516,6 +516,46 @@
     }
   }
 
+  /* Compact desktop mode for short laptop heights */
+  @media (min-width: 1024px) and (max-height: 820px) {
+    .app-shell {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+
+    .app-header {
+      margin-bottom: 0.75rem;
+    }
+
+    .main-stack {
+      gap: 0.5rem;
+    }
+
+    .selectors-block {
+      order: 1;
+    }
+    .growth-bar-block {
+      order: 2;
+    }
+    .data-states-block {
+      order: 3;
+    }
+    .projection-block {
+      order: 4;
+    }
+    .summary-block {
+      order: 5;
+    }
+
+    .projection-block .card {
+      padding: 0.625rem;
+    }
+
+    .summary-block .card {
+      padding: 0.75rem;
+    }
+  }
+
   /* Print helpers */
   .print-only {
     display: none;

@@ -54,6 +54,7 @@
     "name": "GDP per capita (PPP)",
     "unit": "constant 2021 int$",
     "source": "World Bank",
+    "source_code": null,
     "category": "economic"
   },
   "countries": {
