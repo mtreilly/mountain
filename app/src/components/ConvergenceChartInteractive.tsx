@@ -232,32 +232,64 @@ export function ConvergenceChartInteractive({
           }}
         >
           <div
-            className="rounded-lg shadow-xl border px-3 py-2"
-            style={{ background: markerPalette.surface, borderColor: markerPalette.border }}
+            className="rounded-xl shadow-xl border px-3 py-2.5 backdrop-blur-sm"
+            style={{
+              background: theme === "dark" ? "rgba(26, 25, 24, 0.92)" : "rgba(255, 255, 254, 0.94)",
+              borderColor: markerPalette.border,
+            }}
           >
-            <div className="text-xs font-semibold" style={{ color: markerPalette.ink }}>
-              {tooltip.year}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold" style={{ color: markerPalette.ink }}>
+                {tooltip.year}
+              </span>
+              <span
+                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-px rounded-full"
+                style={{
+                  color: tooltip.isProjected ? "#8b5cf6" : "#059669",
+                  background: tooltip.isProjected
+                    ? theme === "dark"
+                      ? "rgba(139, 92, 246, 0.15)"
+                      : "rgba(139, 92, 246, 0.1)"
+                    : theme === "dark"
+                      ? "rgba(5, 150, 105, 0.15)"
+                      : "rgba(5, 150, 105, 0.1)",
+                }}
+              >
+                {tooltip.isProjected ? "Projected" : "Actual"}
+              </span>
             </div>
-            <div
-              className="text-[10px] uppercase tracking-wide mt-0.5"
-              style={{ color: markerPalette.faint }}
-            >
-              {tooltip.isProjected ? "Projected" : "Actual"}
-            </div>
-            <div className="mt-1 space-y-0.5 text-[11px]" style={{ color: markerPalette.faint }}>
-              <div>
+            <div className="mt-1.5 space-y-1 text-[11px]" style={{ color: markerPalette.faint }}>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                  style={{ background: "#ea580c" }}
+                />
                 <span className="font-medium" style={{ color: "#ea580c" }}>
                   {chaserName}
-                  {chaserHasNote && <span style={{ fontSize: 9 }}>†</span>}:
-                </span>{" "}
-                {formatMetricValue(tooltip.chaser, unit)}
+                  {chaserHasNote && <span style={{ fontSize: 9 }}>†</span>}
+                </span>
+                <span
+                  className="ml-auto font-semibold tabular-nums"
+                  style={{ color: markerPalette.ink }}
+                >
+                  {formatMetricValue(tooltip.chaser, unit)}
+                </span>
               </div>
-              <div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                  style={{ background: "#059669" }}
+                />
                 <span className="font-medium" style={{ color: "#059669" }}>
                   {targetName}
-                  {targetHasNote && <span style={{ fontSize: 9 }}>†</span>}:
-                </span>{" "}
-                {formatMetricValue(tooltip.target, unit)}
+                  {targetHasNote && <span style={{ fontSize: 9 }}>†</span>}
+                </span>
+                <span
+                  className="ml-auto font-semibold tabular-nums"
+                  style={{ color: markerPalette.ink }}
+                >
+                  {formatMetricValue(tooltip.target, unit)}
+                </span>
               </div>
             </div>
           </div>

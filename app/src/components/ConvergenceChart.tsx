@@ -114,10 +114,9 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
     const phaseBreakX = showPhaseSplit ? scales.x(projectionStartYear) : null;
     const actualRangeLabel =
       observedStartYear != null && observedEndYear != null
-        ? `Actual ${observedStartYear}-${observedEndYear}`
+        ? `${observedStartYear}-${observedEndYear}`
         : null;
-    const projectionRangeLabel =
-      projectionStartYear != null ? `Projection ${projectionStartYear}+` : null;
+    const projectionRangeLabel = projectionStartYear != null ? `${projectionStartYear}+` : null;
 
     const observedChaserPath = useMemo(() => {
       return observed
@@ -265,46 +264,139 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
           ))}
         </g>
 
-        {showPhaseSplit && phaseBreakX != null && (
-          <g>
-            <line
-              x1={phaseBreakX}
-              y1={padding.top}
-              x2={phaseBreakX}
-              y2={height - padding.bottom}
-              stroke={palette.inkFaint}
-              strokeDasharray="5,4"
-              strokeWidth={1.5}
-              opacity={0.85}
-            />
-            {actualRangeLabel && (
-              <text
-                x={padding.left + 4}
-                y={padding.top + 12}
-                textAnchor="start"
-                fill={palette.inkMuted}
-                fontSize={10}
-                fontWeight={600}
-                fontFamily={fontFamily}
-              >
-                {actualRangeLabel}
-              </text>
-            )}
-            {projectionRangeLabel && (
-              <text
-                x={width - padding.right - 4}
-                y={padding.top + 12}
-                textAnchor="end"
-                fill={palette.inkMuted}
-                fontSize={10}
-                fontWeight={600}
-                fontFamily={fontFamily}
-              >
-                {projectionRangeLabel}
-              </text>
-            )}
-          </g>
-        )}
+        {showPhaseSplit &&
+          phaseBreakX != null &&
+          (() => {
+            const actualWidth = phaseBreakX - padding.left;
+            const projWidth = width - padding.right - phaseBreakX;
+            const actualMidX = padding.left + actualWidth / 2;
+            const projMidX = phaseBreakX + projWidth / 2;
+            const pillY = padding.top + 8;
+            const pillH = 18;
+            const pillR = 9;
+            const actualPillW = 84;
+            const projPillW = 96;
+            const showActualPill = actualRangeLabel && actualWidth > actualPillW + 12;
+            const showProjPill = projectionRangeLabel && projWidth > projPillW + 12;
+
+            return (
+              <g>
+                {/* Subtle phase background tints */}
+                <rect
+                  x={padding.left}
+                  y={padding.top}
+                  width={actualWidth}
+                  height={chartHeight}
+                  fill="#059669"
+                  opacity={theme === "dark" ? 0.035 : 0.025}
+                  rx={4}
+                />
+                <rect
+                  x={phaseBreakX}
+                  y={padding.top}
+                  width={projWidth}
+                  height={chartHeight}
+                  fill="#8b5cf6"
+                  opacity={theme === "dark" ? 0.04 : 0.025}
+                  rx={4}
+                />
+
+                {/* Soft divider */}
+                <line
+                  x1={phaseBreakX}
+                  y1={padding.top + (showActualPill || showProjPill ? pillH + 8 : 0)}
+                  x2={phaseBreakX}
+                  y2={height - padding.bottom}
+                  stroke={palette.inkFaint}
+                  strokeDasharray="2,6"
+                  strokeWidth={1}
+                  opacity={0.4}
+                />
+
+                {/* Actual pill label */}
+                {showActualPill && (
+                  <g>
+                    <rect
+                      x={actualMidX - actualPillW / 2}
+                      y={pillY - pillH / 2}
+                      width={actualPillW}
+                      height={pillH}
+                      rx={pillR}
+                      fill={palette.surfaceRaised}
+                      stroke={palette.grid}
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={actualMidX - 4}
+                      y={pillY + 0.5}
+                      textAnchor="end"
+                      dominantBaseline="central"
+                      fill={palette.inkFaint}
+                      fontSize={9}
+                      fontWeight={500}
+                      fontFamily={fontFamily}
+                      letterSpacing="0.3"
+                    >
+                      ACTUAL
+                    </text>
+                    <text
+                      x={actualMidX + 1}
+                      y={pillY + 0.5}
+                      textAnchor="start"
+                      dominantBaseline="central"
+                      fill={palette.inkMuted}
+                      fontSize={9.5}
+                      fontWeight={600}
+                      fontFamily={fontFamily}
+                    >
+                      {actualRangeLabel}
+                    </text>
+                  </g>
+                )}
+
+                {/* Projection pill label */}
+                {showProjPill && (
+                  <g>
+                    <rect
+                      x={projMidX - projPillW / 2}
+                      y={pillY - pillH / 2}
+                      width={projPillW}
+                      height={pillH}
+                      rx={pillR}
+                      fill={palette.surfaceRaised}
+                      stroke={palette.grid}
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={projMidX - 4}
+                      y={pillY + 0.5}
+                      textAnchor="end"
+                      dominantBaseline="central"
+                      fill={palette.inkFaint}
+                      fontSize={9}
+                      fontWeight={500}
+                      fontFamily={fontFamily}
+                      letterSpacing="0.3"
+                    >
+                      PROJECTED
+                    </text>
+                    <text
+                      x={projMidX + 1}
+                      y={pillY + 0.5}
+                      textAnchor="start"
+                      dominantBaseline="central"
+                      fill={palette.inkMuted}
+                      fontSize={9.5}
+                      fontWeight={600}
+                      fontFamily={fontFamily}
+                    >
+                      {projectionRangeLabel}
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })()}
 
         {/* Convergence year marker */}
         {convergenceYear && convergenceYear <= scales.xMax && (
