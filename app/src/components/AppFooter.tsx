@@ -49,6 +49,15 @@ export function AppFooter({
             Oliver Kim
           </a>
           {" · "}
+          <a
+            href="https://www.global-developments.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--color-accent)] hover:underline"
+          >
+            Global Developments
+          </a>
+          {" · "}
           {isRegions ? `${regionsCount ?? "TL2"} regions` : `${countriesCount} countries`}
         </p>
         <p className="flex items-center gap-1.5">
