@@ -363,31 +363,37 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         )}
 
         {/* Connector lines bridging observed → projected */}
-        {observed.length > 0 && projection.length > 0 && (() => {
-          const lastObs = observed[observed.length - 1];
-          const firstProj = projection[0];
-          return (
-            <>
-              <line
-                x1={scales.x(lastObs.year)} y1={scales.y(lastObs.target)}
-                x2={scales.x(firstProj.year)} y2={scales.y(firstProj.target)}
-                stroke={palette.target}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeDasharray="4,4"
-                opacity={0.6}
-              />
-              <line
-                x1={scales.x(lastObs.year)} y1={scales.y(lastObs.chaser)}
-                x2={scales.x(firstProj.year)} y2={scales.y(firstProj.chaser)}
-                stroke={palette.chaser}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                opacity={0.6}
-              />
-            </>
-          );
-        })()}
+        {observed.length > 0 &&
+          projection.length > 0 &&
+          (() => {
+            const lastObs = observed[observed.length - 1];
+            const firstProj = projection[0];
+            return (
+              <>
+                <line
+                  x1={scales.x(lastObs.year)}
+                  y1={scales.y(lastObs.target)}
+                  x2={scales.x(firstProj.year)}
+                  y2={scales.y(firstProj.target)}
+                  stroke={palette.target}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeDasharray="4,4"
+                  opacity={0.6}
+                />
+                <line
+                  x1={scales.x(lastObs.year)}
+                  y1={scales.y(lastObs.chaser)}
+                  x2={scales.x(firstProj.year)}
+                  y2={scales.y(firstProj.chaser)}
+                  stroke={palette.chaser}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  opacity={0.6}
+                />
+              </>
+            );
+          })()}
 
         {/* Target line */}
         <path
