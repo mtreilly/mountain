@@ -62,6 +62,7 @@ function formatPeople(value: number | null) {
 function formatCountCompact(value: number | null) {
   if (value == null || !Number.isFinite(value)) return "—";
   const abs = Math.abs(value);
+  if (abs > 0 && abs < 1) return "<1";
   if (abs >= 1e12) return `${(abs / 1e12).toFixed(1)}T`;
   if (abs >= 1e9) return `${(abs / 1e9).toFixed(1)}B`;
   if (abs >= 1e6) return `${(abs / 1e6).toFixed(1)}M`;
@@ -174,10 +175,23 @@ export function ImplicationsSlideOver({
   };
 
   const electricityDelta = macro.electricity.buildoutDeltaTWh;
-  const electricityEquivalents = macro.electricity.equivalents;
-  const solarPanelKwhPerYear = (assumptions.panelWatts / 1000) * assumptions.solarCf * 8760;
-  const windTurbineGwhPerYear = assumptions.windTurbineMw * assumptions.windCf * 8.76;
-  const nuclearPlantTwhPerYear = assumptions.nuclearPlantGw * assumptions.nuclearCf * 8.76;
+  const demandIncreaseTWh = Math.max(0, macro.electricity.demandDeltaTWh ?? 0);
+  const solarCf = clamp(assumptions.solarCf, 0.05, 0.5);
+  const windCf = clamp(assumptions.windCf, 0.05, 0.7);
+  const nuclearCf = clamp(assumptions.nuclearCf, 0.05, 0.98);
+  const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
+  const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
+  const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
+  const solarPanelKwhPerYear = (panelWatts / 1000) * solarCf * 8760;
+  const windTurbineGwhPerYear = windTurbineMw * windCf * 8.76;
+  const nuclearPlantTwhPerYear = nuclearPlantGw * nuclearCf * 8.76;
+  const solarPanelTwhPerYear = solarPanelKwhPerYear / 1e9;
+  const solarPanelsForDemand =
+    solarPanelTwhPerYear > 0 ? demandIncreaseTWh / solarPanelTwhPerYear : null;
+  const windTurbinesForDemand =
+    windTurbineGwhPerYear > 0 ? (demandIncreaseTWh * 1000) / windTurbineGwhPerYear : null;
+  const nuclearPlantsForDemand =
+    nuclearPlantTwhPerYear > 0 ? demandIncreaseTWh / nuclearPlantTwhPerYear : null;
 
   const templateFlags: Record<TemplateId, string> = {
     china: "🇨🇳",
@@ -512,55 +526,63 @@ export function ImplicationsSlideOver({
                   <div className="text-[11px] text-ink-faint">
                     Each row assumes one technology covers the entire additional demand.
                   </div>
-                  <div className="space-y-2">
-                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-ink">Solar panels</div>
-                        <div className="text-[11px] text-ink-faint">
-                          {assumptions.panelWatts.toFixed(0)}W panels at{" "}
-                          {(assumptions.solarCf * 100).toFixed(0)}% capacity factor
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[11px] text-ink-faint">Total needed</div>
-                        <div className="text-sm font-semibold text-ink">
-                          {formatCountCompact(electricityEquivalents?.solar.panels ?? null)} panels
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-ink">Wind turbines</div>
-                        <div className="text-[11px] text-ink-faint">
-                          {assumptions.windTurbineMw.toFixed(1)}MW turbines at{" "}
-                          {(assumptions.windCf * 100).toFixed(0)}% capacity factor
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[11px] text-ink-faint">Total needed</div>
-                        <div className="text-sm font-semibold text-ink">
-                          {formatCountCompact(electricityEquivalents?.wind.turbines ?? null)}{" "}
-                          turbines
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-ink">Nuclear plants</div>
-                        <div className="text-[11px] text-ink-faint">
-                          {assumptions.nuclearPlantGw.toFixed(1)}GW plants at{" "}
-                          {(assumptions.nuclearCf * 100).toFixed(0)}% capacity factor
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[11px] text-ink-faint">Total needed</div>
-                        <div className="text-sm font-semibold text-ink">
-                          {formatCountCompact(electricityEquivalents?.nuclear.plants ?? null)}{" "}
-                          plants
-                        </div>
-                      </div>
-                    </div>
+                  <div className="text-[11px] text-ink-muted">
+                    Projected increase used for these rows: +{formatTWh(demandIncreaseTWh)}
                   </div>
+                  {demandIncreaseTWh <= 0 ? (
+                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 text-[11px] text-ink-muted">
+                      Projected demand does not exceed current demand in this scenario, so
+                      additional units needed is 0.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-ink">Solar panels</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {panelWatts.toFixed(0)}W panels at {(solarCf * 100).toFixed(0)}%
+                            capacity factor
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-sm font-semibold text-ink">
+                            {formatCountCompact(solarPanelsForDemand)} panels
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-ink">Wind turbines</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {windTurbineMw.toFixed(1)}MW turbines at {(windCf * 100).toFixed(0)}%
+                            capacity factor
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-sm font-semibold text-ink">
+                            {formatCountCompact(windTurbinesForDemand)} turbines
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-ink">Nuclear plants</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {nuclearPlantGw.toFixed(1)}GW plants at {(nuclearCf * 100).toFixed(0)}%
+                            capacity factor
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-sm font-semibold text-ink">
+                            {formatCountCompact(nuclearPlantsForDemand)} plants
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {observedElectricity && (
