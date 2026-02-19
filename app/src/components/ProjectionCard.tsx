@@ -19,6 +19,8 @@ export function ProjectionCard({
   svgRef,
   chaserHasNote,
   targetHasNote,
+  onShareCard,
+  onExport,
 }: {
   view: ShareState["view"];
   onViewChange: (view: ShareState["view"]) => void;
@@ -34,6 +36,8 @@ export function ProjectionCard({
   svgRef: RefObject<SVGSVGElement | null>;
   chaserHasNote?: boolean;
   targetHasNote?: boolean;
+  onShareCard?: () => void;
+  onExport?: () => void;
 }) {
   return (
     <div className="card p-3 sm:p-4 animate-fade-in-up stagger-3">
@@ -101,6 +105,39 @@ export function ProjectionCard({
           chaserHasNote={chaserHasNote}
           targetHasNote={targetHasNote}
         />
+      )}
+
+      {/* Share / Export action bar */}
+      {(onShareCard || onExport) && (
+        <div className="flex justify-end gap-2 mt-2 no-print">
+          {onShareCard && (
+            <button
+              type="button"
+              onClick={onShareCard}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink hover:bg-surface rounded-md transition-default focus-ring"
+              aria-label="Share as card"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Share
+            </button>
+          )}
+          {onExport && (
+            <button
+              type="button"
+              onClick={onExport}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink hover:bg-surface rounded-md transition-default focus-ring"
+              aria-label="Export data"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

@@ -997,6 +997,8 @@ export default function App() {
                   targetHasNote={
                     comparisonMode === "countries" && targetAdjustment != null && useTargetAdjusted
                   }
+                  onShareCard={() => setIsShareCardModalOpen(true)}
+                  onExport={() => setIsExportModalOpen(true)}
                 />
               )}
 

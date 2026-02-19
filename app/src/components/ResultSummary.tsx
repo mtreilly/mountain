@@ -50,10 +50,12 @@ export function ResultSummary({
     <>
       <span className="font-bold text-chaser">{chaserName}</span> could match{" "}
       <span className="font-bold text-target">{targetName}</span> in{" "}
-      <span className="text-lg sm:text-xl font-display font-black">
+      <span className="text-2xl sm:text-3xl font-display font-black">
         {formatYears(yearsToConvergence)}
       </span>
-      {convergenceYear && <span className="text-ink-muted text-xs"> ({convergenceYear})</span>}
+      {convergenceYear && (
+        <span className="text-ink-muted text-sm sm:text-base font-sans"> by {convergenceYear}</span>
+      )}
     </>
   ) : chaserAlreadyAhead ? (
     <>
@@ -69,9 +71,9 @@ export function ResultSummary({
   );
 
   return (
-    <div className="card p-3 sm:p-4">
+    <div className="card p-4 sm:p-5">
       {/* Main headline - more compact */}
-      <p className="text-sm sm:text-base leading-snug text-ink">{headline}</p>
+      <p className="text-lg sm:text-xl lg:text-2xl font-display leading-snug text-ink">{headline}</p>
 
       {/* Growth rate comparison - inline and compact */}
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-ink-muted">

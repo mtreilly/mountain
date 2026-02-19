@@ -59,6 +59,16 @@ const PALETTES = {
 
 const FONT_FAMILY = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
+/** Estimate hero font size — scale down from 32px to 24px floor for long headlines. */
+function heroFontSize(text: string, maxWidth: number): number {
+  // Approximate char width at 32px ≈ 18px for system-ui bold
+  const charWidth = 18;
+  const idealWidth = text.length * charWidth;
+  if (idealWidth <= maxWidth) return 32;
+  const scaled = Math.floor(32 * (maxWidth / idealWidth));
+  return Math.max(24, scaled);
+}
+
 function escapeXml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -181,7 +191,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   const headline = generateHeadlineText(params);
 
   // Layout calculations
-  const headerHeight = 120;
+  const headerHeight = 140;
   const footerHeight = 50;
   const statCardsHeight = 70;
   const chartAreaY = headerHeight + 10;
@@ -264,15 +274,12 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   <!-- Background -->
   <rect width="${width}" height="${height}" fill="url(#bg)"/>
 
-  <!-- Header -->
-  <text x="48" y="50" font-family="${font}" font-size="36" font-weight="800" fill="${palette.ink}">
-    ${escapeXml(truncateName(chaserName, 20))} → ${escapeXml(truncateName(targetName, 20))}
-  </text>
-  <text x="48" y="78" font-family="${font}" font-size="16" font-weight="500" fill="${palette.muted}">
-    ${escapeXml(metricLabel)}${metricUnit ? ` · ${escapeXml(metricUnit)}` : ""}
-  </text>
-  <text x="48" y="108" font-family="${font}" font-size="20" font-weight="600" fill="${palette.convergence}">
+  <!-- Header: Hero headline + subtitle -->
+  <text x="48" y="${56}" font-family="${font}" font-size="${heroFontSize(headline.main, width - 230)}" font-weight="800" fill="${palette.ink}">
     ${escapeXml(headline.main)}
+  </text>
+  <text x="48" y="${92}" font-family="${font}" font-size="15" font-weight="500" fill="${palette.muted}">
+    ${escapeXml([headline.sub, metricLabel, metricUnit, `${truncateName(chaserName, 18)} → ${truncateName(targetName, 18)}`].filter(Boolean).join(" · "))}
   </text>
 
   <!-- Data source pill -->
