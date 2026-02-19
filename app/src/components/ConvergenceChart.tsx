@@ -103,6 +103,21 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         yMax,
       };
     }, [chartHeight, chartWidth, displaySeries]);
+    const projectionStartYear = projection[0]?.year ?? null;
+    const observedStartYear = observed[0]?.year ?? null;
+    const observedEndYear = observed.length > 0 ? observed[observed.length - 1].year : null;
+    const showPhaseSplit =
+      projectionStartYear != null &&
+      observed.length > 0 &&
+      projectionStartYear > scales.xMin &&
+      projectionStartYear <= scales.xMax;
+    const phaseBreakX = showPhaseSplit ? scales.x(projectionStartYear) : null;
+    const actualRangeLabel =
+      observedStartYear != null && observedEndYear != null
+        ? `Actual ${observedStartYear}-${observedEndYear}`
+        : null;
+    const projectionRangeLabel =
+      projectionStartYear != null ? `Projection ${projectionStartYear}+` : null;
 
     const observedChaserPath = useMemo(() => {
       return observed
@@ -249,6 +264,47 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
             />
           ))}
         </g>
+
+        {showPhaseSplit && phaseBreakX != null && (
+          <g>
+            <line
+              x1={phaseBreakX}
+              y1={padding.top}
+              x2={phaseBreakX}
+              y2={height - padding.bottom}
+              stroke={palette.inkFaint}
+              strokeDasharray="5,4"
+              strokeWidth={1.5}
+              opacity={0.85}
+            />
+            {actualRangeLabel && (
+              <text
+                x={padding.left + 4}
+                y={padding.top + 12}
+                textAnchor="start"
+                fill={palette.inkMuted}
+                fontSize={10}
+                fontWeight={600}
+                fontFamily={fontFamily}
+              >
+                {actualRangeLabel}
+              </text>
+            )}
+            {projectionRangeLabel && (
+              <text
+                x={width - padding.right - 4}
+                y={padding.top + 12}
+                textAnchor="end"
+                fill={palette.inkMuted}
+                fontSize={10}
+                fontWeight={600}
+                fontFamily={fontFamily}
+              >
+                {projectionRangeLabel}
+              </text>
+            )}
+          </g>
+        )}
 
         {/* Convergence year marker */}
         {convergenceYear && convergenceYear <= scales.xMax && (

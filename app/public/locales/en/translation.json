@@ -63,6 +63,7 @@
     "closeDataSources": "Close data sources modal",
     "current": "Current",
     "license": "License",
+    "attribution": "Attribution",
     "inspiredBy": "Inspired by",
     "builtBy": "Built by",
     "regionsCount": "{{count}} regions",

@@ -263,6 +263,7 @@ export default function App() {
       const source = indicator.source?.trim();
       if (source) sources.add(source);
     }
+    sources.add("Penn World Table");
     sources.add("OECD");
     return Array.from(sources).sort((a, b) => a.localeCompare(b));
   }, [indicators]);
@@ -284,13 +285,64 @@ export default function App() {
       ? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
       : 2;
 
+  const countryOverlapSeries = useMemo(() => {
+    const chaserSeries = data[chaserIso] || [];
+    const targetSeries = data[targetIso] || [];
+
+    const chaserByYear = new Map(
+      chaserSeries.map((point) => [
+        point.year,
+        applyAdjustment(point.value, chaserAdjustment, useChaserAdjusted),
+      ]),
+    );
+    const targetByYear = new Map(
+      targetSeries.map((point) => [
+        point.year,
+        applyAdjustment(point.value, targetAdjustment, useTargetAdjusted),
+      ]),
+    );
+
+    const years = Array.from(chaserByYear.keys())
+      .filter((year) => targetByYear.has(year))
+      .sort((a, b) => a - b);
+
+    return years.map((year) => ({
+      year,
+      chaser: chaserByYear.get(year)!,
+      target: targetByYear.get(year)!,
+    }));
+  }, [
+    chaserAdjustment,
+    chaserIso,
+    data,
+    targetAdjustment,
+    targetIso,
+    useChaserAdjusted,
+    useTargetAdjusted,
+  ]);
+
+  const countryProjectionSeed = useMemo(() => {
+    const handoff = countryOverlapSeries[countryOverlapSeries.length - 1];
+    if (!handoff) return null;
+
+    const projectionStartYear = Math.max(baseYear, handoff.year + 1);
+    const yearsForward = projectionStartYear - handoff.year;
+
+    return {
+      handoffYear: handoff.year,
+      projectionStartYear,
+      chaserProjectionStart: handoff.chaser * Math.pow(1 + chaserGrowthRate, yearsForward),
+      targetProjectionStart: handoff.target * Math.pow(1 + targetGrowthRate, yearsForward),
+    };
+  }, [baseYear, chaserGrowthRate, countryOverlapSeries, targetGrowthRate]);
+
   const countryConvergence = useConvergence({
-    chaserValue,
-    targetValue,
+    chaserValue: countryProjectionSeed?.chaserProjectionStart ?? chaserValue,
+    targetValue: countryProjectionSeed?.targetProjectionStart ?? targetValue,
     chaserGrowthRate,
     targetGrowthRate,
     unit: metricUnit,
-    baseYear,
+    baseYear: countryProjectionSeed?.projectionStartYear ?? baseYear,
   });
 
   // Regional convergence (OECD data)
@@ -387,52 +439,10 @@ export default function App() {
       }));
     }
 
-    const chaserSeries = data[chaserIso] || [];
-    const targetSeries = data[targetIso] || [];
-
-    const chaserByYear = new Map(
-      chaserSeries
-        .filter(
-          (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
-        )
-        .map((point) => [
-          point.year,
-          applyAdjustment(point.value, chaserAdjustment, useChaserAdjusted),
-        ]),
+    return countryOverlapSeries.filter(
+      (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
     );
-    const targetByYear = new Map(
-      targetSeries
-        .filter(
-          (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
-        )
-        .map((point) => [
-          point.year,
-          applyAdjustment(point.value, targetAdjustment, useTargetAdjusted),
-        ]),
-    );
-
-    const years = Array.from(chaserByYear.keys())
-      .filter((year) => targetByYear.has(year))
-      .sort((a, b) => a - b);
-
-    return years.map((year) => ({
-      year,
-      chaser: chaserByYear.get(year)!,
-      target: targetByYear.get(year)!,
-    }));
-  }, [
-    chaserAdjustment,
-    chaserIso,
-    chaserRegionCode,
-    comparisonMode,
-    data,
-    projection,
-    targetAdjustment,
-    targetIso,
-    targetRegionCode,
-    useChaserAdjusted,
-    useTargetAdjusted,
-  ]);
+  }, [chaserRegionCode, comparisonMode, countryOverlapSeries, projection, targetRegionCode]);
 
   // Computed display values based on mode
   const displayChaserName =

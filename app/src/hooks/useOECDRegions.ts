@@ -150,10 +150,10 @@ export function useRegionalConvergence({
   return useMemo(() => {
     const chaserRegion = getRegionByCode(chaserCode);
     const targetRegion = getRegionByCode(targetCode);
-    const chaserLatest = getLatestRegionData(chaserCode);
-    const targetLatest = getLatestRegionData(targetCode);
+    const chaserSeries = getRegionDataSeries(chaserCode);
+    const targetSeries = getRegionDataSeries(targetCode);
 
-    if (!chaserLatest || !targetLatest) {
+    if (chaserSeries.length === 0 || targetSeries.length === 0) {
       return {
         chaserRegion,
         targetRegion,
@@ -168,8 +168,34 @@ export function useRegionalConvergence({
       };
     }
 
-    const chaserValue = chaserLatest.gdpPerCapita;
-    const targetValue = targetLatest.gdpPerCapita;
+    const chaserByYear = new Map(chaserSeries.map((point) => [point.year, point.gdpPerCapita]));
+    const targetByYear = new Map(targetSeries.map((point) => [point.year, point.gdpPerCapita]));
+    const overlapYears = Array.from(chaserByYear.keys())
+      .filter((year) => targetByYear.has(year))
+      .sort((a, b) => a - b);
+    const handoffYear = overlapYears[overlapYears.length - 1];
+
+    if (!Number.isFinite(handoffYear)) {
+      return {
+        chaserRegion,
+        targetRegion,
+        chaserValue: null,
+        targetValue: null,
+        gap: null,
+        yearsToConvergence: Infinity,
+        convergenceYear: null,
+        projection: [],
+        milestones: [],
+        hasData: false,
+      };
+    }
+
+    const chaserHandoffValue = chaserByYear.get(handoffYear)!;
+    const targetHandoffValue = targetByYear.get(handoffYear)!;
+    const projectionStartYear = Math.max(baseYear, handoffYear + 1);
+    const yearsForward = projectionStartYear - handoffYear;
+    const chaserValue = chaserHandoffValue * Math.pow(1 + chaserGrowthRate, yearsForward);
+    const targetValue = targetHandoffValue * Math.pow(1 + targetGrowthRate, yearsForward);
     const gap = targetValue / chaserValue;
 
     // Calculate convergence
@@ -178,13 +204,13 @@ export function useRegionalConvergence({
 
     if (chaserValue >= targetValue) {
       yearsToConvergence = 0;
-      convergenceYear = baseYear;
+      convergenceYear = projectionStartYear;
     } else if (chaserGrowthRate > targetGrowthRate) {
       const ratio = targetValue / chaserValue;
       const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);
       if (growthRatio > 1) {
         yearsToConvergence = Math.log(ratio) / Math.log(growthRatio);
-        convergenceYear = Math.round(baseYear + yearsToConvergence);
+        convergenceYear = Math.round(projectionStartYear + yearsToConvergence);
       }
     }
 
@@ -196,7 +222,7 @@ export function useRegionalConvergence({
     const projection: ProjectionPoint[] = [];
 
     for (let y = 0; y <= maxYears; y++) {
-      const year = baseYear + y;
+      const year = projectionStartYear + y;
       const chaser = chaserValue * Math.pow(1 + chaserGrowthRate, y);
       const target = targetValue * Math.pow(1 + targetGrowthRate, y);
       projection.push({ year, chaser: Math.round(chaser), target: Math.round(target) });

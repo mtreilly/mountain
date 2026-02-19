@@ -40,6 +40,7 @@ export function ConvergenceChartInteractive({
     for (const point of projection) byYear.set(point.year, point);
     return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
   }, [observed, projection]);
+  const projectionStartYear = projection[0]?.year ?? null;
 
   const { xMin, xMax, yMax } = useMemo(() => {
     if (displaySeries.length === 0) {
@@ -161,8 +162,9 @@ export function ConvergenceChartInteractive({
       year: active.year,
       chaser: active.chaser,
       target: active.target,
+      isProjected: projectionStartYear != null ? active.year >= projectionStartYear : true,
     };
-  }, [active, activeX, activeYChaser, activeYTarget]);
+  }, [active, activeX, activeYChaser, activeYTarget, projectionStartYear]);
 
   const markerPalette =
     theme === "dark"
@@ -235,6 +237,12 @@ export function ConvergenceChartInteractive({
           >
             <div className="text-xs font-semibold" style={{ color: markerPalette.ink }}>
               {tooltip.year}
+            </div>
+            <div
+              className="text-[10px] uppercase tracking-wide mt-0.5"
+              style={{ color: markerPalette.faint }}
+            >
+              {tooltip.isProjected ? "Projected" : "Actual"}
             </div>
             <div className="mt-1 space-y-0.5 text-[11px]" style={{ color: markerPalette.faint }}>
               <div>

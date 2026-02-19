@@ -3,6 +3,13 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getDataSourceBaseUrl, getDataSourceLicense } from "../lib/dataSourceUrls";
 
+const SOURCE_ATTRIBUTIONS: Record<string, { text: string; url: string | null }> = {
+  "Penn World Table": {
+    text: "Feenstra RC, Inklaar R, Timmer MP (2015), The Next Generation of the Penn World Table.",
+    url: "https://www.aeaweb.org/articles?id=10.1257/aer.20130954",
+  },
+};
+
 export function AppFooter({
   comparisonMode = "countries",
   countriesCount,
@@ -29,7 +36,12 @@ export function AppFooter({
       : "Penn World Table";
   const sourceRows = useMemo(() => {
     const seen = new Set<string>();
-    const rows: Array<{ name: string; url: string | null; license: string | null }> = [];
+    const rows: Array<{
+      name: string;
+      url: string | null;
+      license: string | null;
+      attribution: { text: string; url: string | null } | null;
+    }> = [];
 
     const addSource = (source: string) => {
       const trimmed = source.trim();
@@ -39,10 +51,12 @@ export function AppFooter({
         name: trimmed,
         url: trimmed === "OECD" ? "https://www.oecd.org/" : (getDataSourceBaseUrl(trimmed) ?? null),
         license: getDataSourceLicense(trimmed)?.name ?? null,
+        attribution: SOURCE_ATTRIBUTIONS[trimmed] ?? null,
       });
     };
 
     for (const source of dataSourceNames) addSource(source);
+    addSource("Penn World Table");
     addSource("OECD");
     addSource(resolvedSourceName);
 
@@ -226,6 +240,23 @@ export function AppFooter({
                       {source.license && (
                         <p className="text-xs text-ink-faint mt-1">
                           {t("footer.license")}: {source.license}
+                        </p>
+                      )}
+                      {source.attribution && (
+                        <p className="text-xs text-ink-faint mt-1">
+                          {t("footer.attribution")}:{" "}
+                          {source.attribution.url ? (
+                            <a
+                              href={source.attribution.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[var(--color-accent)] hover:underline"
+                            >
+                              {source.attribution.text}
+                            </a>
+                          ) : (
+                            source.attribution.text
+                          )}
                         </p>
                       )}
                     </div>
