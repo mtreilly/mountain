@@ -59,13 +59,26 @@
     <text x="884.8421052631579" y="513" text-anchor="middle">2038</text>
   </g>
 
+  <!-- Phase split backgrounds -->
+  
+
   <!-- Convergence marker -->
   
 
-  <!-- Target line (dashed) -->
+  <!-- Observed target line (dashed, faded) -->
+  
+
+  <!-- Observed chaser line (solid, faded) -->
+  
+
+  <!-- Connector lines bridging observed → projected -->
+  
+  
+
+  <!-- Projected target line (dashed) -->
   <path d="M 108.0 258.0 L 159.8 255.6 L 211.6 253.2 L 263.4 250.8 L 315.2 248.3 L 366.9 245.9 L 418.7 243.4 L 470.5 240.9 L 522.3 238.3 L 574.1 235.8 L 625.9 233.2 L 677.7 230.5 L 729.5 227.9 L 781.3 225.2 L 833.1 222.5 L 884.8 219.8 L 936.6 217.1 L 988.4 214.3 L 1040.2 211.5 L 1092.0 208.6" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7,5"/>
 
-  <!-- Chaser line (solid) -->
+  <!-- Projected chaser line (solid) -->
   <path d="M 108.0 476.2 L 159.8 475.6 L 211.6 475.0 L 263.4 474.4 L 315.2 473.8 L 366.9 473.2 L 418.7 472.5 L 470.5 471.9 L 522.3 471.2 L 574.1 470.4 L 625.9 469.7 L 677.7 468.9 L 729.5 468.2 L 781.3 467.4 L 833.1 466.5 L 884.8 465.7 L 936.6 464.8 L 988.4 463.9 L 1040.2 463.0 L 1092.0 462.0" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- End point dots -->
