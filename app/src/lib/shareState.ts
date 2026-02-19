@@ -90,10 +90,10 @@ export function toEmbedSearchString(
 
 export const DEFAULT_SHARE_STATE: ShareState = {
   chaser: "POL",
-  target: "DEU",
+  target: "GBR",
   indicator: "GDP_PCAP_PPP",
-  cg: 0.038,
-  tg: 0.004,
+  cg: 0.04,
+  tg: 0.01,
   tmode: "growing",
   baseYear: 2023,
   view: "chart",
