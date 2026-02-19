@@ -418,14 +418,6 @@ export function ImplicationsSlideOver({
                         </div>
                       </div>
                     </div>
-                    <div className="text-xs text-ink-muted pt-2 border-t border-surface-sunken">
-                      <span className="font-medium text-ink">That's equivalent to:</span>{" "}
-                      {formatCountCompact(electricityEquivalents?.nuclear.plants ?? null)} nuclear
-                      plants, or {formatCountCompact(electricityEquivalents?.solar.panels ?? null)}{" "}
-                      solar panels, or{" "}
-                      {formatCountCompact(electricityEquivalents?.wind.turbines ?? null)} wind
-                      turbines
-                    </div>
                   </div>
                 )}
 
@@ -433,6 +425,10 @@ export function ImplicationsSlideOver({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-ink">Equivalent assumptions</span>
                     <span className="text-[11px] text-ink-faint">Editable</span>
+                  </div>
+                  <div className="text-[11px] text-ink-faint">
+                    Capacity factor means average annual output as a percent of max rated output.
+                    Unit size means rated capacity per panel, turbine, or nuclear plant.
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <AssumptionInput
@@ -447,7 +443,7 @@ export function ImplicationsSlideOver({
                       }
                     />
                     <AssumptionInput
-                      label="Solar CF"
+                      label="Solar capacity factor"
                       value={assumptions.solarCf * 100}
                       unit="%"
                       min={5}
@@ -458,7 +454,7 @@ export function ImplicationsSlideOver({
                       }
                     />
                     <AssumptionInput
-                      label="Turbine size"
+                      label="Wind turbine size"
                       value={assumptions.windTurbineMw}
                       unit="MW"
                       min={0.5}
@@ -469,7 +465,7 @@ export function ImplicationsSlideOver({
                       }
                     />
                     <AssumptionInput
-                      label="Wind CF"
+                      label="Wind capacity factor"
                       value={assumptions.windCf * 100}
                       unit="%"
                       min={5}
@@ -480,7 +476,7 @@ export function ImplicationsSlideOver({
                       }
                     />
                     <AssumptionInput
-                      label="Nuclear unit"
+                      label="Nuclear plant size"
                       value={assumptions.nuclearPlantGw}
                       unit="GW"
                       min={0.3}
@@ -491,7 +487,7 @@ export function ImplicationsSlideOver({
                       }
                     />
                     <AssumptionInput
-                      label="Nuclear CF"
+                      label="Nuclear capacity factor"
                       value={assumptions.nuclearCf * 100}
                       unit="%"
                       min={5}
@@ -506,6 +502,64 @@ export function ImplicationsSlideOver({
                     Per unit output used: 1 panel = {solarPanelKwhPerYear.toFixed(0)} kWh/yr, 1 wind
                     turbine = {windTurbineGwhPerYear.toFixed(2)} GWh/yr, 1 nuclear plant ={" "}
                     {nuclearPlantTwhPerYear.toFixed(2)} TWh/yr.
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
+                  <div className="text-xs font-medium text-ink">
+                    Buildout options to cover the full projected increase
+                  </div>
+                  <div className="text-[11px] text-ink-faint">
+                    Each row assumes one technology covers the entire additional demand.
+                  </div>
+                  <div className="space-y-2">
+                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-ink">Solar panels</div>
+                        <div className="text-[11px] text-ink-faint">
+                          {assumptions.panelWatts.toFixed(0)}W panels at{" "}
+                          {(assumptions.solarCf * 100).toFixed(0)}% capacity factor
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[11px] text-ink-faint">Total needed</div>
+                        <div className="text-sm font-semibold text-ink">
+                          {formatCountCompact(electricityEquivalents?.solar.panels ?? null)} panels
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-ink">Wind turbines</div>
+                        <div className="text-[11px] text-ink-faint">
+                          {assumptions.windTurbineMw.toFixed(1)}MW turbines at{" "}
+                          {(assumptions.windCf * 100).toFixed(0)}% capacity factor
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[11px] text-ink-faint">Total needed</div>
+                        <div className="text-sm font-semibold text-ink">
+                          {formatCountCompact(electricityEquivalents?.wind.turbines ?? null)}{" "}
+                          turbines
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-ink">Nuclear plants</div>
+                        <div className="text-[11px] text-ink-faint">
+                          {assumptions.nuclearPlantGw.toFixed(1)}GW plants at{" "}
+                          {(assumptions.nuclearCf * 100).toFixed(0)}% capacity factor
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[11px] text-ink-faint">Total needed</div>
+                        <div className="text-sm font-semibold text-ink">
+                          {formatCountCompact(electricityEquivalents?.nuclear.plants ?? null)}{" "}
+                          plants
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

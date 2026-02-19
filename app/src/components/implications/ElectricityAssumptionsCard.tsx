@@ -71,9 +71,13 @@ export function ElectricityAssumptionsCard({
         )}
       </div>
       <div className="mt-2 rounded-lg border border-surface bg-surface px-3 py-2">
+        <p className="text-[11px] text-ink-faint mb-2">
+          Capacity factor = average annual output as a % of max rated output. Unit size = rated
+          capacity per panel/turbine/plant.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <AssumptionField
-            label="Solar CF"
+            label="Solar capacity factor"
             value={assumptions.solarCf * 100}
             unit="%"
             step={1}
@@ -84,7 +88,7 @@ export function ElectricityAssumptionsCard({
             }
           />
           <AssumptionField
-            label="Wind CF"
+            label="Wind capacity factor"
             value={assumptions.windCf * 100}
             unit="%"
             step={1}
@@ -95,7 +99,7 @@ export function ElectricityAssumptionsCard({
             }
           />
           <AssumptionField
-            label="Nuclear CF"
+            label="Nuclear capacity factor"
             value={assumptions.nuclearCf * 100}
             unit="%"
             step={1}
@@ -106,7 +110,7 @@ export function ElectricityAssumptionsCard({
             }
           />
           <AssumptionField
-            label="Nuclear unit"
+            label="Nuclear plant size"
             value={assumptions.nuclearPlantGw}
             unit="GW"
             step={0.1}
@@ -139,7 +143,7 @@ export function ElectricityAssumptionsCard({
             }
           />
           <AssumptionField
-            label="Turbine size"
+            label="Wind turbine size"
             value={assumptions.windTurbineMw}
             unit="MW"
             step={0.5}
