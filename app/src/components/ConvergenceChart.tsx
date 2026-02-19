@@ -104,19 +104,12 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
       };
     }, [chartHeight, chartWidth, displaySeries]);
     const projectionStartYear = projection[0]?.year ?? null;
-    const observedStartYear = observed[0]?.year ?? null;
-    const observedEndYear = observed.length > 0 ? observed[observed.length - 1].year : null;
     const showPhaseSplit =
       projectionStartYear != null &&
       observed.length > 0 &&
       projectionStartYear > scales.xMin &&
       projectionStartYear <= scales.xMax;
     const phaseBreakX = showPhaseSplit ? scales.x(projectionStartYear) : null;
-    const actualRangeLabel =
-      observedStartYear != null && observedEndYear != null
-        ? `${observedStartYear}-${observedEndYear}`
-        : null;
-    const projectionRangeLabel = projectionStartYear != null ? `${projectionStartYear}+` : null;
 
     const observedChaserPath = useMemo(() => {
       return observed
@@ -269,15 +262,6 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
           (() => {
             const actualWidth = phaseBreakX - padding.left;
             const projWidth = width - padding.right - phaseBreakX;
-            const actualMidX = padding.left + actualWidth / 2;
-            const projMidX = phaseBreakX + projWidth / 2;
-            const pillY = padding.top + 8;
-            const pillH = 18;
-            const pillR = 9;
-            const actualPillW = 84;
-            const projPillW = 96;
-            const showActualPill = actualRangeLabel && actualWidth > actualPillW + 12;
-            const showProjPill = projectionRangeLabel && projWidth > projPillW + 12;
 
             return (
               <g>
@@ -304,7 +288,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
                 {/* Soft divider */}
                 <line
                   x1={phaseBreakX}
-                  y1={padding.top + (showActualPill || showProjPill ? pillH + 8 : 0)}
+                  y1={padding.top}
                   x2={phaseBreakX}
                   y2={height - padding.bottom}
                   stroke={palette.inkFaint}
@@ -312,88 +296,6 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
                   strokeWidth={1}
                   opacity={0.4}
                 />
-
-                {/* Actual pill label */}
-                {showActualPill && (
-                  <g>
-                    <rect
-                      x={actualMidX - actualPillW / 2}
-                      y={pillY - pillH / 2}
-                      width={actualPillW}
-                      height={pillH}
-                      rx={pillR}
-                      fill={palette.surfaceRaised}
-                      stroke={palette.grid}
-                      strokeWidth={1}
-                    />
-                    <text
-                      x={actualMidX - 4}
-                      y={pillY + 0.5}
-                      textAnchor="end"
-                      dominantBaseline="central"
-                      fill={palette.inkFaint}
-                      fontSize={9}
-                      fontWeight={500}
-                      fontFamily={fontFamily}
-                      letterSpacing="0.3"
-                    >
-                      ACTUAL
-                    </text>
-                    <text
-                      x={actualMidX + 1}
-                      y={pillY + 0.5}
-                      textAnchor="start"
-                      dominantBaseline="central"
-                      fill={palette.inkMuted}
-                      fontSize={9.5}
-                      fontWeight={600}
-                      fontFamily={fontFamily}
-                    >
-                      {actualRangeLabel}
-                    </text>
-                  </g>
-                )}
-
-                {/* Projection pill label */}
-                {showProjPill && (
-                  <g>
-                    <rect
-                      x={projMidX - projPillW / 2}
-                      y={pillY - pillH / 2}
-                      width={projPillW}
-                      height={pillH}
-                      rx={pillR}
-                      fill={palette.surfaceRaised}
-                      stroke={palette.grid}
-                      strokeWidth={1}
-                    />
-                    <text
-                      x={projMidX - 4}
-                      y={pillY + 0.5}
-                      textAnchor="end"
-                      dominantBaseline="central"
-                      fill={palette.inkFaint}
-                      fontSize={9}
-                      fontWeight={500}
-                      fontFamily={fontFamily}
-                      letterSpacing="0.3"
-                    >
-                      PROJECTED
-                    </text>
-                    <text
-                      x={projMidX + 1}
-                      y={pillY + 0.5}
-                      textAnchor="start"
-                      dominantBaseline="central"
-                      fill={palette.inkMuted}
-                      fontSize={9.5}
-                      fontWeight={600}
-                      fontFamily={fontFamily}
-                    >
-                      {projectionRangeLabel}
-                    </text>
-                  </g>
-                )}
               </g>
             );
           })()}

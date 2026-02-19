@@ -89,11 +89,11 @@ export function toEmbedSearchString(
 }
 
 export const DEFAULT_SHARE_STATE: ShareState = {
-  chaser: "NGA",
-  target: "IRL",
+  chaser: "POL",
+  target: "DEU",
   indicator: "GDP_PCAP_PPP",
-  cg: 0.035,
-  tg: 0.015,
+  cg: 0.038,
+  tg: 0.004,
   tmode: "growing",
   baseYear: 2023,
   view: "chart",

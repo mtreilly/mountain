@@ -40,7 +40,6 @@ export function ConvergenceChartInteractive({
     for (const point of projection) byYear.set(point.year, point);
     return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
   }, [observed, projection]);
-  const projectionStartYear = projection[0]?.year ?? null;
 
   const { xMin, xMax, yMax } = useMemo(() => {
     if (displaySeries.length === 0) {
@@ -162,9 +161,8 @@ export function ConvergenceChartInteractive({
       year: active.year,
       chaser: active.chaser,
       target: active.target,
-      isProjected: projectionStartYear != null ? active.year >= projectionStartYear : true,
     };
-  }, [active, activeX, activeYChaser, activeYTarget, projectionStartYear]);
+  }, [active, activeX, activeYChaser, activeYTarget]);
 
   const markerPalette =
     theme === "dark"
@@ -241,21 +239,6 @@ export function ConvergenceChartInteractive({
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold" style={{ color: markerPalette.ink }}>
                 {tooltip.year}
-              </span>
-              <span
-                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-px rounded-full"
-                style={{
-                  color: tooltip.isProjected ? "#8b5cf6" : "#059669",
-                  background: tooltip.isProjected
-                    ? theme === "dark"
-                      ? "rgba(139, 92, 246, 0.15)"
-                      : "rgba(139, 92, 246, 0.1)"
-                    : theme === "dark"
-                      ? "rgba(5, 150, 105, 0.15)"
-                      : "rgba(5, 150, 105, 0.1)",
-                }}
-              >
-                {tooltip.isProjected ? "Projected" : "Actual"}
               </span>
             </div>
             <div className="mt-1.5 space-y-1 text-[11px]" style={{ color: markerPalette.faint }}>
