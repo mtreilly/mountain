@@ -108,7 +108,7 @@ INSERT OR IGNORE INTO countries (iso_alpha3, iso_alpha2, name, region, income_gr
     ('IDN', 'ID', 'Indonesia', 'East Asia & Pacific', 'Upper middle income'),
     ('TUR', 'TR', 'Türkiye', 'Europe & Central Asia', 'Upper middle income');
 
--- Sample GDP per capita data (in constant 2021 international $)
+-- Sample GDP per capita data (in constant 2017 US$ PPP, Penn World Table)
 -- Nigeria
 INSERT OR IGNORE INTO data_points (country_id, indicator_id, year, value) VALUES
     ((SELECT id FROM countries WHERE iso_alpha3='NGA'), (SELECT id FROM indicators WHERE code='GDP_PCAP_PPP'), 2000, 3800),

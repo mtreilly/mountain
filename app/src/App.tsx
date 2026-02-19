@@ -625,7 +625,8 @@ export default function App() {
         targetMode: targetGrowthRate === 0 ? "static" : "growing",
         theme,
         siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
-        dataSource: comparisonMode === "regions" ? "OECD" : "Penn World Table",
+        dataSource:
+          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "Penn World Table"),
       };
 
   // Historical data for thread generator
