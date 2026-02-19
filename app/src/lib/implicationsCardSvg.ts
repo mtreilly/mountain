@@ -1,6 +1,6 @@
 /**
  * SVG generator for implications summary card.
- * Shows macro implications: electricity, urbanization, emissions.
+ * Shows electricity implication summary for thread card 4.
  */
 
 import { formatNumber } from "./convergence";
@@ -25,8 +25,6 @@ const PALETTES = {
     muted: "#5c574f",
     faint: "#8a847a",
     electricity: "#f59e0b",
-    urban: "#3b82f6",
-    emissions: "#10b981",
     gdp: "#8b5cf6",
   },
   dark: {
@@ -38,8 +36,6 @@ const PALETTES = {
     muted: "#a8a49c",
     faint: "#6b675f",
     electricity: "#fbbf24",
-    urban: "#60a5fa",
-    emissions: "#34d399",
     gdp: "#a78bfa",
   },
 } as const;
@@ -88,27 +84,18 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
   const palette = PALETTES[theme];
   const font = FONT_FAMILY;
 
-  const {
-    electricityDeltaTWh,
-    nuclearPlants,
-    urbanDeltaPersons,
-    homesNeeded,
-    co2DeltaMt,
-    gdpCurrent,
-    gdpFuture,
-  } = implicationsData;
+  const { electricityDeltaTWh, nuclearPlants, gdpCurrent, gdpFuture } = implicationsData;
 
   // Layout
   const headerHeight = 100;
   const footerHeight = 50;
   const cardY = headerHeight + 30;
-  const cardHeight = 180;
-  const cardWidth = 340;
-  const gap = 30;
-  const leftX = (width - (cardWidth * 3 + gap * 2)) / 2;
+  const cardHeight = 210;
+  const cardWidth = 720;
+  const leftX = (width - cardWidth) / 2;
 
   // GDP summary area
-  const gdpY = cardY + cardHeight + 40;
+  const gdpY = cardY + cardHeight + 28;
 
   // Build implication cards
   interface ImplCard {
@@ -126,21 +113,6 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
       value: electricityDeltaTWh != null ? `+${Math.round(electricityDeltaTWh)} TWh` : null,
       subtitle: nuclearPlants != null ? `≈${Math.round(nuclearPlants)} nuclear plants` : null,
       color: palette.electricity,
-    },
-    {
-      icon: "🏠",
-      title: "URBANIZATION",
-      value: urbanDeltaPersons != null ? `+${formatLargeNumber(urbanDeltaPersons)} people` : null,
-      subtitle: homesNeeded != null ? `≈${formatLargeNumber(homesNeeded)} homes` : null,
-      color: palette.urban,
-    },
-    {
-      icon: "🌍",
-      title: "EMISSIONS",
-      value:
-        co2DeltaMt != null ? `${co2DeltaMt >= 0 ? "+" : ""}${Math.round(co2DeltaMt)} MtCO₂` : null,
-      subtitle: "Territorial emissions",
-      color: palette.emissions,
     },
   ];
 
@@ -167,7 +139,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
   ${cards
     .map(
       (card, i) => `
-  <g transform="translate(${leftX + i * (cardWidth + gap)}, ${cardY})">
+  <g transform="translate(${leftX + i * cardWidth}, ${cardY})">
     <rect width="${cardWidth}" height="${cardHeight}" rx="16" fill="${palette.card}" stroke="${palette.border}"/>
 
     <!-- Icon circle -->
@@ -175,7 +147,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="40" y="50" text-anchor="middle" font-size="28">${card.icon}</text>
 
     <!-- Title -->
-    <text x="80" y="35" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(card.title)}</text>
+    <text x="80" y="35" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(card.title)} BUILDOUT</text>
 
     <!-- Value -->
     ${
@@ -197,6 +169,10 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
         : ""
     }
 
+    <text x="24" y="170" font-family="${font}" font-size="12" fill="${palette.faint}">
+      Additional annual electricity required by ${horizonYear}
+    </text>
+
     <!-- Accent bar (bottom rounded corners via clip-path) -->
     <defs>
       <clipPath id="accentClip${i}">
@@ -211,7 +187,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
 
   <!-- GDP Summary -->
   <g transform="translate(${leftX}, ${gdpY})">
-    <rect width="${cardWidth * 3 + gap * 2}" height="80" rx="12" fill="${palette.card}" stroke="${palette.border}"/>
+    <rect width="${cardWidth}" height="80" rx="12" fill="${palette.card}" stroke="${palette.border}"/>
 
     <!-- GDP Icon -->
     <circle cx="50" cy="40" r="24" fill="${palette.gdp}" fill-opacity="0.15"/>
@@ -236,7 +212,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
   </g>
 
   <!-- Disclaimer -->
-  <text x="${width / 2}" y="${gdpY + 110}" text-anchor="middle" font-family="${font}" font-size="11" fill="${palette.faint}">
+  <text x="${width / 2}" y="${gdpY + 108}" text-anchor="middle" font-family="${font}" font-size="11" fill="${palette.faint}">
     Estimates based on template country development paths. Actual outcomes vary by policy and technology.
   </text>
 

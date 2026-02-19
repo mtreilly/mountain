@@ -25,9 +25,6 @@ export interface ThreadPackage {
 export interface ImplicationsData {
   electricityDeltaTWh: number | null;
   nuclearPlants: number | null;
-  urbanDeltaPersons: number | null;
-  homesNeeded: number | null;
-  co2DeltaMt: number | null;
   gdpCurrent: number | null;
   gdpFuture: number | null;
 }
@@ -141,15 +138,6 @@ function generateImplicationsCaption(ctx: CaptionContext): string {
     parts.push(
       `⚡ +${Math.round(implicationsData.electricityDeltaTWh)} TWh (≈${Math.round(implicationsData.nuclearPlants)} nuclear plants)`,
     );
-  }
-
-  if (implicationsData.homesNeeded != null) {
-    parts.push(`🏠 +${formatNumber(Math.round(implicationsData.homesNeeded))} homes needed`);
-  }
-
-  if (implicationsData.co2DeltaMt != null) {
-    const sign = implicationsData.co2DeltaMt >= 0 ? "+" : "";
-    parts.push(`🌍 ${sign}${Math.round(implicationsData.co2DeltaMt)} MtCO₂`);
   }
 
   const implText =

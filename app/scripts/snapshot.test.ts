@@ -199,9 +199,6 @@ function testImplicationsCardSnapshot() {
     implicationsData: {
       electricityDeltaTWh: 320,
       nuclearPlants: 22,
-      urbanDeltaPersons: 48_000_000,
-      homesNeeded: 10_500_000,
-      co2DeltaMt: 95,
       gdpCurrent: 1.3e12,
       gdpFuture: 4.9e12,
     },
@@ -324,9 +321,6 @@ function testThreadCaptionsSnapshot() {
     implicationsData: {
       electricityDeltaTWh: 320,
       nuclearPlants: 22,
-      urbanDeltaPersons: 48_000_000,
-      homesNeeded: 10_500_000,
-      co2DeltaMt: 95,
       gdpCurrent: 1.3e12,
       gdpFuture: 4.9e12,
     },

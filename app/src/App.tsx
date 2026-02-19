@@ -670,19 +670,10 @@ export default function App() {
     const { macro } = implicationsComputed;
     const electricityDeltaTWh = macro.electricity.equivalents?.deltaTWh ?? null;
     const nuclearPlants = macro.electricity.equivalents?.nuclear.plants ?? null;
-    const urbanDeltaPersons = macro.urban.deltaPersons ?? null;
-    const homesNeeded = macro.urban.homesNeeded ?? null;
-    const co2DeltaMt =
-      macro.co2.currentMt != null && macro.co2.futureMt != null
-        ? macro.co2.futureMt - macro.co2.currentMt
-        : null;
 
     return {
       electricityDeltaTWh,
       nuclearPlants,
-      urbanDeltaPersons,
-      homesNeeded,
-      co2DeltaMt,
       gdpCurrent,
       gdpFuture,
     };
