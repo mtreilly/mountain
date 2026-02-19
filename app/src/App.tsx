@@ -363,12 +363,16 @@ export default function App() {
     if (comparisonMode === "regions") {
       const chaserByYear = new Map(
         getRegionDataSeries(chaserRegionCode)
-          .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+          .filter(
+            (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
+          )
           .map((point) => [point.year, point.gdpPerCapita] as const),
       );
       const targetByYear = new Map(
         getRegionDataSeries(targetRegionCode)
-          .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+          .filter(
+            (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
+          )
           .map((point) => [point.year, point.gdpPerCapita] as const),
       );
 
@@ -388,7 +392,9 @@ export default function App() {
 
     const chaserByYear = new Map(
       chaserSeries
-        .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+        .filter(
+          (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
+        )
         .map((point) => [
           point.year,
           applyAdjustment(point.value, chaserAdjustment, useChaserAdjusted),
@@ -396,7 +402,9 @@ export default function App() {
     );
     const targetByYear = new Map(
       targetSeries
-        .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+        .filter(
+          (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
+        )
         .map((point) => [
           point.year,
           applyAdjustment(point.value, targetAdjustment, useTargetAdjusted),
