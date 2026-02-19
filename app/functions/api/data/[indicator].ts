@@ -36,7 +36,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   });
   if (limited) return limited;
 
-  const indicatorCode = String(context.params.indicator || "").trim().toUpperCase();
+  const indicatorCode = String(context.params.indicator || "")
+    .trim()
+    .toUpperCase();
   const url = new URL(context.request.url);
   const maxYear = new Date().getFullYear() + 1;
 
@@ -113,7 +115,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // Group by country
     const data: Record<string, Array<{ year: number; value: number }>> = {};
-    for (const row of result.results as Array<{ iso_alpha3: string; year: number; value: number }>) {
+    for (const row of result.results as Array<{
+      iso_alpha3: string;
+      year: number;
+      value: number;
+    }>) {
       if (!data[row.iso_alpha3]) {
         data[row.iso_alpha3] = [];
       }

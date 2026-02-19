@@ -34,10 +34,7 @@ function sweepExpired(now: number) {
   lastSweepAt = now;
 }
 
-export function enforceRateLimit(
-  request: Request,
-  options: RateLimitOptions,
-): Response | null {
+export function enforceRateLimit(request: Request, options: RateLimitOptions): Response | null {
   const now = Date.now();
   sweepExpired(now);
 
