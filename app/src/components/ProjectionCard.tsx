@@ -10,6 +10,7 @@ export function ProjectionCard({
   onViewChange,
   showMilestones,
   onShowMilestonesChange,
+  observedSeries,
   projection,
   chaserName,
   targetName,
@@ -27,6 +28,7 @@ export function ProjectionCard({
   onViewChange: (view: ShareState["view"]) => void;
   showMilestones: boolean;
   onShowMilestonesChange: (show: boolean) => void;
+  observedSeries?: Array<{ year: number; chaser: number; target: number }>;
   projection: Array<{ year: number; chaser: number; target: number }>;
   chaserName: string;
   targetName: string;
@@ -152,6 +154,7 @@ export function ProjectionCard({
       ) : (
         <ConvergenceChartInteractive
           svgRef={svgRef}
+          observed={observedSeries}
           projection={projection}
           chaserName={chaserName}
           targetName={targetName}

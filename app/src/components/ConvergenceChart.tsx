@@ -9,6 +9,7 @@ export const CHART_GEOMETRY = {
 } as const;
 
 interface ConvergenceChartProps {
+  observed?: Array<{ year: number; chaser: number; target: number }>;
   projection: Array<{ year: number; chaser: number; target: number }>;
   chaserName: string;
   targetName: string;
@@ -27,6 +28,7 @@ interface ConvergenceChartProps {
 export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChartProps>(
   function ConvergenceChart(
     {
+      observed = [],
       projection,
       chaserName,
       targetName,
@@ -75,9 +77,17 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
+    const displaySeries = useMemo(() => {
+      const byYear = new Map<number, { year: number; chaser: number; target: number }>();
+      for (const point of observed) byYear.set(point.year, point);
+      for (const point of projection) byYear.set(point.year, point);
+      const merged = Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+      return merged.length > 0 ? merged : projection;
+    }, [observed, projection]);
+
     const scales = useMemo(() => {
-      const years = projection.map((d) => d.year);
-      const values = projection.flatMap((d) => [d.chaser, d.target]);
+      const years = displaySeries.map((d) => d.year);
+      const values = displaySeries.flatMap((d) => [d.chaser, d.target]);
 
       const xMin = Math.min(...years);
       const xMax = Math.max(...years);
@@ -92,7 +102,19 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         xMax,
         yMax,
       };
-    }, [chartHeight, chartWidth, projection]);
+    }, [chartHeight, chartWidth, displaySeries]);
+
+    const observedChaserPath = useMemo(() => {
+      return observed
+        .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year)} ${scales.y(d.chaser)}`)
+        .join(" ");
+    }, [observed, scales]);
+
+    const observedTargetPath = useMemo(() => {
+      return observed
+        .map((d, i) => `${i === 0 ? "M" : "L"} ${scales.x(d.year)} ${scales.y(d.target)}`)
+        .join(" ");
+    }, [observed, scales]);
 
     const chaserPath = useMemo(() => {
       return projection
@@ -261,6 +283,33 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
               {convergenceYear}
             </text>
           </g>
+        )}
+
+        {/* Target line */}
+        {observed.length >= 2 && (
+          <path
+            d={observedTargetPath}
+            fill="none"
+            stroke={palette.target}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="5,4"
+            opacity={0.45}
+          />
+        )}
+
+        {/* Chaser line */}
+        {observed.length >= 2 && (
+          <path
+            d={observedChaserPath}
+            fill="none"
+            stroke={palette.chaser}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.45}
+          />
         )}
 
         {/* Target line */}

@@ -8,6 +8,7 @@ const GEOMETRY = CHART_GEOMETRY;
 
 export function ConvergenceChartInteractive({
   svgRef,
+  observed,
   projection,
   chaserName,
   targetName,
@@ -19,6 +20,7 @@ export function ConvergenceChartInteractive({
   targetHasNote,
 }: {
   svgRef: RefObject<SVGSVGElement | null>;
+  observed?: Array<{ year: number; chaser: number; target: number }>;
   projection: Array<{ year: number; chaser: number; target: number }>;
   chaserName: string;
   targetName: string;
@@ -32,15 +34,25 @@ export function ConvergenceChartInteractive({
   const { ref: containerRef, width: containerWidth } = useResizeObserver<HTMLDivElement>();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const displaySeries = useMemo(() => {
+    const byYear = new Map<number, { year: number; chaser: number; target: number }>();
+    for (const point of observed || []) byYear.set(point.year, point);
+    for (const point of projection) byYear.set(point.year, point);
+    return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+  }, [observed, projection]);
+
   const { xMin, xMax, yMax } = useMemo(() => {
-    const years = projection.map((d) => d.year);
-    const values = projection.flatMap((d) => [d.chaser, d.target]);
+    if (displaySeries.length === 0) {
+      return { xMin: 0, xMax: 1, yMax: 1 };
+    }
+    const years = displaySeries.map((d) => d.year);
+    const values = displaySeries.flatMap((d) => [d.chaser, d.target]);
     return {
       xMin: Math.min(...years),
       xMax: Math.max(...years),
-      yMax: Math.max(...values) * 1.1,
+      yMax: Math.max(1, Math.max(...values) * 1.1),
     };
-  }, [projection]);
+  }, [displaySeries]);
 
   const chartWidth = GEOMETRY.width - GEOMETRY.padding.left - GEOMETRY.padding.right;
   const chartHeight = GEOMETRY.height - GEOMETRY.padding.top - GEOMETRY.padding.bottom;
@@ -48,6 +60,7 @@ export function ConvergenceChartInteractive({
 
   const getNearestIndexFromClientPoint = useCallback(
     (clientX: number, clientY: number) => {
+      if (displaySeries.length === 0) return null;
       const svg = svgRef.current;
       if (!svg) return null;
 
@@ -72,8 +85,8 @@ export function ConvergenceChartInteractive({
 
       let bestIndex = 0;
       let bestDist = Infinity;
-      for (let i = 0; i < projection.length; i++) {
-        const d = Math.abs(projection[i].year - approxYear);
+      for (let i = 0; i < displaySeries.length; i++) {
+        const d = Math.abs(displaySeries[i].year - approxYear);
         if (d < bestDist) {
           bestDist = d;
           bestIndex = i;
@@ -81,7 +94,7 @@ export function ConvergenceChartInteractive({
       }
       return bestIndex;
     },
-    [chartWidth, projection, svgRef, xMin, xRange],
+    [chartWidth, displaySeries, svgRef, xMin, xRange],
   );
 
   const onPointerMove = useCallback(
@@ -100,7 +113,7 @@ export function ConvergenceChartInteractive({
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (projection.length === 0) return;
+      if (displaySeries.length === 0) return;
       if (e.key === "Escape") {
         setActiveIndex(null);
         return;
@@ -112,15 +125,15 @@ export function ConvergenceChartInteractive({
         const current = idx ?? 0;
         const next =
           e.key === "ArrowRight"
-            ? Math.min(current + 1, projection.length - 1)
+            ? Math.min(current + 1, displaySeries.length - 1)
             : Math.max(current - 1, 0);
         return next;
       });
     },
-    [projection.length],
+    [displaySeries.length],
   );
 
-  const active = activeIndex == null ? null : projection[activeIndex];
+  const active = activeIndex == null ? null : displaySeries[activeIndex];
   const activeX =
     active == null ? null : GEOMETRY.padding.left + ((active.year - xMin) / xRange) * chartWidth;
   const activeYChaser =
@@ -160,6 +173,7 @@ export function ConvergenceChartInteractive({
     <div ref={containerRef} className="relative w-full">
       <ConvergenceChart
         ref={svgRef}
+        observed={observed}
         projection={projection}
         chaserName={chaserName}
         targetName={targetName}
@@ -169,7 +183,11 @@ export function ConvergenceChartInteractive({
         theme={theme}
         pixelWidth={containerWidth}
         title={`${chaserName} vs ${targetName}`}
-        description={`Projected values from ${xMin} onward. Use arrow keys to inspect values by year.`}
+        description={
+          observed && observed.length > 0
+            ? `Observed values from ${xMin}, projected values from ${projection[0]?.year ?? xMin}. Use arrow keys to inspect values by year.`
+            : `Projected values from ${xMin} onward. Use arrow keys to inspect values by year.`
+        }
         chaserHasNote={chaserHasNote}
         targetHasNote={targetHasNote}
         svgProps={{

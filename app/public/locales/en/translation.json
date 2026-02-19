@@ -56,6 +56,13 @@
   },
   "footer": {
     "data": "Data:",
+    "dataSources": "Data sources",
+    "openDataSources": "Open data sources modal",
+    "dataSourcesTitle": "Data sources",
+    "dataSourcesSubtitle": "Sources used across indicators in this app",
+    "closeDataSources": "Close data sources modal",
+    "current": "Current",
+    "license": "License",
     "inspiredBy": "Inspired by",
     "builtBy": "Built by",
     "regionsCount": "{{count}} regions",

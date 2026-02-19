@@ -1,45 +1,106 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { getDataSourceBaseUrl } from "../lib/dataSourceUrls";
+import { getDataSourceBaseUrl, getDataSourceLicense } from "../lib/dataSourceUrls";
 
 export function AppFooter({
   comparisonMode = "countries",
   countriesCount,
   regionsCount,
   dataSourceName,
+  dataSourceNames = [],
 }: {
   comparisonMode?: "countries" | "regions";
   countriesCount: number;
   regionsCount?: number;
   dataSourceName?: string | null;
+  dataSourceNames?: string[];
 }) {
   const { t } = useTranslation();
+  const [isDataSourcesOpen, setIsDataSourcesOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
   const isRegions = comparisonMode === "regions";
   const resolvedSourceName = isRegions
     ? "OECD"
     : dataSourceName?.trim()
       ? dataSourceName.trim()
       : "Penn World Table";
-  const resolvedSourceUrl = isRegions
-    ? "https://www.oecd.org/"
-    : (getDataSourceBaseUrl(resolvedSourceName) ?? null);
+  const sourceRows = useMemo(() => {
+    const seen = new Set<string>();
+    const rows: Array<{ name: string; url: string | null; license: string | null }> = [];
+
+    const addSource = (source: string) => {
+      const trimmed = source.trim();
+      if (!trimmed || seen.has(trimmed)) return;
+      seen.add(trimmed);
+      rows.push({
+        name: trimmed,
+        url: trimmed === "OECD" ? "https://www.oecd.org/" : (getDataSourceBaseUrl(trimmed) ?? null),
+        license: getDataSourceLicense(trimmed)?.name ?? null,
+      });
+    };
+
+    for (const source of dataSourceNames) addSource(source);
+    addSource("OECD");
+    addSource(resolvedSourceName);
+
+    rows.sort((a, b) => a.name.localeCompare(b.name));
+    return rows;
+  }, [dataSourceNames, resolvedSourceName]);
+
+  const handleClose = useCallback(() => {
+    setIsDataSourcesOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isDataSourcesOpen) return;
+
+    const prev = document.activeElement as HTMLElement | null;
+    queueMicrotask(() => closeButtonRef.current?.focus());
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (modalRef.current?.contains(target)) return;
+      handleClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.body.style.overflow = "";
+      if (prev && prev.isConnected && prev.tagName !== "BODY" && prev.tagName !== "HTML") {
+        prev.focus();
+      }
+    };
+  }, [handleClose, isDataSourcesOpen]);
 
   return (
     <footer className="mt-10 lg:mt-12 pt-6 border-t border-surface">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-ink-faint">
         <p>
           {t("footer.data")}{" "}
-          {resolvedSourceUrl ? (
-            <a
-              href={resolvedSourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--color-accent)] hover:underline"
-            >
-              {resolvedSourceName}
-            </a>
-          ) : (
-            <span>{resolvedSourceName}</span>
-          )}
+          <button
+            type="button"
+            onClick={() => setIsDataSourcesOpen(true)}
+            className="text-[var(--color-accent)] hover:underline focus-ring rounded-sm"
+            aria-label={t("footer.openDataSources")}
+          >
+            {t("footer.dataSources")}
+          </button>
           {" · "}
           {t("footer.inspiredBy")}{" "}
           <a
@@ -99,6 +160,82 @@ export function AppFooter({
           </a>
         </p>
       </div>
+      {isDataSourcesOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+            <div
+              ref={modalRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("footer.dataSourcesTitle")}
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-surface bg-surface-raised shadow-2xl animate-fade-in-up"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b border-surface bg-surface-raised/95 backdrop-blur-sm">
+                <div>
+                  <h2 className="text-lg font-semibold text-ink">{t("footer.dataSourcesTitle")}</h2>
+                  <p className="text-sm text-ink-muted">{t("footer.dataSourcesSubtitle")}</p>
+                </div>
+                <button
+                  type="button"
+                  ref={closeButtonRef}
+                  onClick={handleClose}
+                  className="p-2 rounded-lg hover:bg-surface transition-default"
+                  aria-label={t("footer.closeDataSources")}
+                >
+                  <svg
+                    className="w-5 h-5 text-ink-muted"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-4 space-y-2">
+                {sourceRows.map((source) => (
+                  <div
+                    key={source.name}
+                    className="rounded-lg border border-surface bg-surface p-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-ink flex items-center gap-2 flex-wrap">
+                        {source.url ? (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--color-accent)] hover:underline"
+                          >
+                            {source.name}
+                          </a>
+                        ) : (
+                          <span>{source.name}</span>
+                        )}
+                        {source.name === resolvedSourceName && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-surface-sunken text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                            {t("footer.current")}
+                          </span>
+                        )}
+                      </div>
+                      {source.license && (
+                        <p className="text-xs text-ink-faint mt-1">
+                          {t("footer.license")}: {source.license}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </footer>
   );
 }

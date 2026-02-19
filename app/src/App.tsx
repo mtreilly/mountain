@@ -52,6 +52,7 @@ import {
 let lastInvalidRegionToastKey: string | null = null;
 let lastInvalidIndicatorToastKey: string | null = null;
 let lastInvalidCountryToastKey: string | null = null;
+const OBSERVED_CHART_START_YEAR = 2000;
 
 export default function App() {
   const [{ initialShareState, initialRegionToast }] = useState(() => {
@@ -256,6 +257,15 @@ export default function App() {
 
   const selectedIndicator =
     indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
+  const allDataSources = useMemo(() => {
+    const sources = new Set<string>();
+    for (const indicator of indicators) {
+      const source = indicator.source?.trim();
+      if (source) sources.add(source);
+    }
+    sources.add("OECD");
+    return Array.from(sources).sort((a, b) => a.localeCompare(b));
+  }, [indicators]);
   const metricName = selectedIndicator?.name || indicatorCode;
   const metricUnit = selectedIndicator?.unit || null;
 
@@ -345,6 +355,76 @@ export default function App() {
           milestones: regionalConvergence.milestones,
         }
       : countryConvergence;
+
+  const observedSeriesForChart = useMemo(() => {
+    const projectionStartYear = projection[0]?.year;
+    if (!Number.isFinite(projectionStartYear)) return [];
+
+    if (comparisonMode === "regions") {
+      const chaserByYear = new Map(
+        getRegionDataSeries(chaserRegionCode)
+          .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+          .map((point) => [point.year, point.gdpPerCapita] as const),
+      );
+      const targetByYear = new Map(
+        getRegionDataSeries(targetRegionCode)
+          .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+          .map((point) => [point.year, point.gdpPerCapita] as const),
+      );
+
+      const years = Array.from(chaserByYear.keys())
+        .filter((year) => targetByYear.has(year))
+        .sort((a, b) => a - b);
+
+      return years.map((year) => ({
+        year,
+        chaser: chaserByYear.get(year)!,
+        target: targetByYear.get(year)!,
+      }));
+    }
+
+    const chaserSeries = data[chaserIso] || [];
+    const targetSeries = data[targetIso] || [];
+
+    const chaserByYear = new Map(
+      chaserSeries
+        .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+        .map((point) => [
+          point.year,
+          applyAdjustment(point.value, chaserAdjustment, useChaserAdjusted),
+        ]),
+    );
+    const targetByYear = new Map(
+      targetSeries
+        .filter((point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear)
+        .map((point) => [
+          point.year,
+          applyAdjustment(point.value, targetAdjustment, useTargetAdjusted),
+        ]),
+    );
+
+    const years = Array.from(chaserByYear.keys())
+      .filter((year) => targetByYear.has(year))
+      .sort((a, b) => a - b);
+
+    return years.map((year) => ({
+      year,
+      chaser: chaserByYear.get(year)!,
+      target: targetByYear.get(year)!,
+    }));
+  }, [
+    chaserAdjustment,
+    chaserIso,
+    chaserRegionCode,
+    comparisonMode,
+    data,
+    projection,
+    targetAdjustment,
+    targetIso,
+    targetRegionCode,
+    useChaserAdjusted,
+    useTargetAdjusted,
+  ]);
 
   // Computed display values based on mode
   const displayChaserName =
@@ -988,6 +1068,7 @@ export default function App() {
                     onViewChange={setView}
                     showMilestones={showMilestones}
                     onShowMilestonesChange={setShowMilestones}
+                    observedSeries={observedSeriesForChart}
                     projection={projection}
                     chaserName={displayChaserName}
                     targetName={displayTargetName}
@@ -1157,6 +1238,7 @@ export default function App() {
                 ? "OECD"
                 : (selectedIndicator?.source ?? "Penn World Table")
             }
+            dataSourceNames={allDataSources}
             countriesCount={countries.length}
             regionsCount={ALL_TL2_REGIONS.length}
           />
