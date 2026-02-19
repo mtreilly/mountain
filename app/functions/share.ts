@@ -1,5 +1,6 @@
 import { getLatestRegionData, getRegionByCode } from "../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../src/lib/shareState";
+import { enforceRateLimit } from "./_lib/requestGuards";
 
 interface Env {
   DB: D1Database;
@@ -15,9 +16,23 @@ function escapeHtml(s: string) {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  const limited = enforceRateLimit(context.request, {
+    keyPrefix: "share",
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   const url = new URL(context.request.url);
   const state = parseShareStateFromSearch(url.search);
   const params = toSearchParams(state);
+  const canonicalSearch = params.toString();
+  if (url.search !== `?${canonicalSearch}`) {
+    const redirected = Response.redirect(`${url.origin}/share?${canonicalSearch}`, 301);
+    redirected.headers.set("cache-control", "public, max-age=300, s-maxage=3600");
+    return redirected;
+  }
+
   const canonicalPath = `/share?${params.toString()}`;
   const appPath = `/?${params.toString()}`;
 

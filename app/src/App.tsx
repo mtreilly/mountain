@@ -357,6 +357,8 @@ export default function App() {
   // Implications data for thread generator (only when GDP per capita is selected)
   const implicationsEnabled =
     comparisonMode === "countries" && indicatorCode === "GDP_PCAP_PPP" && chaserValueRaw != null;
+  const shouldLoadImplicationsData =
+    implicationsEnabled && (isImplicationsOpen || isThreadGeneratorOpen);
 
   const {
     data: implicationsRawData,
@@ -367,7 +369,7 @@ export default function App() {
   } = useImplicationsData({
     chaserIso,
     template: impTemplate,
-    enabled: implicationsEnabled,
+    enabled: shouldLoadImplicationsData,
   });
 
   const implicationsComputed = useImplicationsComputed({

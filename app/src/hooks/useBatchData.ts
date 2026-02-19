@@ -34,8 +34,11 @@ export function useBatchData(params: {
   useEffect(() => {
     if (!enabled) return;
     if (countries.length === 0 || indicators.length === 0) return;
+    const controller = new AbortController();
+    let isActive = true;
 
     queueMicrotask(() => {
+      if (!isActive) return;
       setLoading(true);
       setError(null);
     });
@@ -48,20 +51,28 @@ export function useBatchData(params: {
     if (endYear != null) qs.set("end_year", String(endYear));
     if (includeSourceVintage) qs.set("include_source_vintage", "1");
 
-    fetch(`/api/batch-data?${qs}`)
+    fetch(`/api/batch-data?${qs}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((result) => {
+        if (!isActive) return;
         setData(result.data || {});
         setIndicatorByCode(result.indicators || {});
         setLoading(false);
       })
       .catch((err) => {
+        if (!isActive) return;
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError(err.message);
         setLoading(false);
       });
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
   }, [countries, endYear, enabled, includeSourceVintage, indicators, startYear]);
 
   const getLatestValue = (indicator: string, iso: string): number | null => {

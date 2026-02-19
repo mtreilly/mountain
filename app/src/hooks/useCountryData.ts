@@ -36,8 +36,11 @@ export function useCountryData({
   useEffect(() => {
     if (countries.length === 0 || !indicator) return;
     if (!enabled) return;
+    const controller = new AbortController();
+    let isActive = true;
 
     queueMicrotask(() => {
+      if (!isActive) return;
       setLoading(true);
       setError(null);
       setHasLoaded(false);
@@ -47,22 +50,30 @@ export function useCountryData({
       start_year: "1990",
     });
 
-    fetch(`/api/data/${indicator}?${params}`)
+    fetch(`/api/data/${indicator}?${params}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((result) => {
+        if (!isActive) return;
         setData(result.data || {});
         setIndicatorInfo(result.indicator || null);
         setLoading(false);
         setHasLoaded(true);
       })
       .catch((err) => {
+        if (!isActive) return;
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError(err.message);
         setLoading(false);
         setHasLoaded(true);
       });
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
   }, [countriesKey, countries.length, enabled, indicator]);
 
   const resolvedError = !enabled && invalidIndicator && indicator ? "INDICATOR_NOT_FOUND" : error;

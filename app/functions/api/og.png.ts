@@ -1,6 +1,7 @@
 import { formatMetricValue, formatPercent, formatYears } from "../../src/lib/convergence";
 import { getLatestRegionData, getRegionByCode } from "../../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../../src/lib/shareState";
+import { enforceRateLimit } from "../_lib/requestGuards";
 
 interface Env {
   DB: D1Database;
@@ -79,15 +80,32 @@ const THEMES = {
 } as const;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  const limited = enforceRateLimit(context.request, {
+    keyPrefix: "api:og",
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   const url = new URL(context.request.url);
   const state = parseShareStateFromSearch(url.search);
   const params = toSearchParams(state);
-  const canonical = `${url.origin}/share?${params.toString()}`;
 
   // Determine theme
   const themeParam = url.searchParams.get("theme");
   const themeName = themeParam === "dark" ? "dark" : "light";
   const theme = THEMES[themeName];
+  if (themeName === "dark") params.set("theme", "dark");
+
+  const canonicalSearch = params.toString();
+  const canonicalOgUrl = `${url.origin}/api/og.png?${canonicalSearch}`;
+  if (url.search !== `?${canonicalSearch}`) {
+    const redirected = Response.redirect(canonicalOgUrl, 301);
+    redirected.headers.set("cache-control", "public, max-age=300, s-maxage=3600");
+    return redirected;
+  }
+
+  const canonical = `${url.origin}/share?${toSearchParams(state).toString()}`;
 
   // Determine mode and get data
   const isRegionalMode = state.mode === "regions";
@@ -431,14 +449,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return new Response(png, {
       headers: {
         "content-type": "image/png",
-        "cache-control": "public, max-age=86400",
+        "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
       },
     });
   } catch {
     return new Response(svg, {
       headers: {
         "content-type": "image/svg+xml; charset=utf-8",
-        "cache-control": "public, max-age=300",
+        "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
         "x-og-fallback": "svg",
       },
     });
