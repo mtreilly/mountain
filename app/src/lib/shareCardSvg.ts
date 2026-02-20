@@ -309,6 +309,66 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   const statCardWidth = (width - 96 - 24) / 3;
   const statCardsY = height - footerHeight - statCardsHeight - 10;
 
+  const endPointLabels =
+    scales && projection.length > 0
+      ? (() => {
+          const last = projection[projection.length - 1];
+          const endX = scales.x(last.year);
+          const endYChaser = scales.y(last.chaser);
+          const endYTarget = scales.y(last.target);
+          const anchorY = (endYChaser + endYTarget) / 2;
+
+          const maxNameLength = 16;
+          const chaserLabel = truncateName(chaserName, maxNameLength);
+          const targetLabel = truncateName(targetName, maxNameLength);
+
+          const chartLeft = chartGeometry.x + chartGeometry.padding.left;
+          const chartRight = chartGeometry.x + chartGeometry.width - chartGeometry.padding.right;
+          const chartTop = chartGeometry.y + chartGeometry.padding.top;
+          const chartBottom = chartGeometry.y + chartGeometry.height - chartGeometry.padding.bottom;
+
+          const boxHeight = 48;
+          const boxPadding = 10;
+          const rowOffset = 20;
+          const rowGap = 20;
+          const dotRadius = 4;
+          const approxCharWidth = 6.2; // ~10px font in system-ui
+          const labelWidth = Math.max(
+            72,
+            Math.min(
+              190,
+              Math.ceil(Math.max(chaserLabel.length, targetLabel.length) * approxCharWidth) +
+                boxPadding * 2 +
+                16,
+            ),
+          );
+          const gap = 10;
+
+          let boxX = endX + gap;
+          if (boxX + labelWidth > chartRight) {
+            boxX = endX - gap - labelWidth;
+          }
+          if (boxX < chartLeft) {
+            boxX = chartLeft;
+          }
+
+          const boxY = Math.min(Math.max(anchorY - boxHeight / 2, chartTop), chartBottom - boxHeight);
+          const boxCenterY = boxY + boxHeight / 2;
+          const connectorEdgeX = boxX > endX ? boxX : boxX + labelWidth;
+
+          return `
+  <line x1="${endX.toFixed(1)}" y1="${anchorY.toFixed(1)}" x2="${connectorEdgeX.toFixed(1)}" y2="${boxCenterY.toFixed(1)}" stroke="${palette.border}" stroke-width="1.5" opacity="0.8"/>
+  <g transform="translate(${boxX.toFixed(1)}, ${boxY.toFixed(1)})">
+    <rect x="0" y="0" width="${labelWidth}" height="${boxHeight}" rx="6" fill="${palette.card}" fill-opacity="0.95" stroke="${palette.border}" stroke-opacity="0.9"/>
+    <circle cx="${boxPadding}" cy="${rowOffset - 2}" r="${dotRadius}" fill="${palette.chaser}"/>
+    <text x="${boxPadding + 10}" y="${rowOffset + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(chaserLabel)}</text>
+    <circle cx="${boxPadding}" cy="${rowOffset + rowGap - 2}" r="${dotRadius}" fill="${palette.target}"/>
+    <text x="${boxPadding + 10}" y="${rowOffset + rowGap + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(targetLabel)}</text>
+  </g>
+  `;
+        })()
+      : "";
+
   // Build SVG
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
@@ -424,14 +484,8 @@ export function generateShareCardSvg(params: ShareCardParams): string {
       : ""
   }
 
-  <!-- Legend -->
-  <g transform="translate(${chartGeometry.x + chartGeometry.width - chartGeometry.padding.right + 8}, ${chartGeometry.y + chartGeometry.padding.top})">
-    <rect x="-4" y="-6" width="52" height="48" rx="6" fill="${palette.card}" fill-opacity="0.9" stroke="${palette.border}" stroke-opacity="0.5"/>
-    <circle cx="6" cy="8" r="4" fill="${palette.chaser}"/>
-    <text x="16" y="12" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(truncateName(chaserName, 6))}</text>
-    <circle cx="6" cy="28" r="4" fill="${palette.target}"/>
-    <text x="16" y="32" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(truncateName(targetName, 6))}</text>
-  </g>
+  <!-- End point labels -->
+  ${endPointLabels}
   `
       : `
   <!-- No data placeholder -->
