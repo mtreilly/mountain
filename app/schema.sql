@@ -61,12 +61,9 @@ CREATE TABLE IF NOT EXISTS growth_rates (
 -- Seed core indicators
 INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category) VALUES
     ('GDP_PCAP_PPP', 'GDP per capita (PPP)', 'constant 2017 US$ (PPP)', 'Penn World Table', 'pwt11.0:rgdpe/pop', 'economic'),
-    ('GDP_PCAP_USD', 'GDP per capita (current USD)', 'current US$', 'World Bank', 'NY.GDP.PCAP.CD', 'economic'),
     ('POPULATION', 'Total population', 'persons', 'World Bank', 'SP.POP.TOTL', 'demographic'),
     ('LIFE_EXPECT', 'Life expectancy at birth', 'years', 'World Bank', 'SP.DYN.LE00.IN', 'health'),
     ('HDI', 'Human Development Index', 'index 0-1', 'UNDP', NULL, 'composite'),
-    ('LITERACY', 'Literacy rate (adult)', 'percent', 'World Bank', 'SE.ADT.LITR.ZS', 'education'),
-    ('INTERNET', 'Internet users', 'percent of population', 'World Bank', 'IT.NET.USER.ZS', 'infrastructure'),
     ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Data', 'owid-co2-data:co2_per_capita', 'environment'),
     ('ELECTRICITY_GEN_TOTAL', 'Electricity generation (total)', 'TWh', 'Our World in Data', 'owid-energy-data:electricity_generation', 'energy'),
     ('ELECTRICITY_GEN_SOLAR', 'Electricity generation (solar)', 'TWh', 'Our World in Data', 'owid-energy-data:solar_electricity', 'energy'),
@@ -75,20 +72,15 @@ INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, categor
     ('ELECTRICITY_GEN_NUCLEAR', 'Electricity generation (nuclear)', 'TWh', 'Our World in Data', 'owid-energy-data:nuclear_electricity', 'energy'),
     ('INSTALLED_CAPACITY_SOLAR_GW', 'Installed capacity (solar)', 'GW', 'IRENA', 'irena-pxweb:Country_ELECSTAT_2025_H2_PX.px', 'energy'),
     ('INSTALLED_CAPACITY_WIND_GW', 'Installed capacity (wind)', 'GW', 'IRENA', 'irena-pxweb:Country_ELECSTAT_2025_H2_PX.px', 'energy'),
+    ('ELECTRICITY_USE_PCAP', 'Electric power consumption per capita', 'kWh per capita', 'World Bank', 'EG.USE.ELEC.KH.PC', 'energy'),
+    ('RENEWABLE_ENERGY_PCT', 'Renewable energy consumption', 'percent of total final energy', 'World Bank', 'EG.FEC.RNEW.ZS', 'energy'),
+    -- Internal metrics: used by implications engine, not shown in selector
     ('INSTALLED_CAPACITY_COAL_GW', 'Installed capacity (coal)', 'GW', 'Ember', 'ember-api:installed-capacity/monthly', 'energy'),
     ('INSTALLED_CAPACITY_NUCLEAR_GW', 'Installed capacity (nuclear)', 'GW', 'Ember', 'ember-api:installed-capacity/monthly', 'energy'),
     ('ENERGY_USE_PCAP', 'Energy use per capita', 'kg of oil equivalent per capita', 'World Bank', 'EG.USE.PCAP.KG.OE', 'energy'),
-    ('ELECTRICITY_USE_PCAP', 'Electric power consumption per capita', 'kWh per capita', 'World Bank', 'EG.USE.ELEC.KH.PC', 'energy'),
-    ('ELECTRICITY_ACCESS_PCT', 'Access to electricity', 'percent of population', 'World Bank', 'EG.ELC.ACCS.ZS', 'energy'),
-    ('RENEWABLE_ENERGY_PCT', 'Renewable energy consumption', 'percent of total final energy', 'World Bank', 'EG.FEC.RNEW.ZS', 'energy'),
-    ('ENERGY_INTENSITY', 'Energy intensity (primary)', 'MJ per $2017 PPP GDP', 'World Bank', 'EG.EGY.PRIM.PP.KD', 'energy'),
     ('URBAN_POP_PCT', 'Urban population', 'percent of population', 'World Bank', 'SP.URB.TOTL.IN.ZS', 'demographic'),
-    ('AGRICULTURE_VA_PCT_GDP', 'Agriculture value added', 'percent of GDP', 'World Bank', 'NV.AGR.TOTL.ZS', 'economic'),
     ('INDUSTRY_VA_PCT_GDP', 'Industry value added', 'percent of GDP', 'World Bank', 'NV.IND.TOTL.ZS', 'economic'),
-    ('MANUFACTURING_VA_PCT_GDP', 'Manufacturing value added', 'percent of GDP', 'World Bank', 'NV.IND.MANF.ZS', 'economic'),
-    ('SERVICES_VA_PCT_GDP', 'Services value added', 'percent of GDP', 'World Bank', 'NV.SRV.TOTL.ZS', 'economic'),
-    ('CAPITAL_FORMATION_PCT_GDP', 'Gross capital formation', 'percent of GDP', 'World Bank', 'NE.GDI.FTOT.ZS', 'economic'),
-    ('FERTILITY', 'Fertility rate', 'births per woman', 'World Bank', 'SP.DYN.TFRT.IN', 'demographic');
+    ('CAPITAL_FORMATION_PCT_GDP', 'Gross capital formation', 'percent of GDP', 'World Bank', 'NE.GDI.FTOT.ZS', 'economic');
 
 -- Seed sample countries (full list should be imported from World Bank)
 INSERT OR IGNORE INTO countries (iso_alpha3, iso_alpha2, name, region, income_group) VALUES
