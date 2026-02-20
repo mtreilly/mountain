@@ -321,6 +321,10 @@ export function generateShareCardSvg(params: ShareCardParams): string {
           const maxNameLength = 16;
           const chaserLabel = truncateName(chaserName, maxNameLength);
           const targetLabel = truncateName(targetName, maxNameLength);
+          const chaserValueLabel = formatMetricValue(last.chaser, metricUnit);
+          const targetValueLabel = formatMetricValue(last.target, metricUnit);
+          const chaserLine = `${chaserLabel}: ${chaserValueLabel}`;
+          const targetLine = `${targetLabel}: ${targetValueLabel}`;
 
           const chartLeft = chartGeometry.x + chartGeometry.padding.left;
           const chartRight = chartGeometry.x + chartGeometry.width - chartGeometry.padding.right;
@@ -336,8 +340,8 @@ export function generateShareCardSvg(params: ShareCardParams): string {
           const labelWidth = Math.max(
             72,
             Math.min(
-              190,
-              Math.ceil(Math.max(chaserLabel.length, targetLabel.length) * approxCharWidth) +
+              240,
+              Math.ceil(Math.max(chaserLine.length, targetLine.length) * approxCharWidth) +
                 boxPadding * 2 +
                 16,
             ),
@@ -364,9 +368,9 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   <g transform="translate(${boxX.toFixed(1)}, ${boxY.toFixed(1)})">
     <rect x="0" y="0" width="${labelWidth}" height="${boxHeight}" rx="6" fill="${palette.card}" fill-opacity="0.95" stroke="${palette.border}" stroke-opacity="0.9"/>
     <circle cx="${boxPadding}" cy="${rowOffset - 2}" r="${dotRadius}" fill="${palette.chaser}"/>
-    <text x="${boxPadding + 10}" y="${rowOffset + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(chaserLabel)}</text>
+    <text x="${boxPadding + 10}" y="${rowOffset + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(chaserLine)}</text>
     <circle cx="${boxPadding}" cy="${rowOffset + rowGap - 2}" r="${dotRadius}" fill="${palette.target}"/>
-    <text x="${boxPadding + 10}" y="${rowOffset + rowGap + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(targetLabel)}</text>
+    <text x="${boxPadding + 10}" y="${rowOffset + rowGap + 2}" font-family="${font}" font-size="10" font-weight="500" fill="${palette.muted}">${escapeXml(targetLine)}</text>
   </g>
   `;
         })()
