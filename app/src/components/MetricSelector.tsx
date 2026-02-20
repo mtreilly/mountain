@@ -175,7 +175,9 @@ export function MetricSelector({
               >
                 {indicator.name}
               </span>
-              {indicator.unit && <span className="ml-2 text-xs text-ink-faint">({indicator.unit})</span>}
+              {indicator.unit && (
+                <span className="ml-2 text-xs text-ink-faint">({indicator.unit})</span>
+              )}
             </button>
           );
         })
