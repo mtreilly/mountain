@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import type { Indicator } from "../types";
 
-// These codes are kept in the DB for internal use (implications engine) but
-// should not appear in the user-facing metric selector.
-const INTERNAL_ONLY_CODES = new Set([
-  "INSTALLED_CAPACITY_COAL_GW",
-  "INSTALLED_CAPACITY_NUCLEAR_GW",
-  "ENERGY_USE_PCAP",
-  "URBAN_POP_PCT",
-  "INDUSTRY_VA_PCT_GDP",
-  "CAPITAL_FORMATION_PCT_GDP",
-]);
+const VISIBLE_METRIC_CODES = [
+  "POPULATION",
+  "GDP_PCAP_PPP",
+  "LIFE_EXPECT",
+  "INTERNET",
+  "ELECTRICITY_USE_PCAP",
+] as const;
+
+const VISIBLE_METRIC_SET = new Set<string>(VISIBLE_METRIC_CODES);
+const METRIC_ORDER: Record<string, number> = Object.fromEntries(
+  VISIBLE_METRIC_CODES.map((code, index) => [code, index]),
+);
 
 export function useIndicators() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
@@ -25,7 +27,10 @@ export function useIndicators() {
       })
       .then((data) => {
         const all: Indicator[] = data.data || [];
-        setIndicators(all.filter((ind) => !INTERNAL_ONLY_CODES.has(ind.code)));
+        const filtered = all
+          .filter((ind) => VISIBLE_METRIC_SET.has(ind.code))
+          .sort((a, b) => (METRIC_ORDER[a.code] ?? 99) - (METRIC_ORDER[b.code] ?? 99));
+        setIndicators(filtered);
         setLoading(false);
       })
       .catch((err) => {

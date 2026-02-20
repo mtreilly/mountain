@@ -45,35 +45,15 @@ export function MetricSelector({
   const listboxId = useId();
   const isMobile = useIsMobile();
 
-  const grouped = useMemo(() => {
+  const flatList = useMemo(() => {
     const q = search.trim().toLowerCase();
     const tokens = q.split(/\s+/).filter(Boolean);
-    const filtered = indicators.filter((ind) => {
+    return indicators.filter((ind) => {
       if (tokens.length === 0) return true;
       const haystack = `${ind.name} ${ind.code}`.toLowerCase();
       return tokens.every((token) => haystack.includes(token));
     });
-
-    return filtered.reduce(
-      (acc, indicator) => {
-        const category = indicator.category?.trim() || "Other";
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(indicator);
-        return acc;
-      },
-      {} as Record<string, Indicator[]>,
-    );
   }, [indicators, search]);
-
-  const flatList = useMemo(() => {
-    const result: Indicator[] = [];
-    Object.entries(grouped)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .forEach(([, items]) => {
-        items.sort((a, b) => a.name.localeCompare(b.name)).forEach((item) => result.push(item));
-      });
-    return result;
-  }, [grouped]);
 
   const selectedIndicator = indicators.find((i) => i.code === value);
 
@@ -171,60 +151,40 @@ export function MetricSelector({
           {t("selector.noMetricsFound")}
         </div>
       ) : (
-        (() => {
-          let lastCategory: string | null = null;
-          return flatList.map((indicator, idx) => {
-            const category = indicator.category?.trim() || "Other";
-            const showCategory = category !== lastCategory;
-            lastCategory = category;
-            const active = idx === activeIndex;
-            const selected = indicator.code === value;
+        flatList.map((indicator, idx) => {
+          const active = idx === activeIndex;
+          const selected = indicator.code === value;
 
-            return (
-              <div key={indicator.code}>
-                {showCategory && (
-                  <div className="px-4 py-2 text-[11px] font-semibold text-ink-faint uppercase tracking-wider bg-surface-sunken sticky top-0">
-                    {category}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onClick={() => handleSelect(indicator.code)}
-                  className={[
-                    "w-full px-4 py-3 text-left transition-default focus-ring",
-                    "focus-visible:bg-surface-sunken",
-                    active ? "bg-surface-sunken" : "",
-                    selected ? "bg-amber-50 dark:bg-amber-950/30" : "",
-                  ].join(" ")}
-                >
-                  <span
-                    className={`font-medium text-ink ${selected ? "text-amber-700 dark:text-amber-400" : ""}`}
-                  >
-                    {indicator.name}
-                  </span>
-                  {indicator.unit && (
-                    <span className="ml-2 text-xs text-ink-faint">({indicator.unit})</span>
-                  )}
-                </button>
-              </div>
-            );
-          });
-        })()
+          return (
+            <button
+              key={indicator.code}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onMouseEnter={() => setActiveIndex(idx)}
+              onClick={() => handleSelect(indicator.code)}
+              className={[
+                "w-full px-4 py-3 text-left transition-default focus-ring",
+                "focus-visible:bg-surface-sunken",
+                active ? "bg-surface-sunken" : "",
+                selected ? "bg-amber-50 dark:bg-amber-950/30" : "",
+              ].join(" ")}
+            >
+              <span
+                className={`font-medium text-ink ${selected ? "text-amber-700 dark:text-amber-400" : ""}`}
+              >
+                {indicator.name}
+              </span>
+              {indicator.unit && <span className="ml-2 text-xs text-ink-faint">({indicator.unit})</span>}
+            </button>
+          );
+        })
       )}
     </>
   );
 
   return (
     <div className={dense ? "" : "space-y-1"}>
-      {!dense && (
-        <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider">
-          {t("selector.metric")}
-        </label>
-      )}
-
       <button
         ref={triggerRef}
         type="button"
@@ -237,6 +197,7 @@ export function MetricSelector({
           if (e.key === "Escape") close();
         }}
         disabled={disabled}
+        aria-label={t("selector.metric")}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
@@ -251,11 +212,6 @@ export function MetricSelector({
         ].join(" ")}
       >
         <span className="min-w-0 flex-1 flex items-center gap-1.5">
-          {dense && (
-            <span className="shrink-0 text-[9px] px-1 py-0.5 rounded font-semibold uppercase tracking-wider bg-surface-sunken border border-surface text-ink-muted">
-              {t("selector.metric")}
-            </span>
-          )}
           <span
             className={`truncate ${dense ? "text-xs" : "text-sm"} ${selectedIndicator ? "font-semibold text-ink" : "text-ink-faint"}`}
           >
