@@ -83,9 +83,9 @@ export function useCountryData({
     const countryData = data[iso];
     if (!countryData || countryData.length === 0) return null;
 
-    // Sort by year descending and get the first (latest)
-    const sorted = [...countryData].sort((a, b) => b.year - a.year);
-    return sorted[0].value;
+    let latest = countryData[0];
+    for (const point of countryData) if (point.year > latest.year) latest = point;
+    return latest.value;
   };
 
   return {

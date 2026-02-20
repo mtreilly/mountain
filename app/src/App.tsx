@@ -1,28 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { AppErrorScreen } from "./components/AppErrorScreen";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
-import { AppLoadingScreen } from "./components/AppLoadingScreen";
-import { CitationPanel } from "./components/CitationPanel";
 import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
 import { EmbedView } from "./components/EmbedView";
-import { ExportModal } from "./components/ExportModal";
 import { GrowthRateBar } from "./components/GrowthRateBar";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
-import { ImplicationsSlideOver } from "./components/implications/ImplicationsSlideOver";
-import {
-  DEFAULT_ASSUMPTIONS,
-  useImplicationsComputed,
-} from "./components/implications/useImplicationsComputed";
-import { useImplicationsData } from "./components/implications/useImplicationsData";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { ResultSummary } from "./components/ResultSummary";
 import { SelectorsPanel } from "./components/SelectorsPanel";
-import { ShareCardModal } from "./components/ShareCardModal";
-import { ThreadGeneratorModal } from "./components/ThreadGeneratorModal";
 import { useConvergence } from "./hooks/useConvergence";
 import { useCountries } from "./hooks/useCountries";
 import { useCountryData } from "./hooks/useCountryData";
@@ -53,6 +42,25 @@ let lastInvalidRegionToastKey: string | null = null;
 let lastInvalidIndicatorToastKey: string | null = null;
 let lastInvalidCountryToastKey: string | null = null;
 const OBSERVED_CHART_START_YEAR = 2000;
+const ExportModal = lazy(() =>
+  import("./components/ExportModal").then((module) => ({ default: module.ExportModal })),
+);
+const ShareCardModal = lazy(() =>
+  import("./components/ShareCardModal").then((module) => ({ default: module.ShareCardModal })),
+);
+const CitationPanel = lazy(() =>
+  import("./components/CitationPanel").then((module) => ({ default: module.CitationPanel })),
+);
+const ThreadGeneratorModal = lazy(() =>
+  import("./components/ThreadGeneratorModal").then((module) => ({
+    default: module.ThreadGeneratorModal,
+  })),
+);
+const ImplicationsSlideOver = lazy(() =>
+  import("./components/implications/ImplicationsSlideOver").then((module) => ({
+    default: module.ImplicationsSlideOver,
+  })),
+);
 
 export default function App() {
   const [{ initialShareState, initialRegionToast }] = useState(() => {
@@ -191,10 +199,9 @@ export default function App() {
     error: dataError,
     hasLoaded: dataHasLoaded,
   } = useCountryData({
-    countries:
-      comparisonMode === "countries" && indicatorExists === true ? [chaserIso, targetIso] : [],
+    countries: comparisonMode === "countries" ? [chaserIso, targetIso] : [],
     indicator: indicatorCode,
-    enabled: comparisonMode === "countries" && indicatorExists === true,
+    enabled: comparisonMode === "countries" && Boolean(indicatorCode),
     invalidIndicator: comparisonMode === "countries" && indicatorExists === false,
   });
 
@@ -257,6 +264,7 @@ export default function App() {
 
   const selectedIndicator =
     indicators.find((i) => i.code === indicatorCode) || indicatorInfo || null;
+  const resolvedDataError = indicatorExists === false ? null : dataError;
   const allDataSources = useMemo(() => {
     const sources = new Set<string>();
     for (const indicator of indicators) {
@@ -352,41 +360,6 @@ export default function App() {
     chaserGrowthRate,
     targetGrowthRate,
     baseYear,
-  });
-
-  // Implications data for thread generator (only when GDP per capita is selected)
-  const implicationsEnabled =
-    comparisonMode === "countries" && indicatorCode === "GDP_PCAP_PPP" && chaserValueRaw != null;
-  const shouldLoadImplicationsData =
-    implicationsEnabled && (isImplicationsOpen || isThreadGeneratorOpen);
-
-  const {
-    data: implicationsRawData,
-    dataWithVintage: implicationsDataWithVintage,
-    indicatorByCode: implicationsIndicatorByCode,
-    getLatestValue: implicationsGetLatestValue,
-    templateDef: implicationsTemplateDef,
-  } = useImplicationsData({
-    chaserIso,
-    template: impTemplate,
-    enabled: shouldLoadImplicationsData,
-  });
-
-  const implicationsComputed = useImplicationsComputed({
-    chaserIso,
-    gdpCurrent: chaserValue,
-    chaserGrowthRate,
-    horizonYears: impHorizonYears,
-    baseYear,
-    templateDef: implicationsTemplateDef,
-    data: implicationsRawData,
-    dataWithVintage: implicationsDataWithVintage,
-    indicatorByCode: implicationsIndicatorByCode,
-    getLatestValue: implicationsGetLatestValue,
-    popAssumption: "trend",
-    scenario: "baseline",
-    assumptions: DEFAULT_ASSUMPTIONS,
-    mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
   });
 
   useEffect(() => {
@@ -507,7 +480,7 @@ export default function App() {
     chaserCountry &&
     targetCountry &&
     !dataLoading &&
-    !dataError &&
+    !resolvedDataError &&
     chaserValueRaw != null &&
     targetValueRaw != null;
 
@@ -638,14 +611,16 @@ export default function App() {
 
     const getEarliest = (series: Array<{ year: number; value: number }>) => {
       if (!series.length) return null;
-      const sorted = [...series].sort((a, b) => a.year - b.year);
-      return { year: sorted[0].year, value: sorted[0].value };
+      let earliest = series[0];
+      for (const point of series) if (point.year < earliest.year) earliest = point;
+      return { year: earliest.year, value: earliest.value };
     };
 
     const getLatest = (series: Array<{ year: number; value: number }>) => {
       if (!series.length) return null;
-      const sorted = [...series].sort((a, b) => b.year - a.year);
-      return { year: sorted[0].year, value: sorted[0].value };
+      let latest = series[0];
+      for (const point of series) if (point.year > latest.year) latest = point;
+      return { year: latest.year, value: latest.value };
     };
 
     return {
@@ -655,29 +630,6 @@ export default function App() {
       targetCurrent: getLatest(targetSeries),
     };
   }, [comparisonMode, data, chaserIso, targetIso]);
-
-  // Implications data for thread generator (only when GDP per capita is selected)
-  const implicationsData = (() => {
-    if (comparisonMode !== "countries") return null;
-    if (indicatorCode !== "GDP_PCAP_PPP") return null;
-    if (!yearsToConvergence) return null;
-    if (chaserValueRaw == null) return null;
-
-    const gdpCurrent = applyAdjustment(chaserValueRaw, chaserAdjustment, useChaserAdjusted);
-    const gdpFuture = gdpCurrent * Math.pow(1 + chaserGrowthRate, impHorizonYears);
-
-    // Extract computed values from implications hook
-    const { macro } = implicationsComputed;
-    const electricityDeltaTWh = macro.electricity.equivalents?.deltaTWh ?? null;
-    const nuclearPlants = macro.electricity.equivalents?.nuclear.plants ?? null;
-
-    return {
-      electricityDeltaTWh,
-      nuclearPlants,
-      gdpCurrent,
-      gdpFuture,
-    };
-  })();
 
   const countriesByIso3 = useMemo(() => {
     const map: Record<string, { name: string }> = {};
@@ -875,30 +827,6 @@ export default function App() {
       <Toaster theme={theme} position="bottom-right" closeButton richColors />
     );
 
-  if (countriesLoading) {
-    if (embedParams.embed) {
-      return (
-        <>
-          {toaster}
-          <EmbedView
-            shareState={shareState}
-            embedParams={embedParams}
-            chaserName={displayChaserName}
-            targetName={displayTargetName}
-            status="loading"
-            resolvedTheme={theme}
-          />
-        </>
-      );
-    }
-    return (
-      <>
-        {toaster}
-        <AppLoadingScreen />
-      </>
-    );
-  }
-
   if (countriesError) {
     if (embedParams.embed) {
       return (
@@ -937,7 +865,7 @@ export default function App() {
           hasInvalidCountryIso ||
           dataLoading
           ? "loading"
-          : dataError
+          : resolvedDataError
             ? "no-data"
             : hasData
               ? "ready"
@@ -955,7 +883,11 @@ export default function App() {
           chaserName={displayChaserName}
           targetName={displayTargetName}
           status={status}
-          message={status === "no-data" && typeof dataError === "string" ? dataError : undefined}
+          message={
+            status === "no-data" && typeof resolvedDataError === "string"
+              ? resolvedDataError
+              : undefined
+          }
           projection={status === "ready" ? projection : undefined}
           convergenceYear={status === "ready" ? convergenceYear : undefined}
           yearsToConvergence={status === "ready" ? yearsToConvergence : undefined}
@@ -1028,13 +960,14 @@ export default function App() {
               </div>
               <div className="data-states-block">
                 <DataStates
-                  loading={dataLoading || indicatorsLoading}
-                  error={dataError}
+                  loading={countriesLoading || dataLoading || indicatorsLoading}
+                  error={resolvedDataError}
                   metricName={metricName}
                   showMissingData={
                     comparisonMode === "countries" &&
                     dataHasLoaded &&
                     !indicatorsLoading &&
+                    indicatorExists !== false &&
                     chaserCountry != null &&
                     targetCountry != null &&
                     (chaserValueRaw == null || targetValueRaw == null)
@@ -1258,78 +1191,89 @@ export default function App() {
           />
         </div>
 
-        {/* Export Modal */}
-        <ExportModal
-          isOpen={isExportModalOpen}
-          onClose={() => setIsExportModalOpen(false)}
-          baseYear={baseYear}
-          onBaseYearChange={(year) => {
-            if (!Number.isFinite(year)) return;
-            setBaseYear(Math.max(1950, Math.min(2100, year)));
-          }}
-          onReset={resetToDefaults}
-          comparisonMode={comparisonMode}
-          dataSourceName={
-            comparisonMode === "regions"
-              ? "OECD"
-              : (selectedIndicator?.source ?? "Penn World Table")
-          }
-          onDownloadObservedCsv={onDownloadObservedCsv}
-          onDownloadProjectionCsv={onDownloadProjectionCsv}
-          onDownloadReportJson={onDownloadReportJson}
-          shareState={shareState}
-          onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
-        />
+        <Suspense fallback={null}>
+          {/* Export Modal */}
+          {isExportModalOpen && (
+            <ExportModal
+              isOpen
+              onClose={() => setIsExportModalOpen(false)}
+              baseYear={baseYear}
+              onBaseYearChange={(year) => {
+                if (!Number.isFinite(year)) return;
+                setBaseYear(Math.max(1950, Math.min(2100, year)));
+              }}
+              onReset={resetToDefaults}
+              comparisonMode={comparisonMode}
+              dataSourceName={
+                comparisonMode === "regions"
+                  ? "OECD"
+                  : (selectedIndicator?.source ?? "Penn World Table")
+              }
+              onDownloadObservedCsv={onDownloadObservedCsv}
+              onDownloadProjectionCsv={onDownloadProjectionCsv}
+              onDownloadReportJson={onDownloadReportJson}
+              shareState={shareState}
+              onOpenCitationPanel={() => setIsCitationPanelOpen(true)}
+            />
+          )}
 
-        {/* Share Card Modal */}
-        <ShareCardModal
-          isOpen={isShareCardModalOpen}
-          onClose={() => setIsShareCardModalOpen(false)}
-          shareCardParams={shareCardParams}
-        />
+          {/* Share Card Modal */}
+          {isShareCardModalOpen && (
+            <ShareCardModal
+              isOpen
+              onClose={() => setIsShareCardModalOpen(false)}
+              shareCardParams={shareCardParams}
+            />
+          )}
 
-        {/* Citation Panel */}
-        <CitationPanel
-          isOpen={isCitationPanelOpen}
-          onClose={() => setIsCitationPanelOpen(false)}
-          shareState={shareState}
-          indicator={citationIndicator}
-          chaserName={displayChaserName}
-          targetName={displayTargetName}
-        />
+          {/* Citation Panel */}
+          {isCitationPanelOpen && (
+            <CitationPanel
+              isOpen
+              onClose={() => setIsCitationPanelOpen(false)}
+              shareState={shareState}
+              indicator={citationIndicator}
+              chaserName={displayChaserName}
+              targetName={displayTargetName}
+            />
+          )}
 
-        {/* Thread Generator Modal */}
-        {isThreadGeneratorOpen && shareCardParams && (
-          <ThreadGeneratorModal
-            isOpen
-            onClose={() => setIsThreadGeneratorOpen(false)}
-            shareCardParams={shareCardParams}
-            historicalData={historicalData}
-            implicationsData={implicationsData}
-            baseYear={baseYear}
-            horizonYears={impHorizonYears}
-            appUrl={appUrl}
-          />
-        )}
+          {/* Thread Generator Modal */}
+          {isThreadGeneratorOpen && shareCardParams && (
+            <ThreadGeneratorModal
+              isOpen
+              onClose={() => setIsThreadGeneratorOpen(false)}
+              shareCardParams={shareCardParams}
+              historicalData={historicalData}
+              chaserIso={chaserIso}
+              indicatorCode={indicatorCode}
+              gdpCurrent={chaserValue}
+              template={impTemplate}
+              baseYear={baseYear}
+              horizonYears={impHorizonYears}
+              appUrl={appUrl}
+            />
+          )}
 
-        {/* Implications Slide-Over */}
-        {comparisonMode === "countries" && (
-          <ImplicationsSlideOver
-            isOpen={isImplicationsOpen}
-            onClose={() => setIsImplicationsOpen(false)}
-            chaserIso={chaserIso}
-            chaserName={displayChaserName}
-            gdpCurrent={chaserValue}
-            chaserGrowthRate={chaserGrowthRate}
-            baseYear={baseYear}
-            horizonYears={impHorizonYears}
-            onHorizonYearsChange={setImpHorizonYears}
-            template={impTemplate}
-            onTemplateChange={setImpTemplate}
-            activeCard={impCard}
-            onActiveCardChange={setImpCard}
-          />
-        )}
+          {/* Implications Slide-Over */}
+          {comparisonMode === "countries" && isImplicationsOpen && (
+            <ImplicationsSlideOver
+              isOpen
+              onClose={() => setIsImplicationsOpen(false)}
+              chaserIso={chaserIso}
+              chaserName={displayChaserName}
+              gdpCurrent={chaserValue}
+              chaserGrowthRate={chaserGrowthRate}
+              baseYear={baseYear}
+              horizonYears={impHorizonYears}
+              onHorizonYearsChange={setImpHorizonYears}
+              template={impTemplate}
+              onTemplateChange={setImpTemplate}
+              activeCard={impCard}
+              onActiveCardChange={setImpCard}
+            />
+          )}
+        </Suspense>
       </div>
     </>
   );

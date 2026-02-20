@@ -9,11 +9,17 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  DEFAULT_ASSUMPTIONS,
+  useImplicationsComputed,
+} from "./implications/useImplicationsComputed";
+import { useImplicationsData } from "./implications/useImplicationsData";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
 import { generateShareCardSvg, SHARE_CARD_SIZES, type ShareCardParams } from "../lib/shareCardSvg";
+import type { TemplateId } from "../lib/templatePaths";
 import {
   generateCaptions,
   type HistoricalData,
@@ -28,7 +34,10 @@ export interface ThreadGeneratorModalProps {
   onClose: () => void;
   shareCardParams: ShareCardParams | null;
   historicalData: HistoricalData | null;
-  implicationsData: ImplicationsData | null;
+  chaserIso: string;
+  indicatorCode: string;
+  gdpCurrent: number;
+  template: TemplateId;
   baseYear: number;
   horizonYears: number;
   appUrl: string;
@@ -39,7 +48,10 @@ export function ThreadGeneratorModal({
   onClose,
   shareCardParams,
   historicalData,
-  implicationsData,
+  chaserIso,
+  indicatorCode,
+  gdpCurrent,
+  template,
   baseYear,
   horizonYears,
   appUrl,
@@ -55,6 +67,53 @@ export function ThreadGeneratorModal({
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(initialTheme);
   const [captionOverrides, setCaptionOverrides] = useState<Record<number, string>>({});
   const [regenerateKey, setRegenerateKey] = useState(0);
+  const implicationsEnabled =
+    isOpen && indicatorCode === "GDP_PCAP_PPP" && Number.isFinite(gdpCurrent) && gdpCurrent > 0;
+
+  const {
+    data: implicationsRawData,
+    dataWithVintage: implicationsDataWithVintage,
+    indicatorByCode: implicationsIndicatorByCode,
+    getLatestValue: implicationsGetLatestValue,
+    templateDef: implicationsTemplateDef,
+  } = useImplicationsData({
+    chaserIso,
+    template,
+    enabled: implicationsEnabled,
+  });
+
+  const implicationsComputed = useImplicationsComputed({
+    chaserIso,
+    gdpCurrent,
+    chaserGrowthRate: shareCardParams?.chaserGrowth ?? 0,
+    horizonYears,
+    baseYear,
+    templateDef: implicationsTemplateDef,
+    data: implicationsRawData,
+    dataWithVintage: implicationsDataWithVintage,
+    indicatorByCode: implicationsIndicatorByCode,
+    getLatestValue: implicationsGetLatestValue,
+    popAssumption: "trend",
+    scenario: "baseline",
+    assumptions: DEFAULT_ASSUMPTIONS,
+    mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
+  });
+
+  const implicationsData = useMemo<ImplicationsData | null>(() => {
+    if (!implicationsEnabled || !shareCardParams) return null;
+    if (!shareCardParams.yearsToConvergence) return null;
+
+    const gdpFuture = gdpCurrent * Math.pow(1 + shareCardParams.chaserGrowth, horizonYears);
+    const electricityDeltaTWh = implicationsComputed.macro.electricity.equivalents?.deltaTWh ?? null;
+    const nuclearPlants = implicationsComputed.macro.electricity.equivalents?.nuclear.plants ?? null;
+
+    return {
+      electricityDeltaTWh,
+      nuclearPlants,
+      gdpCurrent,
+      gdpFuture,
+    };
+  }, [gdpCurrent, horizonYears, implicationsComputed, implicationsEnabled, shareCardParams]);
 
   const baseCards = useMemo((): ThreadCard[] => {
     if (!isOpen || !shareCardParams) return [];
@@ -151,10 +210,12 @@ export function ThreadGeneratorModal({
     horizonYears,
     implicationsData,
     isOpen,
+    indicatorCode,
     regenerateKey,
     selectedTheme,
     shareCardParams,
     t,
+    template,
   ]);
 
   const cards = useMemo(() => {
