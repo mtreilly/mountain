@@ -352,7 +352,10 @@ export function generateShareCardSvg(params: ShareCardParams): string {
             boxX = chartLeft;
           }
 
-          const boxY = Math.min(Math.max(anchorY - boxHeight / 2, chartTop), chartBottom - boxHeight);
+          const boxY = Math.min(
+            Math.max(anchorY - boxHeight / 2, chartTop),
+            chartBottom - boxHeight,
+          );
           const boxCenterY = boxY + boxHeight / 2;
           const connectorEdgeX = boxX > endX ? boxX : boxX + labelWidth;
 
