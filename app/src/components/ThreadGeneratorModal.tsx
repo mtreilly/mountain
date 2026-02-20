@@ -9,11 +9,6 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  DEFAULT_ASSUMPTIONS,
-  useImplicationsComputed,
-} from "./implications/useImplicationsComputed";
-import { useImplicationsData } from "./implications/useImplicationsData";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
@@ -26,6 +21,11 @@ import {
   type ImplicationsData,
   type ThreadCard,
 } from "../lib/threadGenerator";
+import {
+  DEFAULT_ASSUMPTIONS,
+  useImplicationsComputed,
+} from "./implications/useImplicationsComputed";
+import { useImplicationsData } from "./implications/useImplicationsData";
 import { ThreadExportOptions } from "./ThreadExportOptions";
 import { ThreadPreview } from "./ThreadPreview";
 
@@ -104,8 +104,10 @@ export function ThreadGeneratorModal({
     if (!shareCardParams.yearsToConvergence) return null;
 
     const gdpFuture = gdpCurrent * Math.pow(1 + shareCardParams.chaserGrowth, horizonYears);
-    const electricityDeltaTWh = implicationsComputed.macro.electricity.equivalents?.deltaTWh ?? null;
-    const nuclearPlants = implicationsComputed.macro.electricity.equivalents?.nuclear.plants ?? null;
+    const electricityDeltaTWh =
+      implicationsComputed.macro.electricity.equivalents?.deltaTWh ?? null;
+    const nuclearPlants =
+      implicationsComputed.macro.electricity.equivalents?.nuclear.plants ?? null;
 
     return {
       electricityDeltaTWh,
