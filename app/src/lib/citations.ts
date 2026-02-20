@@ -12,10 +12,12 @@ interface IndicatorInfo {
 }
 
 export type CitationFormat = "bibtex" | "apa" | "chicago" | "plaintext";
+export const DEFAULT_TOOL_AUTHOR = "Micheál Reilly";
 
 export interface CitationContext {
   // Tool info
   toolName: string;
+  toolAuthor?: string;
   toolUrl: string;
   accessDate: Date;
 
@@ -109,11 +111,13 @@ export function generateToolCitation(ctx: CitationContext, format: CitationForma
   const permalink = buildPermalink(ctx.toolUrl, ctx.state);
   const dateStr = formatDate(ctx.accessDate, format);
   const title = `${ctx.chaserName} to ${ctx.targetName}: ${ctx.indicatorName} convergence analysis`;
+  const author = ctx.toolAuthor?.trim() || DEFAULT_TOOL_AUTHOR;
 
   switch (format) {
     case "bibtex": {
       const key = generateBibtexKey(ctx);
       return `@misc{${key},
+  author = {{${escapeBibtex(author)}}},
   title = {${escapeBibtex(ctx.toolName)}: ${escapeBibtex(title)}},
   url = {${permalink}},
   note = {Interactive economic convergence visualization tool},
@@ -122,13 +126,14 @@ export function generateToolCitation(ctx: CitationContext, format: CitationForma
     }
 
     case "apa":
-      return `${ctx.toolName}. (n.d.). ${title}. Retrieved ${dateStr}, from ${permalink}`;
+      return `${author}. (n.d.). ${ctx.toolName}: ${title}. Retrieved ${dateStr}, from ${permalink}`;
 
     case "chicago":
-      return `"${title}." ${ctx.toolName}. Accessed ${dateStr}. ${permalink}`;
+      return `"${title}." ${ctx.toolName}. By ${author}. Accessed ${dateStr}. ${permalink}`;
 
     case "plaintext":
       return `${ctx.toolName} - ${title}
+Author: ${author}
 URL: ${permalink}
 Accessed: ${dateStr}`;
   }
@@ -225,6 +230,7 @@ export function createCitationContext(params: {
 
   return {
     toolName: "Convergence Explorer",
+    toolAuthor: DEFAULT_TOOL_AUTHOR,
     toolUrl,
     accessDate,
     chaserName,

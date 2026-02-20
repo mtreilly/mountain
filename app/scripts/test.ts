@@ -692,6 +692,7 @@ function testBibtexCitation() {
 
   // Check structure
   assert.ok(citation.startsWith("@misc{convergence2024indchn,"));
+  assert.ok(citation.includes("author = {{Micheál Reilly}}"));
   assert.ok(citation.includes("title = {Convergence Explorer:"));
   assert.ok(citation.includes("India to China: GDP per capita (PPP) convergence analysis"));
   assert.ok(citation.includes("url = {https://convergence.example.com"));
@@ -703,7 +704,8 @@ function testApaCitation() {
   const ctx = createTestCitationContext();
   const citation = generateToolCitation(ctx, "apa");
 
-  assert.ok(citation.includes("Convergence Explorer. (n.d.)."));
+  assert.ok(citation.includes("Micheál Reilly. (n.d.)."));
+  assert.ok(citation.includes("Convergence Explorer:"));
   assert.ok(citation.includes("India to China: GDP per capita (PPP) convergence analysis"));
   assert.ok(citation.includes("Retrieved January 15, 2024"));
   assert.ok(citation.includes("https://convergence.example.com"));
@@ -715,6 +717,7 @@ function testChicagoCitation() {
 
   assert.ok(citation.startsWith('"India to China: GDP per capita (PPP) convergence analysis."'));
   assert.ok(citation.includes("Convergence Explorer."));
+  assert.ok(citation.includes("By Micheál Reilly."));
   assert.ok(citation.includes("Accessed January 15, 2024"));
   assert.ok(citation.includes("https://convergence.example.com"));
 }
@@ -728,6 +731,7 @@ function testPlaintextCitation() {
       "Convergence Explorer - India to China: GDP per capita (PPP) convergence analysis",
     ),
   );
+  assert.ok(citation.includes("Author: Micheál Reilly"));
   assert.ok(citation.includes("URL: https://convergence.example.com"));
   assert.ok(citation.includes("Accessed: January 15, 2024"));
 }
@@ -807,6 +811,7 @@ function testCreateCitationContext() {
   assert.equal(ctx.indicatorName, "GDP per capita (PPP)");
   assert.equal(ctx.dataSource, "World Bank");
   assert.equal(ctx.toolUrl, "https://test.com");
+  assert.equal(ctx.toolAuthor, "Micheál Reilly");
 }
 
 function testGetAllCitationFormats() {
