@@ -296,6 +296,20 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
                   strokeWidth={1}
                   opacity={0.4}
                 />
+
+                {/* Projection assumption label */}
+                <text
+                  x={(phaseBreakX + (width - padding.right)) / 2}
+                  y={padding.top + 12}
+                  textAnchor="middle"
+                  fontFamily={fontFamily}
+                  fontSize={9}
+                  fontStyle="italic"
+                  fill={palette.inkFaint}
+                  opacity={0.6}
+                >
+                  constant-rate projection
+                </text>
               </g>
             );
           })()}

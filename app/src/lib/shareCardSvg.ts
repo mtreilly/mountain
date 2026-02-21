@@ -301,7 +301,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
       value: currentGap > 1 ? `${currentGap.toFixed(1)}×` : "—",
     },
     {
-      label: "GROWTH RATES",
+      label: "ASSUMED RATES",
       value: `${formatPercent(chaserGrowth)} / ${targetMode === "static" ? "0%" : formatPercent(targetGrowth)}`,
     },
   ];
@@ -448,6 +448,7 @@ export function generateShareCardSvg(params: ShareCardParams): string {
   <rect x="${chartLeft}" y="${chartTop}" width="${(Number(breakX) - chartLeft).toFixed(1)}" height="${chartH}" fill="#059669" opacity="${theme === "dark" ? 0.035 : 0.025}" rx="4"/>
   <rect x="${breakX}" y="${chartTop}" width="${(chartRight - Number(breakX)).toFixed(1)}" height="${chartH}" fill="#8b5cf6" opacity="${theme === "dark" ? 0.04 : 0.025}" rx="4"/>
   <line x1="${breakX}" y1="${chartTop}" x2="${breakX}" y2="${chartBot}" stroke="${palette.faint}" stroke-dasharray="2,6" stroke-width="1" opacity="0.4"/>
+  <text x="${((Number(breakX) + chartRight) / 2).toFixed(1)}" y="${(chartTop + 14).toFixed(1)}" text-anchor="middle" font-family="${font}" font-size="10" font-style="italic" fill="${palette.faint}" opacity="0.55">constant-rate projection</text>
   `;
           }
         )()
