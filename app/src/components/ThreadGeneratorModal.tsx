@@ -212,12 +212,10 @@ export function ThreadGeneratorModal({
     horizonYears,
     implicationsData,
     isOpen,
-    indicatorCode,
     regenerateKey,
     selectedTheme,
     shareCardParams,
     t,
-    template,
   ]);
 
   const cards = useMemo(() => {
