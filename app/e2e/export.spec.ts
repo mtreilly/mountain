@@ -10,7 +10,7 @@ test("Export modal downloads observed/projection/report files", async ({ page })
 
   await page.getByRole("button", { name: "More options" }).click();
   await page.getByRole("menuitem", { name: "Data / Embed" }).click();
-  const dialog = page.getByRole("dialog", { name: "Export Options" });
+  const dialog = page.getByRole("dialog", { name: "Export Data" });
   await expect(dialog).toBeVisible();
   await expect(page.getByRole("heading", { name: "Export Data" })).toBeVisible();
 
@@ -53,8 +53,8 @@ test("Header link copy writes share URL to clipboard", async ({ page }) => {
   );
   expect(copied).toBeTruthy();
   expect(copied).toMatch(/\/share\?/);
-  expect(copied).toContain("chaser=NGA");
-  expect(copied).toContain("target=IRL");
+  expect(copied).toContain("chaser=POL");
+  expect(copied).toContain("target=GBR");
 });
 
 test("Share card modal downloads PNG for selected size", async ({ page }) => {

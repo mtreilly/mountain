@@ -14,7 +14,7 @@
  *   npx tsx scripts/fetch-pwt.ts > data-import.sql
  */
 
-import XLSX from "xlsx";
+import { type Row, readSheet } from "read-excel-file/node";
 
 const PWT_DATASET_PERSISTENT_ID = process.env.PWT_DATASET_PERSISTENT_ID ?? "doi:10.34894/FABVLR";
 const DATAVERSE_DATASET_API = `https://dataverse.nl/api/datasets/:persistentId/?persistentId=${encodeURIComponent(
@@ -55,6 +55,10 @@ function asFiniteNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function cellAt(row: Row | undefined, index: number): unknown {
+  return row?.[index] ?? null;
 }
 
 function inferVersionFromFilename(filename: string): string | null {
@@ -134,17 +138,19 @@ async function main() {
   const buffer = await response.arrayBuffer();
 
   console.error("Parsing workbook...");
-  const workbook = XLSX.read(buffer, { type: "array" });
-  const sheet = workbook.Sheets.Data;
-  if (!sheet) {
-    throw new Error(`Workbook missing "Data" sheet. Found: ${workbook.SheetNames.join(", ")}`);
+  let rows: Row[];
+  try {
+    rows = await readSheet(Buffer.from(buffer), "Data");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Workbook missing or failed to parse "Data" sheet: ${message}`);
   }
 
-  const range = XLSX.utils.decode_range(sheet["!ref"] || "A1");
   const headerByName = new Map<string, number>();
-  for (let c = 0; c <= range.e.c; c += 1) {
-    const cell = sheet[XLSX.utils.encode_cell({ r: 0, c })];
-    const header = typeof cell?.v === "string" ? cell.v.trim().toLowerCase() : "";
+  const headerRow = rows[0] ?? [];
+  for (let c = 0; c < headerRow.length; c += 1) {
+    const value = headerRow[c];
+    const header = typeof value === "string" ? value.trim().toLowerCase() : "";
     if (header.length > 0) headerByName.set(header, c);
   }
 
@@ -163,15 +169,6 @@ async function main() {
     throw new Error("Required columns missing in PWT Data sheet (countrycode/year/rgdpe/pop).");
   }
 
-  let maxDataRow = 1;
-  for (const key of Object.keys(sheet)) {
-    if (!/^A\d+$/.test(key)) continue;
-    const row = Number.parseInt(key.slice(1), 10);
-    if (Number.isFinite(row)) {
-      maxDataRow = Math.max(maxDataRow, row);
-    }
-  }
-
   console.log("\n-- GDP_PCAP_PPP data (Penn World Table)");
   console.log(
     `INSERT OR REPLACE INTO indicators (code, name, unit, source, source_code, category)
@@ -186,11 +183,11 @@ VALUES ('GDP_PCAP_PPP', 'GDP per capita (PPP)', 'constant 2017 US$ (PPP)', 'Penn
 
   let scanned = 0;
   let inserted = 0;
-  for (let row = 2; row <= maxDataRow; row += 1) {
-    const isoRaw = sheet[XLSX.utils.encode_cell({ r: row - 1, c: idxIso })]?.v;
-    const yearRaw = sheet[XLSX.utils.encode_cell({ r: row - 1, c: idxYear })]?.v;
-    const rgdpeRaw = sheet[XLSX.utils.encode_cell({ r: row - 1, c: idxRgdpe })]?.v;
-    const popRaw = sheet[XLSX.utils.encode_cell({ r: row - 1, c: idxPop })]?.v;
+  for (const row of rows.slice(1)) {
+    const isoRaw = cellAt(row, idxIso);
+    const yearRaw = cellAt(row, idxYear);
+    const rgdpeRaw = cellAt(row, idxRgdpe);
+    const popRaw = cellAt(row, idxPop);
 
     scanned += 1;
 

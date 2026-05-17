@@ -2,6 +2,20 @@ import type { Page, Route } from "@playwright/test";
 
 const countries = [
   {
+    iso_alpha3: "POL",
+    iso_alpha2: "PL",
+    name: "Poland",
+    region: "Europe & Central Asia",
+    income_group: "High income",
+  },
+  {
+    iso_alpha3: "GBR",
+    iso_alpha2: "GB",
+    name: "United Kingdom",
+    region: "Europe & Central Asia",
+    income_group: "High income",
+  },
+  {
     iso_alpha3: "NGA",
     iso_alpha2: "NG",
     name: "Nigeria",
@@ -34,7 +48,7 @@ const indicators = [
     category: "economic",
   },
   {
-    code: "LIFE_EXPECTANCY",
+    code: "LIFE_EXPECT",
     name: "Life expectancy at birth",
     description: "Life expectancy at birth, total (years)",
     unit: "years",
@@ -56,6 +70,16 @@ const seriesByIndicatorAndIso: Record<
   Record<string, Array<{ year: number; value: number }>>
 > = {
   GDP_PCAP_PPP: {
+    POL: [
+      { year: 2021, value: 36_500 },
+      { year: 2022, value: 38_200 },
+      { year: 2023, value: 40_100 },
+    ],
+    GBR: [
+      { year: 2021, value: 49_500 },
+      { year: 2022, value: 50_700 },
+      { year: 2023, value: 52_000 },
+    ],
     NGA: [
       { year: 2021, value: 5100 },
       { year: 2022, value: 5250 },
@@ -72,12 +96,16 @@ const seriesByIndicatorAndIso: Record<
       { year: 2023, value: 68000 },
     ],
   },
-  LIFE_EXPECTANCY: {
+  LIFE_EXPECT: {
+    POL: [{ year: 2023, value: 78.6 }],
+    GBR: [{ year: 2023, value: 81.3 }],
     NGA: [{ year: 2023, value: 55.4 }],
     IRL: [{ year: 2023, value: 82.7 }],
     USA: [{ year: 2023, value: 77.5 }],
   },
   POPULATION: {
+    POL: [{ year: 2023, value: 36_700_000 }],
+    GBR: [{ year: 2023, value: 68_300_000 }],
     NGA: [{ year: 2023, value: 223_800_000 }],
     IRL: [{ year: 2023, value: 5_300_000 }],
     USA: [{ year: 2023, value: 334_900_000 }],

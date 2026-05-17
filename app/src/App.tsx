@@ -170,7 +170,7 @@ export default function App() {
 
     // In non-interactive embed mode, normalize quietly (no toasts).
     if (embedParams.embed && embedParams.interactive === false) {
-      setIndicatorCode(fallback);
+      queueMicrotask(() => setIndicatorCode(fallback));
       return;
     }
 
@@ -178,7 +178,7 @@ export default function App() {
     if (lastInvalidIndicatorToastKey === toastKey) return;
     lastInvalidIndicatorToastKey = toastKey;
 
-    setIndicatorCode(fallback);
+    queueMicrotask(() => setIndicatorCode(fallback));
     const fallbackName = indicators.find((i) => i.code === fallback)?.name ?? fallback;
     toast.error(`Unknown metric "${unknownIndicator}" in URL. Reset to ${fallbackName}.`);
   }, [
@@ -228,8 +228,10 @@ export default function App() {
 
     // In non-interactive embed mode, normalize quietly (no toasts).
     if (embedParams.embed && embedParams.interactive === false) {
-      if (!chaserValid) setChaserIso(nextChaserIso);
-      if (!targetValid) setTargetIso(nextTargetIso);
+      queueMicrotask(() => {
+        if (!chaserValid) setChaserIso(nextChaserIso);
+        if (!targetValid) setTargetIso(nextTargetIso);
+      });
       return;
     }
 
@@ -241,8 +243,10 @@ export default function App() {
     if (lastInvalidCountryToastKey === toastKey) return;
     lastInvalidCountryToastKey = toastKey;
 
-    if (!chaserValid) setChaserIso(nextChaserIso);
-    if (!targetValid) setTargetIso(nextTargetIso);
+    queueMicrotask(() => {
+      if (!chaserValid) setChaserIso(nextChaserIso);
+      if (!targetValid) setTargetIso(nextTargetIso);
+    });
 
     const resolvedChaserName =
       countries.find((c) => c.iso_alpha3 === nextChaserIso)?.name ?? nextChaserIso;
@@ -283,6 +287,10 @@ export default function App() {
 
   const chaserAdjustment = getAdjustment(chaserIso, indicatorCode);
   const targetAdjustment = getAdjustment(targetIso, indicatorCode);
+  const chaserObservedFactor =
+    chaserAdjustment != null && useChaserAdjusted ? chaserAdjustment.adjustmentFactor : 1;
+  const targetObservedFactor =
+    targetAdjustment != null && useTargetAdjusted ? targetAdjustment.adjustmentFactor : 1;
 
   const chaserValue =
     chaserValueRaw != null
@@ -293,21 +301,15 @@ export default function App() {
       ? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
       : 2;
 
-  const countryOverlapSeries = useMemo(() => {
+  const countryOverlapSeries = (() => {
     const chaserSeries = data[chaserIso] || [];
     const targetSeries = data[targetIso] || [];
 
     const chaserByYear = new Map(
-      chaserSeries.map((point) => [
-        point.year,
-        applyAdjustment(point.value, chaserAdjustment, useChaserAdjusted),
-      ]),
+      chaserSeries.map((point) => [point.year, point.value * chaserObservedFactor]),
     );
     const targetByYear = new Map(
-      targetSeries.map((point) => [
-        point.year,
-        applyAdjustment(point.value, targetAdjustment, useTargetAdjusted),
-      ]),
+      targetSeries.map((point) => [point.year, point.value * targetObservedFactor]),
     );
 
     const years = Array.from(chaserByYear.keys())
@@ -319,17 +321,9 @@ export default function App() {
       chaser: chaserByYear.get(year)!,
       target: targetByYear.get(year)!,
     }));
-  }, [
-    chaserAdjustment,
-    chaserIso,
-    data,
-    targetAdjustment,
-    targetIso,
-    useChaserAdjusted,
-    useTargetAdjusted,
-  ]);
+  })();
 
-  const countryProjectionSeed = useMemo(() => {
+  const countryProjectionSeed = (() => {
     const handoff = countryOverlapSeries[countryOverlapSeries.length - 1];
     if (!handoff) return null;
 
@@ -342,7 +336,7 @@ export default function App() {
       chaserProjectionStart: handoff.chaser * Math.pow(1 + chaserGrowthRate, yearsForward),
       targetProjectionStart: handoff.target * Math.pow(1 + targetGrowthRate, yearsForward),
     };
-  }, [baseYear, chaserGrowthRate, countryOverlapSeries, targetGrowthRate]);
+  })();
 
   const countryConvergence = useConvergence({
     chaserValue: countryProjectionSeed?.chaserProjectionStart ?? chaserValue,
@@ -383,8 +377,9 @@ export default function App() {
         }
       : countryConvergence;
 
-  const observedSeriesForChart = useMemo(() => {
-    const projectionStartYear = projection[0]?.year;
+  const projectionStartYearForChart = projection[0]?.year;
+  const observedSeriesForChart = (() => {
+    const projectionStartYear = projectionStartYearForChart;
     if (!Number.isFinite(projectionStartYear)) return [];
 
     if (comparisonMode === "regions") {
@@ -417,7 +412,7 @@ export default function App() {
     return countryOverlapSeries.filter(
       (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
     );
-  }, [chaserRegionCode, comparisonMode, countryOverlapSeries, projection, targetRegionCode]);
+  })();
 
   // Computed display values based on mode
   const displayChaserName =

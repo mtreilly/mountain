@@ -12,8 +12,8 @@ test("Responsive: mobile stacks selectors and keeps modal in viewport", async ({
 
   await page.goto("/");
 
-  const chaser = page.getByRole("button", { name: /Chaser: Nigeria/i });
-  const target = page.getByRole("button", { name: /Target: Ireland/i });
+  const chaser = page.getByRole("button", { name: /Chaser: Poland/i });
+  const target = page.getByRole("button", { name: /Target: United Kingdom/i });
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 
@@ -28,7 +28,7 @@ test("Responsive: mobile stacks selectors and keeps modal in viewport", async ({
   await page.getByRole("button", { name: "More options" }).click();
   await page.getByRole("menuitem", { name: "Data / Embed" }).click();
 
-  const modal = page.getByRole("dialog", { name: "Export Options" });
+  const modal = page.getByRole("dialog", { name: "Export Data" });
   await expect(modal).toBeVisible();
   const box = await modal.boundingBox();
   expect(box).toBeTruthy();
@@ -47,8 +47,8 @@ test("Responsive: tablet keeps selectors side-by-side and modal fits viewport", 
 
   await page.goto("/");
 
-  const chaser = page.getByRole("button", { name: /Chaser: Nigeria/i });
-  const target = page.getByRole("button", { name: /Target: Ireland/i });
+  const chaser = page.getByRole("button", { name: /Chaser: Poland/i });
+  const target = page.getByRole("button", { name: /Target: United Kingdom/i });
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 
@@ -60,7 +60,7 @@ test("Responsive: tablet keeps selectors side-by-side and modal fits viewport", 
   expect(Math.abs((targetBox?.y ?? 0) - (chaserBox?.y ?? 0))).toBeLessThan(30);
   expect((targetBox?.x ?? 0) - (chaserBox?.x ?? 0)).toBeGreaterThan(120);
 
-  await page.getByRole("button", { name: /Chaser: Nigeria/i }).click();
+  await page.getByRole("button", { name: /Chaser: Poland/i }).click();
   const picker = page.getByRole("dialog");
   await expect(picker).toBeVisible();
   const box = await picker.boundingBox();
@@ -79,8 +79,8 @@ test("Responsive: desktop shows sidebar layout", async ({ page }, testInfo) => {
   const sidebar = page.locator("aside.sidebar-desktop");
   await expect(sidebar).toBeVisible();
 
-  const chaser = page.getByRole("button", { name: /Chaser: Nigeria/i });
-  const target = page.getByRole("button", { name: /Target: Ireland/i });
+  const chaser = page.getByRole("button", { name: /Chaser: Poland/i });
+  const target = page.getByRole("button", { name: /Target: United Kingdom/i });
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 

@@ -17,9 +17,7 @@ async function selectCountry(
 }
 
 async function selectMetric(page: import("@playwright/test").Page, metricName: string) {
-  await page
-    .getByRole("button", { name: /GDP per capita \(PPP\)|Life expectancy at birth/i })
-    .click();
+  await page.getByRole("button", { name: "Metric" }).click();
   await page.getByPlaceholder("Search metrics...").fill(metricName);
   await page.getByRole("option", { name: new RegExp(metricName, "i") }).click();
 }
@@ -31,14 +29,16 @@ test.beforeEach(async ({ page }) => {
 test("Country comparison flow updates selectors, growth, and projection view", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("button", { name: /Chaser: Nigeria/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Target: Ireland/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Chaser: Poland/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Target: United Kingdom/i })).toBeVisible();
 
-  await selectCountry(page, /Target: Ireland/i, "United States");
+  await selectCountry(page, /Target: United Kingdom/i, "United States");
   await expect(page.getByRole("button", { name: /Target: United States/i })).toBeVisible();
 
   await selectMetric(page, "Life expectancy");
-  await expect(page.getByRole("button", { name: /Life expectancy at birth/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Metric" })).toContainText(
+    "Life expectancy at birth",
+  );
 
   await page.getByRole("button", { name: "Rapid" }).first().click();
   await expect(page).toHaveURL(/cg=0\.070/);
@@ -52,7 +52,7 @@ test("Country comparison flow updates selectors, growth, and projection view", a
   await page.getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Projection Data" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Year" })).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: "Nigeria" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Poland" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "United States" })).toBeVisible();
 
   await page.getByRole("button", { name: "Chart" }).click();

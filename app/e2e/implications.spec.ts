@@ -42,8 +42,8 @@ test("Implications panel opens and renders finite values", async ({ page }) => {
   const panel = page.getByRole("dialog", { name: "Development Implications" });
   await expect(panel.getByRole("heading", { name: "Economic Output" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "Electricity" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: /Urbanization/i })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: /CO.? Emissions/i })).toBeVisible();
+  await expect(panel.getByText("GDP/capita")).toBeVisible();
+  await expect(panel.getByText("Projected demand", { exact: true })).toBeVisible();
 
   await expect(panel).not.toContainText("NaN");
   await expect(panel).not.toContainText("undefined");

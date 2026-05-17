@@ -5,27 +5,19 @@ test.beforeEach(async ({ page }) => {
   await installApiMocks(page);
 });
 
-test("Keyboard: tab moves focus across interactive controls", async ({ page }) => {
+test("Keyboard: tab moves focus across interactive controls", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop tab order assertion");
+
   await page.goto("/");
 
-  const focusedSignature = () =>
-    page.evaluate(() => {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el || el.tagName === "BODY" || el.tagName === "HTML") return null;
-      return `${el.tagName}:${el.getAttribute("aria-label") || el.textContent?.trim() || ""}`;
-    });
-
-  const waitForFocusedSignature = async () => {
-    await expect.poll(focusedSignature).not.toBeNull();
-    return focusedSignature();
-  };
+  const linkButton = page.getByRole("button", { name: "Link" });
+  await linkButton.focus();
+  await expect(linkButton).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Share", exact: true })).toBeFocused();
 
   await page.keyboard.press("Tab");
-  const firstSig = await waitForFocusedSignature();
-
-  await page.keyboard.press("Tab");
-  const secondSig = await waitForFocusedSignature();
-  expect(secondSig).not.toEqual(firstSig);
+  await expect(page.getByRole("button", { name: "Thread" })).toBeFocused();
 });
 
 test("Keyboard: country picker modal opens with Enter, closes with Escape, and restores focus", async ({
@@ -33,7 +25,7 @@ test("Keyboard: country picker modal opens with Enter, closes with Escape, and r
 }) => {
   await page.goto("/");
 
-  const trigger = page.getByRole("button", { name: /Chaser: Nigeria/i });
+  const trigger = page.getByRole("button", { name: /Chaser: Poland/i });
   await trigger.focus();
   await expect(trigger).toBeFocused();
 
@@ -51,7 +43,7 @@ test("Keyboard: growth-rate slider responds to arrow keys", async ({ page }) => 
   await page.goto("/");
 
   const slider = page
-    .locator('input[type="range"][aria-label="Nigeria growth rate"]:visible')
+    .locator('input[type="range"][aria-label="Poland growth rate"]:visible')
     .first();
   await expect(slider).toBeVisible();
   await slider.focus();

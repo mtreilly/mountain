@@ -30,6 +30,8 @@ export function useBatchData(params: {
   const [indicatorByCode, setIndicatorByCode] = useState<Record<string, Indicator>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const countriesKey = countries.join(",");
+  const indicatorsKey = indicators.join(",");
 
   useEffect(() => {
     if (!enabled) return;
@@ -44,8 +46,8 @@ export function useBatchData(params: {
     });
 
     const qs = new URLSearchParams({
-      countries: countries.join(","),
-      indicators: indicators.join(","),
+      countries: countriesKey,
+      indicators: indicatorsKey,
       start_year: String(startYear),
     });
     if (endYear != null) qs.set("end_year", String(endYear));
@@ -73,7 +75,16 @@ export function useBatchData(params: {
       isActive = false;
       controller.abort();
     };
-  }, [countries, endYear, enabled, includeSourceVintage, indicators, startYear]);
+  }, [
+    countries.length,
+    countriesKey,
+    endYear,
+    enabled,
+    includeSourceVintage,
+    indicators.length,
+    indicatorsKey,
+    startYear,
+  ]);
 
   const getLatestValue = (indicator: string, iso: string): number | null => {
     const pts = data[indicator]?.[iso];

@@ -85,7 +85,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
       return merged.length > 0 ? merged : projection;
     }, [observed, projection]);
 
-    const scales = useMemo(() => {
+    const scales = (() => {
       const years = displaySeries.map((d) => d.year);
       const values = displaySeries.flatMap((d) => [d.chaser, d.target]);
 
@@ -102,7 +102,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         xMax,
         yMax,
       };
-    }, [chartHeight, chartWidth, displaySeries]);
+    })();
     const projectionStartYear = projection[0]?.year ?? null;
     const showPhaseSplit =
       projectionStartYear != null &&
@@ -135,7 +135,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         .join(" ");
     }, [projection, scales]);
 
-    const yTicks = useMemo(() => {
+    const yTicks = (() => {
       const max = scales.yMax;
       if (!Number.isFinite(max) || max <= 0) return [0];
 
@@ -163,9 +163,9 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         ticks.push(v);
       }
       return ticks.length ? ticks : [0, max];
-    }, [pixelWidth, scales.yMax]);
+    })();
 
-    const xTicks = useMemo(() => {
+    const xTicks = (() => {
       const ticks: number[] = [];
       const range = scales.xMax - scales.xMin;
       const targetTicks = (pixelWidth ?? width) < 420 ? 4 : 6;
@@ -175,7 +175,7 @@ export const ConvergenceChart = forwardRef<SVGSVGElement | null, ConvergenceChar
         ticks.push(year);
       }
       return ticks;
-    }, [pixelWidth, scales]);
+    })();
 
     /* ── Filter milestones that were already exceeded at the start ──────────
      When two countries have close figures the chaser may already sit above
