@@ -11,7 +11,7 @@ export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: (
       aria-label={t("theme.switchTo", { mode: theme === "dark" ? "light" : "dark" })}
     >
       {theme === "dark" ? (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
           <path
             d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"
             stroke="currentColor"
@@ -21,7 +21,7 @@ export function ThemeToggle({ theme, onToggle }: { theme: ThemeMode; onToggle: (
           />
         </svg>
       ) : (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
           <path
             d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"

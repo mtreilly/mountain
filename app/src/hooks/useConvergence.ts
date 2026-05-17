@@ -102,9 +102,7 @@ export function useConvergence({
     yearsToConvergence,
   ]);
 
-  const gap = useMemo(() => {
-    return targetValue / chaserValue;
-  }, [chaserValue, targetValue]);
+  const gap = targetValue / chaserValue;
 
   // Net growth advantage
   const netGrowthAdvantage = chaserGrowthRate - targetGrowthRate;

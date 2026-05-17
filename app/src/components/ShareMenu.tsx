@@ -142,10 +142,10 @@ export function ShareMenu({
             queueMicrotask(() => focusLastMenuItem());
           }
         }}
-        className="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-surface bg-surface-raised text-ink-muted hover:text-ink hover:bg-surface transition-default disabled:opacity-50"
+        className="inline-flex items-center justify-center size-8 sm:size-9 rounded-lg border border-surface bg-surface-raised text-ink-muted hover:text-ink hover:bg-surface transition-default disabled:opacity-50"
       >
         <svg
-          className="w-5 h-5"
+          className="size-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -223,7 +223,7 @@ export function ShareMenu({
               >
                 {theme === "dark" ? (
                   <svg
-                    className="w-4 h-4 text-ink-muted"
+                    className="size-4 text-ink-muted"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -237,7 +237,7 @@ export function ShareMenu({
                   </svg>
                 ) : (
                   <svg
-                    className="w-4 h-4 text-ink-muted"
+                    className="size-4 text-ink-muted"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -266,7 +266,7 @@ export function ShareMenu({
                 className="w-full px-3 py-2 text-sm text-left text-ink hover:bg-surface transition-default inline-flex items-center gap-3"
               >
                 <svg
-                  className="w-4 h-4 text-ink-muted"
+                  className="size-4 text-ink-muted"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -294,7 +294,7 @@ export function ShareMenu({
                 className="w-full px-3 py-2 text-sm text-left text-ink hover:bg-surface transition-default inline-flex items-center gap-3"
               >
                 <svg
-                  className="w-4 h-4 text-ink-muted"
+                  className="size-4 text-ink-muted"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

@@ -16,7 +16,7 @@ export function calculateCagr(params: {
 }): number | null {
   const { series, lookbackYears } = params;
   if (!series.length) return null;
-  const sorted = [...series].sort((a, b) => a.year - b.year);
+  const sorted = series.toSorted((a, b) => a.year - b.year);
   const latest = sorted[sorted.length - 1];
   if (!Number.isFinite(latest.value) || latest.value <= 0) return null;
 

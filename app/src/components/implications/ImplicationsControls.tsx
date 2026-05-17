@@ -39,9 +39,9 @@ export function ImplicationsControls({
     <div className="space-y-4">
       {/* Template Path */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">
+        <span className="block text-xs font-medium text-ink-muted mb-2">
           Development Path Template
-        </label>
+        </span>
         <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
           {TEMPLATE_PATHS.map((t) => (
             <button
@@ -89,9 +89,7 @@ export function ImplicationsControls({
 
       {/* Population Assumption */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">
-          Population Assumption
-        </label>
+        <span className="block text-xs font-medium text-ink-muted mb-2">Population Assumption</span>
         <div className="flex items-center gap-3">
           <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
             <button
@@ -132,7 +130,7 @@ export function ImplicationsControls({
 
       {/* Scenario */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">Scenario</label>
+        <span className="block text-xs font-medium text-ink-muted mb-2">Scenario</span>
         <div className="inline-flex flex-wrap rounded-lg border border-surface bg-surface overflow-hidden">
           {IMPLICATION_SCENARIOS.map((s) => (
             <button

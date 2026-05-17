@@ -1051,7 +1051,7 @@ export default function App() {
                         </p>
                       </div>
                       <svg
-                        className="w-5 h-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+                        className="size-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -1129,9 +1129,9 @@ export default function App() {
                       className="w-full card p-4 text-left hover:bg-surface transition-default group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
+                        <div className="flex-shrink-0 size-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
                           <svg
-                            className="w-5 h-5 text-[var(--color-accent)]"
+                            className="size-5 text-[var(--color-accent)]"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -1153,7 +1153,7 @@ export default function App() {
                           </p>
                         </div>
                         <svg
-                          className="w-4 h-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
+                          className="size-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"

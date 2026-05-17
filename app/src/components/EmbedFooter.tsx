@@ -27,7 +27,7 @@ export function EmbedFooter({ shareUrl, chaserName, targetName }: EmbedFooterPro
           className="inline-flex items-center gap-1.5 text-ink hover:text-chaser transition-colors"
         >
           <span className="font-medium">Convergence Explorer</span>
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

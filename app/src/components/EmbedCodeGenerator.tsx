@@ -46,8 +46,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
     return `${window.location.origin}${window.location.pathname}${search}`;
   }, [shareState, embedParams]);
 
-  const iframeCode = useMemo(() => {
-    return `<iframe
+  const iframeCode = `<iframe
   src="${embedUrl}"
   width="100%"
   height="${height}"
@@ -55,7 +54,6 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
   loading="lazy"
   style="border: 1px solid #e5e5e5; border-radius: 8px;"
 ></iframe>`;
-  }, [embedUrl, height]);
 
   const imageUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -134,9 +132,9 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       <div className="grid grid-cols-2 gap-4">
         {/* Interactivity */}
         <div>
-          <label className="block text-xs font-medium text-ink-muted mb-2">
+          <span className="block text-xs font-medium text-ink-muted mb-2">
             {t("embed.interactivity")}
-          </label>
+          </span>
           <div
             role="radiogroup"
             aria-label="Interactivity"
@@ -182,7 +180,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
 
         {/* Theme */}
         <div>
-          <label className="block text-xs font-medium text-ink-muted mb-2">Theme</label>
+          <span className="block text-xs font-medium text-ink-muted mb-2">Theme</span>
           <div
             role="radiogroup"
             aria-label="Theme"
@@ -237,9 +235,9 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
 
       {/* Embed code */}
       <div>
-        <label className="block text-xs font-medium text-ink-muted mb-2">
+        <span className="block text-xs font-medium text-ink-muted mb-2">
           {t("embed.embedCode")}
-        </label>
+        </span>
         <div className="relative">
           <pre className="p-3 rounded-lg bg-surface-sunken border border-surface text-xs text-ink-muted overflow-x-auto whitespace-pre-wrap break-all font-mono">
             {iframeCode}
@@ -267,16 +265,16 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
       {/* Image fallback */}
       {imageUrl && (
         <div className="pt-3 border-t border-surface">
-          <label className="block text-xs font-medium text-ink-muted mb-2">
+          <span className="block text-xs font-medium text-ink-muted mb-2">
             {t("embed.staticImage")}
-          </label>
+          </span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={copyImageUrl}
               className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-surface bg-surface-raised text-ink hover:bg-surface transition-default inline-flex items-center justify-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -291,7 +289,7 @@ export function EmbedCodeGenerator({ shareState }: EmbedCodeGeneratorProps) {
               download="convergence-chart.png"
               className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-surface bg-surface-raised text-ink hover:bg-surface transition-default inline-flex items-center justify-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

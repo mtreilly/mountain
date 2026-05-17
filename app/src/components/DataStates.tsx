@@ -17,7 +17,7 @@ export function DataStates({
       {loading && (
         <div className="text-center py-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-raised border border-surface text-sm">
-            <div className="w-3 h-3 rounded-full border-2 border-t-[var(--color-accent)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+            <div className="size-3 rounded-full border-2 border-t-[var(--color-accent)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
             <span className="text-ink-muted">{t("data.loading")}</span>
           </div>
         </div>
@@ -27,7 +27,7 @@ export function DataStates({
         <div className="card p-3 animate-fade-in-up">
           <div className="flex items-center gap-2 text-sm">
             <svg
-              className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+              className="size-4 text-amber-600 dark:text-amber-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

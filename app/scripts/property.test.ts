@@ -464,7 +464,7 @@ function testMilestonesMatchFirstReachYear() {
       assert.equal(new Set(out.map((m) => m.percentage)).size, out.length);
 
       // For each p, milestone matches the first year where ratio>=p under the same validity filters.
-      const sorted = [...points].sort((a, b) => a.year - b.year);
+      const sorted = points.toSorted((a, b) => a.year - b.year);
       const firstYearByP = new Map<number, { year: number; chaser: number; target: number }>();
       for (const p of [...new Set(ps)]) {
         for (const pt of sorted) {
@@ -667,7 +667,7 @@ function testBuildTemplateMappingPointsSortedUnique() {
     iso: fc.array(arbIso3, { minLength: 1, maxLength: 3 }),
     years: fc
       .array(fc.integer({ min: 1990, max: 2025 }), { minLength: 2, maxLength: 8 })
-      .map((ys) => [...new Set(ys)].sort((a, b) => a - b)),
+      .map((ys) => [...new Set(ys)].toSorted((a, b) => a - b)),
     gdp0: fc.double({ min: 100, max: 1_000_000, noNaN: true, noInfinity: true }),
     gdpGrowth: fc.double({ min: 1.001, max: 1.25, noNaN: true, noInfinity: true }),
     metric0: fc.double({ min: -1000, max: 1000, noNaN: true, noInfinity: true }),

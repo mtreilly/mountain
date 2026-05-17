@@ -40,9 +40,9 @@ function DataExportCard({ label, description, onDownload, disabled }: DataExport
         className="shrink-0 px-3 py-1.5 rounded-lg border border-surface bg-surface-raised text-ink text-xs font-medium hover:bg-surface transition-default disabled:opacity-50 inline-flex items-center gap-1.5"
       >
         {isDownloading ? (
-          <div className="w-3 h-3 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          <div className="size-3 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
         ) : (
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -196,7 +196,7 @@ export function ExportModal({
             aria-label={t("exportModal.closeExportModal")}
           >
             <svg
-              className="w-5 h-5 text-ink-muted"
+              className="size-5 text-ink-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -278,7 +278,7 @@ export function ExportModal({
                   }}
                   className="w-full px-3 py-2 rounded-lg border border-surface bg-surface text-sm font-medium text-ink-muted hover:text-ink hover:bg-surface-raised transition-default inline-flex items-center justify-center gap-2"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -320,7 +320,7 @@ export function ExportModal({
                   }}
                   className="w-full px-4 py-2.5 rounded-lg border border-surface bg-surface-raised text-ink text-sm font-medium hover:bg-surface transition-default inline-flex items-center justify-center gap-2"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"

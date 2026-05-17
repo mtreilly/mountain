@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { formatPercent } from "../lib/convergence";
 
 interface GrowthRateSliderProps {
@@ -23,24 +24,29 @@ export function GrowthRateSlider({
   max = 0.15,
   presets = DEFAULT_PRESETS,
 }: GrowthRateSliderProps) {
+  const inputId = useId();
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">Annual growth rate</label>
+        <label htmlFor={inputId} className="text-sm font-medium text-ink">
+          Annual growth rate
+        </label>
         <span className="text-lg font-bold text-primary">{formatPercent(value)}</span>
       </div>
 
       <input
+        id={inputId}
         type="range"
         min={min}
         max={max}
         step={0.001}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+        className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-primary"
       />
 
-      <div className="flex justify-between text-xs text-gray-500">
+      <div className="flex justify-between text-xs text-ink-faint">
         <span>{formatPercent(min)}</span>
         <span>{formatPercent(max)}</span>
       </div>
@@ -55,7 +61,7 @@ export function GrowthRateSlider({
               ${
                 Math.abs(value - preset.value) < 0.001
                   ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-surface-raised text-ink hover:bg-surface"
               }
             `}
           >

@@ -246,7 +246,7 @@ export function CitationPanel({
             aria-label={t("citation.closeCitationPanel")}
           >
             <svg
-              className="w-5 h-5 text-ink-muted"
+              className="size-5 text-ink-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -313,7 +313,7 @@ export function CitationPanel({
                 onClick={handleCopyToolCitation}
                 className="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded bg-surface-raised border border-surface text-ink hover:bg-surface transition-default inline-flex items-center gap-1"
               >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -353,12 +353,7 @@ export function CitationPanel({
                       className="shrink-0 px-2 py-1 text-xs font-medium rounded border border-surface bg-surface-raised text-ink hover:bg-surface transition-default inline-flex items-center gap-1"
                     >
                       {t("citation.view")}
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
+                      <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -383,7 +378,7 @@ export function CitationPanel({
                     onClick={handleCopyDataCitation}
                     className="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded bg-surface-raised border border-surface text-ink hover:bg-surface transition-default inline-flex items-center gap-1"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -406,7 +401,7 @@ export function CitationPanel({
             <div className="p-4 rounded-lg border border-surface bg-surface space-y-2">
               <div className="flex items-center gap-2">
                 <svg
-                  className="w-4 h-4 text-ink-muted shrink-0"
+                  className="size-4 text-ink-muted shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -426,7 +421,7 @@ export function CitationPanel({
               {license && (
                 <div className="flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-ink-muted shrink-0"
+                    className="size-4 text-ink-muted shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -462,7 +457,7 @@ export function CitationPanel({
               onClick={handleCopyBoth}
               className="w-full px-4 py-3 text-sm font-medium rounded-lg bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-light)] transition-default inline-flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

@@ -10,7 +10,7 @@ export function ThreadPreview({ cards, onCaptionChange }: ThreadPreviewProps) {
   if (cards.length === 0) {
     return (
       <div className="flex items-center justify-center p-8 rounded-xl border border-dashed border-surface">
-        <p className="text-sm text-ink-muted">Generating thread cards...</p>
+        <p className="text-sm text-ink-muted">Generating thread cards…</p>
       </div>
     );
   }

@@ -202,7 +202,7 @@ export function ConvergenceChartInteractive({
 
       {active && activeX != null && activeYChaser != null && activeYTarget != null && (
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 size-full pointer-events-none"
           viewBox={`0 0 ${GEOMETRY.width} ${GEOMETRY.height}`}
         >
           <line
@@ -244,12 +244,12 @@ export function ConvergenceChartInteractive({
             <div className="mt-1.5 space-y-1 text-[11px]" style={{ color: markerPalette.faint }}>
               <div className="flex items-center gap-1.5">
                 <span
-                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                  className="inline-block size-2 rounded-full shrink-0"
                   style={{ background: "#ea580c" }}
                 />
                 <span className="font-medium" style={{ color: "#ea580c" }}>
                   {chaserName}
-                  {chaserHasNote && <span style={{ fontSize: 9 }}>†</span>}
+                  {chaserHasNote && <span style={{ fontSize: 12 }}>†</span>}
                 </span>
                 <span
                   className="ml-auto font-semibold tabular-nums"
@@ -260,12 +260,12 @@ export function ConvergenceChartInteractive({
               </div>
               <div className="flex items-center gap-1.5">
                 <span
-                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                  className="inline-block size-2 rounded-full shrink-0"
                   style={{ background: "#059669" }}
                 />
                 <span className="font-medium" style={{ color: "#059669" }}>
                   {targetName}
-                  {targetHasNote && <span style={{ fontSize: 9 }}>†</span>}
+                  {targetHasNote && <span style={{ fontSize: 12 }}>†</span>}
                 </span>
                 <span
                   className="ml-auto font-semibold tabular-nums"

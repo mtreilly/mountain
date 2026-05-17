@@ -35,7 +35,7 @@ export function CountryContextCard({
       {/* Header */}
       <div className="flex items-start gap-2 mb-2">
         <svg
-          className={`w-4 h-4 mt-0.5 shrink-0 ${textColor}`}
+          className={`size-4 mt-0.5 shrink-0 ${textColor}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -56,7 +56,7 @@ export function CountryContextCard({
       {/* Explanation */}
       <p className="text-xs text-ink-muted leading-relaxed mb-2">
         {adjustment.explanation}
-        {adjustment.source && <span className="text-ink-faint"> — {adjustment.source}</span>}
+        {adjustment.source && <span className="text-ink-faint"> ({adjustment.source})</span>}
       </p>
 
       {/* Value comparison */}

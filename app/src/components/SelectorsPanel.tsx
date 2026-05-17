@@ -117,12 +117,12 @@ export function SelectorsPanel({
             <button
               type="button"
               onClick={onSwapCountries}
-              className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
+              className="flex items-center justify-center size-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
               title={t("selector.swapCountries")}
               aria-label={t("selector.swapCountries")}
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="size-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -176,7 +176,7 @@ export function SelectorsPanel({
               aria-label={t("selector.swapCountries")}
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="size-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -227,7 +227,7 @@ export function SelectorsPanel({
                 aria-label={t("selector.swapCountries")}
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="size-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -296,12 +296,12 @@ export function SelectorsPanel({
             <button
               type="button"
               onClick={onSwapRegions}
-              className="flex items-center justify-center w-7 h-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
+              className="flex items-center justify-center size-7 rounded text-ink-muted hover:text-ink hover:bg-surface-sunken transition-default focus-ring shrink-0"
               title={t("selector.swapCountries")}
               aria-label={t("selector.swapRegions")}
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="size-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -346,7 +346,7 @@ export function SelectorsPanel({
                 aria-label={t("selector.swapRegions")}
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="size-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

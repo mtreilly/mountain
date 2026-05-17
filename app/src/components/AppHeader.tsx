@@ -64,7 +64,7 @@ export function AppHeader({
             className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
           >
             <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+              className="size-3.5 sm:size-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -86,7 +86,7 @@ export function AppHeader({
             className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
           >
             <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+              className="size-3.5 sm:size-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -108,7 +108,7 @@ export function AppHeader({
             className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
           >
             <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+              className="size-3.5 sm:size-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

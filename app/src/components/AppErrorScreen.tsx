@@ -13,9 +13,9 @@ export function AppErrorScreen({
   return (
     <div className="min-h-screen bg-surface grain flex items-center justify-center p-4">
       <div className="text-center max-w-sm p-6 card animate-fade-in-up">
-        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
+        <div className="size-10 mx-auto mb-3 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
           <svg
-            className="w-5 h-5 text-red-600 dark:text-red-400"
+            className="size-5 text-red-600 dark:text-red-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

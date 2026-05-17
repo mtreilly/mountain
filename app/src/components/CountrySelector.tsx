@@ -99,7 +99,7 @@ export function CountrySelector({
           </span>
         )}
         <svg
-          className={`w-3.5 h-3.5 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`size-3.5 text-ink-faint transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

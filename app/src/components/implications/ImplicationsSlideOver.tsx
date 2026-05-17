@@ -334,8 +334,8 @@ export function ImplicationsSlideOver({
         {loading && (
           <div className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3 text-ink-muted">
-              <div className="w-5 h-5 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              <span>Loading data...</span>
+              <div className="size-5 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+              <span>Loading data…</span>
             </div>
           </div>
         )}

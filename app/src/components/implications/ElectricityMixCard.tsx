@@ -72,7 +72,7 @@ function MixField(props: {
     <label className="block rounded-lg border border-surface bg-surface px-2 py-1.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
+          <span className={`size-2 rounded-full ${color}`} aria-hidden="true" />
           <span className="text-[11px] text-ink truncate">{label}</span>
         </div>
         <input
@@ -127,7 +127,7 @@ function MixResultCard(props: {
     <div className="rounded-lg border border-surface bg-surface px-3 py-2">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
+          <span className={`size-2 rounded-full ${color}`} aria-hidden="true" />
           <div className="text-xs font-medium text-ink truncate">{title}</div>
         </div>
         <div className="text-[11px] text-ink-faint shrink-0">
@@ -338,7 +338,7 @@ export function ElectricityMixCard({
               aria-label={`Nuclear ${mixBuildout.percent.nuclear}%`}
             />
             <div
-              className="bg-slate-400"
+              className="bg-zinc-500"
               style={{ width: `${mixBuildout.percent.coal}%` }}
               aria-label={`Coal ${mixBuildout.percent.coal}%`}
             />

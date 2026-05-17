@@ -74,10 +74,27 @@ export function Scrubber({
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  const nudge = (direction: -1 | 1) => {
+    const next = Math.max(min, Math.min(max, value + step * direction));
+    onChange(Math.round(next / step) * step);
+  };
+
   return (
     <span
       ref={ref}
+      role="slider"
+      tabIndex={0}
       onMouseDown={handleMouseDown}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+          e.preventDefault();
+          nudge(-1);
+        }
+        if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+          e.preventDefault();
+          nudge(1);
+        }
+      }}
       className={`
         cursor-ew-resize select-none
         px-1 py-0.5 rounded
@@ -87,6 +104,11 @@ export function Scrubber({
         ${className}
       `}
       title="Drag to adjust • Hold Shift for fine control"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      aria-valuetext={format(value)}
+      aria-label="Adjust value"
     >
       {format(value)}
     </span>

@@ -221,7 +221,7 @@ export function MetricSelector({
           </span>
         </span>
         <svg
-          className={`w-3.5 h-3.5 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`size-3.5 text-ink-faint shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -243,7 +243,7 @@ export function MetricSelector({
             <div className="p-3 border-b border-surface-subtle">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-ink-faint"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -306,7 +306,12 @@ export function MetricSelector({
         isMobile &&
         createPortal(
           <div className="fixed inset-0 z-50 flex flex-col">
-            <div className="absolute inset-0 sheet-backdrop animate-fade-in" onClick={close} />
+            <button
+              type="button"
+              className="absolute inset-0 sheet-backdrop animate-fade-in"
+              onClick={close}
+              aria-label={t("selector.close")}
+            />
 
             <div
               ref={popoverRef}
@@ -329,7 +334,7 @@ export function MetricSelector({
                     aria-label={t("selector.close")}
                   >
                     <svg
-                      className="w-5 h-5 text-ink-muted"
+                      className="size-5 text-ink-muted"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -346,7 +351,7 @@ export function MetricSelector({
 
                 <div className="relative">
                   <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-faint"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-ink-faint"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

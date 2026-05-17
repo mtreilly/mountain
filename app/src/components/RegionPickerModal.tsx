@@ -118,7 +118,12 @@ export function RegionPickerModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 sheet-backdrop" onClick={onClose} />
+      <button
+        type="button"
+        className="absolute inset-0 sheet-backdrop"
+        onClick={onClose}
+        aria-label="Close region picker"
+      />
       <div
         ref={dialogRef}
         role="dialog"
@@ -146,7 +151,7 @@ export function RegionPickerModal({
               aria-label={t("selector.close")}
             >
               <svg
-                className="w-5 h-5 text-ink-muted"
+                className="size-5 text-ink-muted"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -164,7 +169,7 @@ export function RegionPickerModal({
           <div className="mt-4">
             <div className="relative">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint"
+                className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-ink-faint"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -222,7 +227,7 @@ export function RegionPickerModal({
                       </span>
                       {selected && (
                         <svg
-                          className={`w-4 h-4 shrink-0 ${colorConfig.check}`}
+                          className={`size-4 shrink-0 ${colorConfig.check}`}
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"

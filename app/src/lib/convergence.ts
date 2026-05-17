@@ -46,7 +46,7 @@ export function calculateMilestones(
 ): Milestone[] {
   if (!projection.length) return [];
 
-  const sorted = [...projection].sort((a, b) => a.year - b.year);
+  const sorted = projection.toSorted((a, b) => a.year - b.year);
   const remaining = new Set(milestonePercentages);
   const milestones: Milestone[] = [];
 

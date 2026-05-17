@@ -137,7 +137,7 @@ export function SlideOver({
             aria-label={`Close ${title}`}
           >
             <svg
-              className="w-5 h-5 text-ink-muted"
+              className="size-5 text-ink-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

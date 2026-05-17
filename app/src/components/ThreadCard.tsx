@@ -59,7 +59,7 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
             onClick={handleCopyCaption}
             className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-ink-muted hover:text-ink rounded-md hover:bg-surface transition-default"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -74,7 +74,7 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
             onClick={handleCopyCard}
             className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-ink-muted hover:text-ink rounded-md hover:bg-surface transition-default"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -120,7 +120,7 @@ export function ThreadCard({ card, onCaptionChange }: ThreadCardProps) {
             <img
               src={svgDataUrl}
               alt={`Thread card ${card.index}: ${CARD_LABELS[card.type]}`}
-              className="w-full h-full object-contain"
+              className="size-full object-contain"
             />
           </div>
         </div>

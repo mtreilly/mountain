@@ -79,7 +79,7 @@ export function GrowthCalculator({
 
       <div className="mt-3">
         {required == null ? (
-          <p className="text-sm text-ink-muted">—</p>
+          <p className="text-sm text-ink-muted">No projection available</p>
         ) : chaserValue >= targetValue ? (
           <p className="text-sm text-ink-muted">
             <span className="font-semibold text-chaser">{chaserName}</span> is already ahead of{" "}

@@ -97,7 +97,7 @@ export function ProjectionCard({
                 aria-label={t("projection.shareAsCard")}
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="size-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -125,7 +125,7 @@ export function ProjectionCard({
                 aria-label={t("projection.exportData")}
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="size-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

@@ -26,6 +26,10 @@ export function ShareCardPreview({
     () => generateShareCardSvg(paramsWithDimensions),
     [paramsWithDimensions],
   );
+  const svgDataUrl = useMemo(
+    () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`,
+    [svgString],
+  );
 
   const scaledWidth = dimensions.width * scale;
   const scaledHeight = dimensions.height * scale;
@@ -40,15 +44,17 @@ export function ShareCardPreview({
         height: scaledHeight,
       }}
     >
-      <div
+      <img
+        src={svgDataUrl}
+        alt=""
         aria-hidden="true"
+        className="block"
         style={{
           width: dimensions.width,
           height: dimensions.height,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
-        dangerouslySetInnerHTML={{ __html: svgString }}
       />
     </div>
   );
