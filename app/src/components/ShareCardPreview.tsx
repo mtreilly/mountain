@@ -28,8 +28,7 @@ export function ShareCardPreview({
   );
   const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
 
-  const scaledWidth = dimensions.width * scale;
-  const scaledHeight = dimensions.height * scale;
+  const displayWidth = dimensions.width * scale;
 
   return (
     <div
@@ -37,8 +36,9 @@ export function ShareCardPreview({
       role="img"
       aria-label="Share card preview"
       style={{
-        width: scaledWidth,
-        height: scaledHeight,
+        width: displayWidth,
+        maxWidth: "100%",
+        aspectRatio: `${dimensions.width} / ${dimensions.height}`,
       }}
     >
       <img
@@ -47,10 +47,10 @@ export function ShareCardPreview({
         aria-hidden="true"
         className="block"
         style={{
-          width: dimensions.width,
-          height: dimensions.height,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          width: "100%",
+          height: "100%",
+          maxWidth: "none",
+          objectFit: "contain",
         }}
       />
     </div>
