@@ -132,16 +132,16 @@ async function* readLines(stream: ReadableStream<Uint8Array>) {
   let buffer = "";
 
   while (true) {
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    let idx = buffer.indexOf("\n");
-    while (idx !== -1) {
-      const line = buffer.slice(0, idx).replace(/\r$/, "");
-      buffer = buffer.slice(idx + 1);
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\r$/, "");
       yield line;
-      idx = buffer.indexOf("\n");
     }
   }
 
@@ -175,14 +175,15 @@ async function main() {
   for await (const line of readLines(res.body)) {
     if (!header) {
       header = parseCsvLine(line);
-      idxIso = header.indexOf("iso_code");
-      idxYear = header.indexOf("year");
+      const headerIndex = new Map(header.map((column, index) => [column, index]));
+      idxIso = headerIndex.get("iso_code") ?? -1;
+      idxYear = headerIndex.get("year") ?? -1;
       if (idxIso === -1 || idxYear === -1) {
         throw new Error(`OWID energy CSV missing required columns: iso_code/year`);
       }
 
       for (const s of SERIES) {
-        const idx = header.indexOf(s.owidColumn);
+        const idx = headerIndex.get(s.owidColumn) ?? -1;
         if (idx === -1) {
           throw new Error(`OWID energy CSV missing required column: ${s.owidColumn}`);
         }

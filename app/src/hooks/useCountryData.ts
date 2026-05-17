@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface DataPoint {
   year: number;
@@ -20,63 +20,45 @@ interface UseCountryDataParams {
   invalidIndicator?: boolean;
 }
 
+async function fetchCountryData(params: {
+  countriesKey: string;
+  indicator: string;
+  signal?: AbortSignal;
+}) {
+  const qs = new URLSearchParams({
+    countries: params.countriesKey,
+    start_year: "1990",
+  });
+
+  const res = await fetch(`/api/data/${params.indicator}?${qs}`, { signal: params.signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as {
+    data?: Record<string, DataPoint[]>;
+    indicator?: IndicatorInfo | null;
+  };
+}
+
 export function useCountryData({
   countries,
   indicator,
   enabled = true,
   invalidIndicator = false,
 }: UseCountryDataParams) {
-  const [data, setData] = useState<Record<string, DataPoint[]>>({});
-  const [indicatorInfo, setIndicatorInfo] = useState<IndicatorInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const countriesKey = countries.join(",");
+  const queryEnabled = enabled && countries.length > 0 && Boolean(indicator);
 
-  useEffect(() => {
-    if (countries.length === 0 || !indicator) return;
-    if (!enabled) return;
-    const controller = new AbortController();
-    let isActive = true;
+  const query = useQuery({
+    queryKey: ["country-data", countriesKey, indicator],
+    queryFn: ({ signal }) => fetchCountryData({ countriesKey, indicator, signal }),
+    enabled: queryEnabled,
+  });
 
-    queueMicrotask(() => {
-      if (!isActive) return;
-      setLoading(true);
-      setError(null);
-      setHasLoaded(false);
-    });
-    const params = new URLSearchParams({
-      countries: countriesKey,
-      start_year: "1990",
-    });
+  const data = query.data?.data ?? {};
+  const indicatorInfo = query.data?.indicator ?? null;
 
-    fetch(`/api/data/${indicator}?${params}`, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((result) => {
-        if (!isActive) return;
-        setData(result.data || {});
-        setIndicatorInfo(result.indicator || null);
-        setLoading(false);
-        setHasLoaded(true);
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setError(err.message);
-        setLoading(false);
-        setHasLoaded(true);
-      });
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, [countriesKey, countries.length, enabled, indicator]);
-
-  const resolvedError = !enabled && invalidIndicator && indicator ? "INDICATOR_NOT_FOUND" : error;
+  const queryError = query.error instanceof Error ? query.error.message : null;
+  const resolvedError =
+    !enabled && invalidIndicator && indicator ? "INDICATOR_NOT_FOUND" : queryError;
 
   // Get the latest value for a country
   const getLatestValue = (iso: string): number | null => {
@@ -91,9 +73,9 @@ export function useCountryData({
   return {
     data: enabled ? data : {},
     indicator: enabled ? indicatorInfo : null,
-    loading: enabled ? loading : false,
+    loading: queryEnabled ? query.isLoading || query.isFetching : false,
     error: resolvedError,
-    hasLoaded: enabled ? hasLoaded : false,
+    hasLoaded: queryEnabled ? query.isFetched : false,
     getLatestValue,
   };
 }

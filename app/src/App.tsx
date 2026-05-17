@@ -1,4 +1,13 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Toaster, toast } from "sonner";
 import { AppErrorScreen } from "./components/AppErrorScreen";
 import { AppFooter } from "./components/AppFooter";
@@ -62,6 +71,67 @@ const ImplicationsSlideOver = lazy(() =>
   })),
 );
 
+type AppUiState = {
+  comparisonMode: "countries" | "regions";
+  chaserIso: string;
+  targetIso: string;
+  chaserRegionCode: string;
+  targetRegionCode: string;
+  indicatorCode: string;
+  chaserGrowthRate: number;
+  targetGrowthRate: number;
+  baseYear: number;
+  view: NonNullable<ShareState["view"]>;
+  useChaserAdjusted: boolean;
+  useTargetAdjusted: boolean;
+  catchUpYears: number;
+  showMilestones: boolean;
+  impTemplate: "china" | "us" | "eu";
+  impHorizonYears: number;
+  impCard: NonNullable<ShareState["impCard"]>;
+  isExportModalOpen: boolean;
+  isShareCardModalOpen: boolean;
+  isCitationPanelOpen: boolean;
+  isThreadGeneratorOpen: boolean;
+  isImplicationsOpen: boolean;
+};
+
+type AppUiAction =
+  | { type: "patch"; patch: Partial<AppUiState> }
+  | { type: "reset"; state: AppUiState };
+
+function createAppUiState(state: ShareState): AppUiState {
+  return {
+    comparisonMode: state.mode ?? "countries",
+    chaserIso: state.chaser,
+    targetIso: state.target,
+    chaserRegionCode: state.cr ?? "UKC",
+    targetRegionCode: state.tr ?? "UKI",
+    indicatorCode: state.indicator,
+    chaserGrowthRate: state.cg,
+    targetGrowthRate: state.tmode === "static" ? 0 : state.tg,
+    baseYear: state.baseYear,
+    view: state.view || "chart",
+    useChaserAdjusted: state.adjC ?? true,
+    useTargetAdjusted: state.adjT ?? true,
+    catchUpYears: state.goal ?? 25,
+    showMilestones: state.ms ?? true,
+    impTemplate: (state.tpl as "china" | "us" | "eu" | undefined) ?? "china",
+    impHorizonYears: state.ih ?? 25,
+    impCard: state.impCard ?? "gdp",
+    isExportModalOpen: false,
+    isShareCardModalOpen: false,
+    isCitationPanelOpen: false,
+    isThreadGeneratorOpen: false,
+    isImplicationsOpen: false,
+  };
+}
+
+function appUiReducer(state: AppUiState, action: AppUiAction): AppUiState {
+  if (action.type === "reset") return action.state;
+  return { ...state, ...action.patch };
+}
+
 export default function App() {
   const [{ initialShareState, initialRegionToast }] = useState(() => {
     const state =
@@ -121,34 +191,124 @@ export default function App() {
     return parseEmbedParams(window.location.search);
   }, []);
 
-  const [comparisonMode, setComparisonMode] = useState<"countries" | "regions">(
-    initialShareState.mode ?? "countries",
+  const [uiState, dispatchUiState] = useReducer(appUiReducer, initialShareState, createAppUiState);
+  const updateUiState = useCallback((patch: Partial<AppUiState>) => {
+    dispatchUiState({ type: "patch", patch });
+  }, []);
+
+  const {
+    comparisonMode,
+    chaserIso,
+    targetIso,
+    chaserRegionCode,
+    targetRegionCode,
+    indicatorCode,
+    chaserGrowthRate,
+    targetGrowthRate,
+    baseYear,
+    view,
+    useChaserAdjusted,
+    useTargetAdjusted,
+    catchUpYears,
+    showMilestones,
+    impTemplate,
+    impHorizonYears,
+    impCard,
+    isExportModalOpen,
+    isShareCardModalOpen,
+    isCitationPanelOpen,
+    isThreadGeneratorOpen,
+    isImplicationsOpen,
+  } = uiState;
+
+  const setComparisonMode = useCallback(
+    (comparisonMode: AppUiState["comparisonMode"]) => updateUiState({ comparisonMode }),
+    [updateUiState],
   );
-  const [chaserIso, setChaserIso] = useState(initialShareState.chaser);
-  const [targetIso, setTargetIso] = useState(initialShareState.target);
-  const [chaserRegionCode, setChaserRegionCode] = useState(initialShareState.cr ?? "UKC");
-  const [targetRegionCode, setTargetRegionCode] = useState(initialShareState.tr ?? "UKI");
-  const [indicatorCode, setIndicatorCode] = useState(initialShareState.indicator);
-  const [chaserGrowthRate, setChaserGrowthRate] = useState(initialShareState.cg);
-  const [targetGrowthRate, setTargetGrowthRate] = useState(
-    initialShareState.tmode === "static" ? 0 : initialShareState.tg,
+  const setChaserIso = useCallback(
+    (chaserIso: string) => updateUiState({ chaserIso }),
+    [updateUiState],
   );
-  const [baseYear, setBaseYear] = useState(initialShareState.baseYear);
-  const [view, setView] = useState<ShareState["view"]>(initialShareState.view || "chart");
-  const [useChaserAdjusted, setUseChaserAdjusted] = useState(initialShareState.adjC ?? true);
-  const [useTargetAdjusted, setUseTargetAdjusted] = useState(initialShareState.adjT ?? true);
-  const [catchUpYears, setCatchUpYears] = useState(initialShareState.goal ?? 25);
-  const [showMilestones, setShowMilestones] = useState(initialShareState.ms ?? true);
-  const [impTemplate, setImpTemplate] = useState<"china" | "us" | "eu">(
-    (initialShareState.tpl as "china" | "us" | "eu" | undefined) ?? "china",
+  const setTargetIso = useCallback(
+    (targetIso: string) => updateUiState({ targetIso }),
+    [updateUiState],
   );
-  const [impHorizonYears, setImpHorizonYears] = useState(initialShareState.ih ?? 25);
-  const [impCard, setImpCard] = useState(initialShareState.impCard ?? "gdp");
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isShareCardModalOpen, setIsShareCardModalOpen] = useState(false);
-  const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
-  const [isThreadGeneratorOpen, setIsThreadGeneratorOpen] = useState(false);
-  const [isImplicationsOpen, setIsImplicationsOpen] = useState(false);
+  const setChaserRegionCode = useCallback(
+    (chaserRegionCode: string) => updateUiState({ chaserRegionCode }),
+    [updateUiState],
+  );
+  const setTargetRegionCode = useCallback(
+    (targetRegionCode: string) => updateUiState({ targetRegionCode }),
+    [updateUiState],
+  );
+  const setIndicatorCode = useCallback(
+    (indicatorCode: string) => updateUiState({ indicatorCode }),
+    [updateUiState],
+  );
+  const setChaserGrowthRate = useCallback(
+    (chaserGrowthRate: number) => updateUiState({ chaserGrowthRate }),
+    [updateUiState],
+  );
+  const setTargetGrowthRate = useCallback(
+    (targetGrowthRate: number) => updateUiState({ targetGrowthRate }),
+    [updateUiState],
+  );
+  const setBaseYear = useCallback(
+    (baseYear: number) => updateUiState({ baseYear }),
+    [updateUiState],
+  );
+  const setView = useCallback(
+    (view: ShareState["view"]) => updateUiState({ view: view || "chart" }),
+    [updateUiState],
+  );
+  const setUseChaserAdjusted = useCallback(
+    (useChaserAdjusted: boolean) => updateUiState({ useChaserAdjusted }),
+    [updateUiState],
+  );
+  const setUseTargetAdjusted = useCallback(
+    (useTargetAdjusted: boolean) => updateUiState({ useTargetAdjusted }),
+    [updateUiState],
+  );
+  const setCatchUpYears = useCallback(
+    (catchUpYears: number) => updateUiState({ catchUpYears }),
+    [updateUiState],
+  );
+  const setShowMilestones = useCallback(
+    (showMilestones: boolean) => updateUiState({ showMilestones }),
+    [updateUiState],
+  );
+  const setImpTemplate = useCallback(
+    (impTemplate: AppUiState["impTemplate"]) => updateUiState({ impTemplate }),
+    [updateUiState],
+  );
+  const setImpHorizonYears = useCallback(
+    (impHorizonYears: number) => updateUiState({ impHorizonYears }),
+    [updateUiState],
+  );
+  const setImpCard = useCallback(
+    (impCard: AppUiState["impCard"]) => updateUiState({ impCard }),
+    [updateUiState],
+  );
+  const setIsExportModalOpen = useCallback(
+    (isExportModalOpen: boolean) => updateUiState({ isExportModalOpen }),
+    [updateUiState],
+  );
+  const setIsShareCardModalOpen = useCallback(
+    (isShareCardModalOpen: boolean) => updateUiState({ isShareCardModalOpen }),
+    [updateUiState],
+  );
+  const setIsCitationPanelOpen = useCallback(
+    (isCitationPanelOpen: boolean) => updateUiState({ isCitationPanelOpen }),
+    [updateUiState],
+  );
+  const setIsThreadGeneratorOpen = useCallback(
+    (isThreadGeneratorOpen: boolean) => updateUiState({ isThreadGeneratorOpen }),
+    [updateUiState],
+  );
+  const setIsImplicationsOpen = useCallback(
+    (isImplicationsOpen: boolean) => updateUiState({ isImplicationsOpen }),
+    [updateUiState],
+  );
   const { theme, toggleTheme } = useTheme();
 
   const { countries, loading: countriesLoading, error: countriesError } = useCountries();
@@ -170,7 +330,7 @@ export default function App() {
 
     // In non-interactive embed mode, normalize quietly (no toasts).
     if (embedParams.embed && embedParams.interactive === false) {
-      queueMicrotask(() => setIndicatorCode(fallback));
+      queueMicrotask(() => updateUiState({ indicatorCode: fallback }));
       return;
     }
 
@@ -178,7 +338,7 @@ export default function App() {
     if (lastInvalidIndicatorToastKey === toastKey) return;
     lastInvalidIndicatorToastKey = toastKey;
 
-    queueMicrotask(() => setIndicatorCode(fallback));
+    queueMicrotask(() => updateUiState({ indicatorCode: fallback }));
     const fallbackName = indicators.find((i) => i.code === fallback)?.name ?? fallback;
     toast.error(`Unknown metric "${unknownIndicator}" in URL. Reset to ${fallbackName}.`);
   }, [
@@ -189,6 +349,7 @@ export default function App() {
     indicatorExists,
     indicators,
     indicatorsLoading,
+    updateUiState,
   ]);
 
   const {
@@ -229,8 +390,10 @@ export default function App() {
     // In non-interactive embed mode, normalize quietly (no toasts).
     if (embedParams.embed && embedParams.interactive === false) {
       queueMicrotask(() => {
-        if (!chaserValid) setChaserIso(nextChaserIso);
-        if (!targetValid) setTargetIso(nextTargetIso);
+        updateUiState({
+          ...(!chaserValid ? { chaserIso: nextChaserIso } : {}),
+          ...(!targetValid ? { targetIso: nextTargetIso } : {}),
+        });
       });
       return;
     }
@@ -244,8 +407,10 @@ export default function App() {
     lastInvalidCountryToastKey = toastKey;
 
     queueMicrotask(() => {
-      if (!chaserValid) setChaserIso(nextChaserIso);
-      if (!targetValid) setTargetIso(nextTargetIso);
+      updateUiState({
+        ...(!chaserValid ? { chaserIso: nextChaserIso } : {}),
+        ...(!targetValid ? { targetIso: nextTargetIso } : {}),
+      });
     });
 
     const resolvedChaserName =
@@ -264,6 +429,7 @@ export default function App() {
     embedParams.embed,
     embedParams.interactive,
     targetIso,
+    updateUiState,
   ]);
 
   const selectedIndicator =
@@ -383,20 +549,18 @@ export default function App() {
     if (!Number.isFinite(projectionStartYear)) return [];
 
     if (comparisonMode === "regions") {
-      const chaserByYear = new Map(
-        getRegionDataSeries(chaserRegionCode)
-          .filter(
-            (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
-          )
-          .map((point) => [point.year, point.gdpPerCapita] as const),
-      );
-      const targetByYear = new Map(
-        getRegionDataSeries(targetRegionCode)
-          .filter(
-            (point) => point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear,
-          )
-          .map((point) => [point.year, point.gdpPerCapita] as const),
-      );
+      const chaserByYear = new Map<number, number>();
+      for (const point of getRegionDataSeries(chaserRegionCode)) {
+        if (point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear) {
+          chaserByYear.set(point.year, point.gdpPerCapita);
+        }
+      }
+      const targetByYear = new Map<number, number>();
+      for (const point of getRegionDataSeries(targetRegionCode)) {
+        if (point.year >= OBSERVED_CHART_START_YEAR && point.year < projectionStartYear) {
+          targetByYear.set(point.year, point.gdpPerCapita);
+        }
+      }
 
       const years = Array.from(chaserByYear.keys())
         .filter((year) => targetByYear.has(year))
@@ -514,7 +678,7 @@ export default function App() {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [setIsCitationPanelOpen]);
 
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -748,41 +912,48 @@ export default function App() {
         };
 
   const resetToDefaults = useCallback(() => {
-    setChaserIso(DEFAULT_SHARE_STATE.chaser);
-    setTargetIso(DEFAULT_SHARE_STATE.target);
-    setIndicatorCode(DEFAULT_SHARE_STATE.indicator);
-    setChaserGrowthRate(DEFAULT_SHARE_STATE.cg);
-    setTargetGrowthRate(DEFAULT_SHARE_STATE.tmode === "static" ? 0 : DEFAULT_SHARE_STATE.tg);
-    setBaseYear(DEFAULT_SHARE_STATE.baseYear);
-    setView(DEFAULT_SHARE_STATE.view || "chart");
-    setUseChaserAdjusted(true);
-    setUseTargetAdjusted(true);
-    setComparisonMode(DEFAULT_SHARE_STATE.mode ?? "countries");
-    setChaserRegionCode(DEFAULT_SHARE_STATE.cr ?? "UKC");
-    setTargetRegionCode(DEFAULT_SHARE_STATE.tr ?? "UKI");
-  }, []);
+    const defaults = createAppUiState(DEFAULT_SHARE_STATE);
+    updateUiState({
+      chaserIso: defaults.chaserIso,
+      targetIso: defaults.targetIso,
+      indicatorCode: defaults.indicatorCode,
+      chaserGrowthRate: defaults.chaserGrowthRate,
+      targetGrowthRate: defaults.targetGrowthRate,
+      baseYear: defaults.baseYear,
+      view: defaults.view,
+      useChaserAdjusted: defaults.useChaserAdjusted,
+      useTargetAdjusted: defaults.useTargetAdjusted,
+      comparisonMode: defaults.comparisonMode,
+      chaserRegionCode: defaults.chaserRegionCode,
+      targetRegionCode: defaults.targetRegionCode,
+    });
+  }, [updateUiState]);
 
   const swapCountries = useCallback(() => {
-    setChaserIso(targetIso);
-    setTargetIso(chaserIso);
-    setChaserGrowthRate(targetGrowthRate);
-    setTargetGrowthRate(chaserGrowthRate);
-    setUseChaserAdjusted(useTargetAdjusted);
-    setUseTargetAdjusted(useChaserAdjusted);
+    updateUiState({
+      chaserIso: targetIso,
+      targetIso: chaserIso,
+      chaserGrowthRate: targetGrowthRate,
+      targetGrowthRate: chaserGrowthRate,
+      useChaserAdjusted: useTargetAdjusted,
+      useTargetAdjusted: useChaserAdjusted,
+    });
   }, [
     chaserIso,
-    targetIso,
     chaserGrowthRate,
     targetGrowthRate,
+    targetIso,
+    updateUiState,
     useChaserAdjusted,
     useTargetAdjusted,
   ]);
 
   const swapRegions = useCallback(() => {
-    const temp = chaserRegionCode;
-    setChaserRegionCode(targetRegionCode);
-    setTargetRegionCode(temp);
-  }, [chaserRegionCode, targetRegionCode]);
+    updateUiState({
+      chaserRegionCode: targetRegionCode,
+      targetRegionCode: chaserRegionCode,
+    });
+  }, [chaserRegionCode, targetRegionCode, updateUiState]);
 
   const contextCards =
     comparisonMode === "countries" &&

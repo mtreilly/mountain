@@ -85,10 +85,12 @@ function tryExtractOptionValues(payload: unknown): string[] {
 }
 
 function maxDateYYYYMM(values: string[]) {
-  const valid = values
-    .map((x) => x.trim())
-    .filter((x) => /^\d{4}-\d{2}$/.test(x))
-    .sort();
+  const valid = values.reduce<string[]>((out, value) => {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}$/.test(trimmed)) out.push(trimmed);
+    return out;
+  }, []);
+  valid.sort();
   return valid.length ? valid[valid.length - 1] : null;
 }
 
@@ -221,6 +223,7 @@ async function main() {
 
   for (let attempt = 0; attempt < 24; attempt++) {
     console.error(`Fetching Ember installed capacity for ${activeMonth}…`);
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     const result = await fetchRows(activeMonth);
     if (!result) return;
     allRows = (result.data || []).filter(
@@ -250,9 +253,9 @@ async function main() {
 
     const seriesKey = (() => {
       const low = normalizeSeriesName(row.series);
-      if (low.includes("wind and solar")) return null; // ambiguous; skip
-      if (low.includes("solar")) return "solar";
-      if (low.includes("wind")) return "wind";
+      if (/wind and solar/.test(low)) return null; // ambiguous; skip
+      if (/solar/.test(low)) return "solar";
+      if (/wind/.test(low)) return "wind";
       return null;
     })();
     if (!seriesKey) continue;

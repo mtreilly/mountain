@@ -26,10 +26,7 @@ export function ShareCardPreview({
     () => generateShareCardSvg(paramsWithDimensions),
     [paramsWithDimensions],
   );
-  const svgDataUrl = useMemo(
-    () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`,
-    [svgString],
-  );
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
 
   const scaledWidth = dimensions.width * scale;
   const scaledHeight = dimensions.height * scale;

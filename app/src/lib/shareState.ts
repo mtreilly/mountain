@@ -1,7 +1,7 @@
-export type TargetMode = "growing" | "static";
-export type ViewMode = "chart" | "table";
-export type TemplateMode = "china" | "us" | "eu";
-export type ComparisonMode = "countries" | "regions";
+type TargetMode = "growing" | "static";
+type ViewMode = "chart" | "table";
+type TemplateMode = "china" | "us" | "eu";
+type ComparisonMode = "countries" | "regions";
 export type EmbedTheme = "light" | "dark" | "auto";
 export type ImplicationCardType =
   | "gdp"
@@ -10,7 +10,7 @@ export type ImplicationCardType =
   | "elec-assumptions"
   | "urban"
   | "co2";
-export type ElectricityMode = "compare" | "mix";
+type ElectricityMode = "compare" | "mix";
 
 export interface ShareState {
   chaser: string;
@@ -63,7 +63,7 @@ export function parseEmbedParams(search: string): EmbedParams {
   return { embed, interactive, embedTheme, height };
 }
 
-export function toEmbedSearchParams(
+function toEmbedSearchParams(
   state: ShareState,
   embedParams: Partial<EmbedParams> = {},
 ): URLSearchParams {

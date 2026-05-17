@@ -4,7 +4,6 @@ import { calculateMilestones } from "../lib/convergence";
 import {
   ALL_TL2_REGIONS,
   COUNTRIES_WITH_REGIONS,
-  getLatestRegionData,
   getRegionByCode,
   getRegionDataSeries,
   getRegionsByCountry,
@@ -39,64 +38,6 @@ export function useOECDRegions(): UseOECDRegionsResult {
     getRegionsByCountry,
     getRegionByCode,
     hasRegionalData,
-  };
-}
-
-interface UseOECDRegionDataParams {
-  regionCodes: string[];
-}
-
-interface DataPoint {
-  year: number;
-  value: number;
-}
-
-interface UseOECDRegionDataResult {
-  /** GDP per capita data keyed by region code */
-  data: Record<string, DataPoint[]>;
-  /** Get the latest value for a region */
-  getLatestValue: (code: string) => number | null;
-  /** Loading state (always false for static data) */
-  loading: boolean;
-  /** Error state */
-  error: string | null;
-}
-
-/**
- * Hook for fetching OECD regional GDP data
- * Currently uses static data; designed to support live API when available
- */
-export function useOECDRegionData({
-  regionCodes,
-}: UseOECDRegionDataParams): UseOECDRegionDataResult {
-  const data = useMemo(() => {
-    const result: Record<string, DataPoint[]> = {};
-
-    for (const code of regionCodes) {
-      const regionData = getRegionDataSeries(code);
-      if (regionData.length > 0) {
-        result[code] = regionData.map((d) => ({
-          year: d.year,
-          value: d.gdpPerCapita,
-        }));
-      }
-    }
-
-    return result;
-  }, [regionCodes]);
-
-  const getLatestValue = useMemo(() => {
-    return (code: string): number | null => {
-      const latestData = getLatestRegionData(code);
-      return latestData?.gdpPerCapita ?? null;
-    };
-  }, []);
-
-  return {
-    data,
-    getLatestValue,
-    loading: false,
-    error: null,
   };
 }
 

@@ -17,8 +17,7 @@ test("Responsive: mobile stacks selectors and keeps modal in viewport", async ({
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 
-  const chaserBox = await chaser.boundingBox();
-  const targetBox = await target.boundingBox();
+  const [chaserBox, targetBox] = await Promise.all([chaser.boundingBox(), target.boundingBox()]);
   expect(chaserBox).toBeTruthy();
   expect(targetBox).toBeTruthy();
   // Mobile layout should stack selectors vertically.
@@ -52,8 +51,7 @@ test("Responsive: tablet keeps selectors side-by-side and modal fits viewport", 
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 
-  const chaserBox = await chaser.boundingBox();
-  const targetBox = await target.boundingBox();
+  const [chaserBox, targetBox] = await Promise.all([chaser.boundingBox(), target.boundingBox()]);
   expect(chaserBox).toBeTruthy();
   expect(targetBox).toBeTruthy();
   // Tablet layout should place selectors in a row.
@@ -84,8 +82,7 @@ test("Responsive: desktop shows sidebar layout", async ({ page }, testInfo) => {
   await expect(chaser).toBeVisible();
   await expect(target).toBeVisible();
 
-  const chaserBox = await chaser.boundingBox();
-  const targetBox = await target.boundingBox();
+  const [chaserBox, targetBox] = await Promise.all([chaser.boundingBox(), target.boundingBox()]);
   expect(chaserBox).toBeTruthy();
   expect(targetBox).toBeTruthy();
   expect(Math.abs((targetBox?.y ?? 0) - (chaserBox?.y ?? 0))).toBeLessThan(30);

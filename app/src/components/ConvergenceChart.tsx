@@ -8,10 +8,13 @@ export const CHART_GEOMETRY = {
   padding: { top: 24, right: 80, bottom: 44, left: 70 },
 } as const;
 
+type ChartPoint = { year: number; chaser: number; target: number };
+const EMPTY_CHART_POINTS: ChartPoint[] = [];
+
 interface ConvergenceChartProps {
   ref?: Ref<SVGSVGElement>;
-  observed?: Array<{ year: number; chaser: number; target: number }>;
-  projection: Array<{ year: number; chaser: number; target: number }>;
+  observed?: ChartPoint[];
+  projection: ChartPoint[];
   chaserName: string;
   targetName: string;
   convergenceYear: number | null;
@@ -28,7 +31,7 @@ interface ConvergenceChartProps {
 
 export function ConvergenceChart({
   ref,
-  observed = [],
+  observed = EMPTY_CHART_POINTS,
   projection,
   chaserName,
   targetName,

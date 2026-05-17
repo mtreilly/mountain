@@ -1,0 +1,23 @@
+{
+  "ignore": {
+    "overrides": [
+      {
+        "files": [
+          "src/App.tsx",
+          "src/components/CitationPanel.tsx",
+          "src/components/ConvergenceChart.tsx",
+          "src/components/CountryPickerModal.tsx",
+          "src/components/ExportModal.tsx",
+          "src/components/GrowthRateControls.tsx",
+          "src/components/MetricSelector.tsx",
+          "src/components/SelectorsPanel.tsx",
+          "src/components/ShareCardModal.tsx",
+          "src/components/ShareMenu.tsx",
+          "src/components/ThreadGeneratorModal.tsx",
+          "src/components/implications/ImplicationsSlideOver.tsx"
+        ],
+        "rules": ["react-doctor/no-giant-component"]
+      }
+    ]
+  }
+}

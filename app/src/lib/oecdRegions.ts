@@ -43,7 +43,7 @@ export interface OECDRegionData {
 }
 
 // UK TL2 Regions (ITL1 equivalent)
-export const UK_TL2_REGIONS: OECDRegion[] = [
+const UK_TL2_REGIONS: OECDRegion[] = [
   {
     code: "UKC",
     name: "North East England",
@@ -119,7 +119,7 @@ export const UK_TL2_REGIONS: OECDRegion[] = [
 ];
 
 // US TL2 Regions (States - selected major ones)
-export const US_TL2_REGIONS: OECDRegion[] = [
+const US_TL2_REGIONS: OECDRegion[] = [
   {
     code: "US-CA",
     name: "California",
@@ -209,7 +209,7 @@ export const US_TL2_REGIONS: OECDRegion[] = [
 ];
 
 // Germany TL2 Regions (Länder)
-export const DE_TL2_REGIONS: OECDRegion[] = [
+const DE_TL2_REGIONS: OECDRegion[] = [
   {
     code: "DE1",
     name: "Baden-Württemberg",
@@ -259,7 +259,7 @@ export const DE_TL2_REGIONS: OECDRegion[] = [
 ];
 
 // France TL2 Regions
-export const FR_TL2_REGIONS: OECDRegion[] = [
+const FR_TL2_REGIONS: OECDRegion[] = [
   { code: "FR1", name: "Île-de-France", countryCode: "FRA", countryName: "France", level: "TL2" },
   {
     code: "FRB",

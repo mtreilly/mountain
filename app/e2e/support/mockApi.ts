@@ -139,6 +139,13 @@ function json(route: Route, data: unknown, status = 200) {
   });
 }
 
+function parseParamList(value: string | null) {
+  return (value || "").split(",").flatMap((item) => {
+    const normalized = item.trim().toUpperCase();
+    return normalized ? [normalized] : [];
+  });
+}
+
 export async function installApiMocks(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
@@ -154,10 +161,7 @@ export async function installApiMocks(page: Page) {
 
     if (pathname.startsWith("/api/data/")) {
       const indicator = pathname.replace("/api/data/", "").toUpperCase();
-      const requested = (url.searchParams.get("countries") || "")
-        .split(",")
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean);
+      const requested = parseParamList(url.searchParams.get("countries"));
 
       const data: Record<string, Array<{ year: number; value: number }>> = {};
       for (const iso of requested) {
@@ -175,14 +179,8 @@ export async function installApiMocks(page: Page) {
     }
 
     if (pathname === "/api/batch-data") {
-      const requestedCountries = (url.searchParams.get("countries") || "")
-        .split(",")
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean);
-      const requestedIndicators = (url.searchParams.get("indicators") || "")
-        .split(",")
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean);
+      const requestedCountries = parseParamList(url.searchParams.get("countries"));
+      const requestedIndicators = parseParamList(url.searchParams.get("indicators"));
 
       const data: Record<string, Record<string, Array<{ year: number; value: number }>>> = {};
       for (const code of requestedIndicators) {
@@ -192,10 +190,11 @@ export async function installApiMocks(page: Page) {
         }
       }
 
+      const indicatorsByCode = new Map(indicators.map((indicator) => [indicator.code, indicator]));
       const indicatorByCode: Record<string, unknown> = {};
       for (const code of requestedIndicators) {
         indicatorByCode[code] =
-          indicators.find((i) => i.code === code) ||
+          indicatorsByCode.get(code) ||
           ({
             code,
             name: code,

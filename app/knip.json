@@ -1,0 +1,10 @@
+{
+  "entry": [
+    "src/main.tsx",
+    "src/**/*.test.{ts,tsx}",
+    "scripts/**/*.ts",
+    "e2e/**/*.ts",
+    "functions/**/*.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "e2e/**/*.ts", "functions/**/*.ts"]
+}

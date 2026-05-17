@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { HeadlineData } from "../lib/headlineGenerator";
@@ -62,6 +62,15 @@ export function ShareMenu({
     setPopover(null);
     if (opts?.restoreFocus) queueMicrotask(() => triggerRef.current?.focus());
   }, []);
+  const closeFromEffect = useEffectEvent((opts?: { restoreFocus?: boolean }) => {
+    close(opts);
+  });
+  const updatePopoverFromEffect = useEffectEvent(() => {
+    updatePopover();
+  });
+  const focusFirstMenuItemFromEffect = useEffectEvent(() => {
+    focusFirstMenuItem();
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,10 +80,10 @@ export function ShareMenu({
       if (!target) return;
       if (triggerRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
-      close();
+      closeFromEffect();
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close({ restoreFocus: true });
+      if (e.key === "Escape") closeFromEffect({ restoreFocus: true });
     };
 
     document.addEventListener("pointerdown", onPointerDown, true);
@@ -83,7 +92,7 @@ export function ShareMenu({
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [close, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,31 +102,31 @@ export function ShareMenu({
       if (!target) return;
       if (triggerRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
-      close();
+      closeFromEffect();
     };
 
     document.addEventListener("focusin", onFocusIn);
     return () => {
       document.removeEventListener("focusin", onFocusIn);
     };
-  }, [close, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const onResize = () => updatePopover();
-    const onScroll = () => updatePopover();
+    const onResize = () => updatePopoverFromEffect();
+    const onScroll = () => updatePopoverFromEffect();
     window.addEventListener("resize", onResize);
     window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll, true);
     };
-  }, [isOpen, updatePopover]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
-    queueMicrotask(() => focusFirstMenuItem());
-  }, [focusFirstMenuItem, isOpen]);
+    queueMicrotask(() => focusFirstMenuItemFromEffect());
+  }, [isOpen]);
 
   return (
     <div className="relative">

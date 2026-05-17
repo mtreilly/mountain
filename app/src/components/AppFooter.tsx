@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { getDataSourceBaseUrl, getDataSourceLicense } from "../lib/dataSourceUrls";
@@ -9,13 +9,14 @@ const SOURCE_ATTRIBUTIONS: Record<string, { text: string; url: string | null }> 
     url: "https://www.aeaweb.org/articles?id=10.1257/aer.20130954",
   },
 };
+const EMPTY_DATA_SOURCE_NAMES: string[] = [];
 
 export function AppFooter({
   comparisonMode = "countries",
   countriesCount,
   regionsCount,
   dataSourceName,
-  dataSourceNames = [],
+  dataSourceNames = EMPTY_DATA_SOURCE_NAMES,
 }: {
   comparisonMode?: "countries" | "regions";
   countriesCount: number;
@@ -67,6 +68,9 @@ export function AppFooter({
   const handleClose = useCallback(() => {
     setIsDataSourcesOpen(false);
   }, []);
+  const closeFromEffect = useEffectEvent(() => {
+    handleClose();
+  });
 
   useEffect(() => {
     if (!isDataSourcesOpen) return;
@@ -77,7 +81,7 @@ export function AppFooter({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        handleClose();
+        closeFromEffect();
       }
     };
 
@@ -85,7 +89,7 @@ export function AppFooter({
       const target = event.target as Node | null;
       if (!target) return;
       if (modalRef.current?.contains(target)) return;
-      handleClose();
+      closeFromEffect();
     };
 
     document.addEventListener("keydown", onKeyDown);
@@ -100,7 +104,7 @@ export function AppFooter({
         prev.focus();
       }
     };
-  }, [handleClose, isDataSourcesOpen]);
+  }, [isDataSourcesOpen]);
 
   return (
     <footer className="mt-10 lg:mt-12 pt-6 border-t border-surface">

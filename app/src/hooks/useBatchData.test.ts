@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { createQueryWrapper } from "../test/queryClient";
 import { useBatchData } from "./useBatchData";
 
 describe("useBatchData", () => {
@@ -32,7 +33,9 @@ describe("useBatchData", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    const { result } = renderHook(() => useBatchData({ countries, indicators, startYear: 2000 }));
+    const { result } = renderHook(() => useBatchData({ countries, indicators, startYear: 2000 }), {
+      wrapper: createQueryWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.getLatestValue("GDP_PCAP_PPP", "NGA")).toBe(5400);
@@ -53,12 +56,14 @@ describe("useBatchData", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    const { result } = renderHook(() =>
-      useBatchData({
-        countries,
-        indicators,
-        enabled: false,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBatchData({
+          countries,
+          indicators,
+          enabled: false,
+        }),
+      { wrapper: createQueryWrapper() },
     );
 
     expect(fetchMock).not.toHaveBeenCalled();

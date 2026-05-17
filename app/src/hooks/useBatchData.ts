@@ -1,13 +1,37 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Indicator } from "../types";
 
-export interface BatchSeriesPoint {
+interface BatchSeriesPoint {
   year: number;
   value: number;
   source_vintage?: string | null;
 }
 
-export type BatchSeries = Record<string, Record<string, BatchSeriesPoint[]>>; // indicator -> iso -> points
+type BatchSeries = Record<string, Record<string, BatchSeriesPoint[]>>; // indicator -> iso -> points
+
+async function fetchBatchData(params: {
+  countriesKey: string;
+  indicatorsKey: string;
+  startYear: number;
+  endYear?: number;
+  includeSourceVintage: boolean;
+  signal?: AbortSignal;
+}) {
+  const qs = new URLSearchParams({
+    countries: params.countriesKey,
+    indicators: params.indicatorsKey,
+    start_year: String(params.startYear),
+  });
+  if (params.endYear != null) qs.set("end_year", String(params.endYear));
+  if (params.includeSourceVintage) qs.set("include_source_vintage", "1");
+
+  const res = await fetch(`/api/batch-data?${qs}`, { signal: params.signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as {
+    data?: BatchSeries;
+    indicators?: Record<string, Indicator>;
+  };
+}
 
 export function useBatchData(params: {
   countries: string[];
@@ -26,65 +50,27 @@ export function useBatchData(params: {
     includeSourceVintage = false,
   } = params;
 
-  const [data, setData] = useState<BatchSeries>({});
-  const [indicatorByCode, setIndicatorByCode] = useState<Record<string, Indicator>>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const countriesKey = countries.join(",");
   const indicatorsKey = indicators.join(",");
+  const queryEnabled = enabled && countries.length > 0 && indicators.length > 0;
 
-  useEffect(() => {
-    if (!enabled) return;
-    if (countries.length === 0 || indicators.length === 0) return;
-    const controller = new AbortController();
-    let isActive = true;
+  const query = useQuery({
+    queryKey: ["batch-data", countriesKey, indicatorsKey, startYear, endYear, includeSourceVintage],
+    queryFn: ({ signal }) =>
+      fetchBatchData({
+        countriesKey,
+        indicatorsKey,
+        startYear,
+        endYear,
+        includeSourceVintage,
+        signal,
+      }),
+    enabled: queryEnabled,
+  });
 
-    queueMicrotask(() => {
-      if (!isActive) return;
-      setLoading(true);
-      setError(null);
-    });
-
-    const qs = new URLSearchParams({
-      countries: countriesKey,
-      indicators: indicatorsKey,
-      start_year: String(startYear),
-    });
-    if (endYear != null) qs.set("end_year", String(endYear));
-    if (includeSourceVintage) qs.set("include_source_vintage", "1");
-
-    fetch(`/api/batch-data?${qs}`, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((result) => {
-        if (!isActive) return;
-        setData(result.data || {});
-        setIndicatorByCode(result.indicators || {});
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setError(err.message);
-        setLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, [
-    countries.length,
-    countriesKey,
-    endYear,
-    enabled,
-    includeSourceVintage,
-    indicators.length,
-    indicatorsKey,
-    startYear,
-  ]);
+  const data = query.data?.data ?? {};
+  const indicatorByCode = query.data?.indicators ?? {};
+  const error = query.error instanceof Error ? query.error.message : null;
 
   const getLatestValue = (indicator: string, iso: string): number | null => {
     const pts = data[indicator]?.[iso];
@@ -94,5 +80,11 @@ export function useBatchData(params: {
     return best.value;
   };
 
-  return { data, indicatorByCode, loading, error, getLatestValue };
+  return {
+    data,
+    indicatorByCode,
+    loading: queryEnabled ? query.isLoading || query.isFetching : false,
+    error,
+    getLatestValue,
+  };
 }

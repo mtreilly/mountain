@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -60,6 +60,72 @@ export function CitationPanel({
     onClose();
   }, [onClose]);
 
+  const handleDocumentKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      handleClose();
+      return;
+    }
+
+    if (e.key === "Tab") {
+      const root = modalRef.current;
+      if (!root) return;
+      const focusables = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (active && !root.contains(active)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      }
+
+      return;
+    }
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const currentIndex = FORMAT_KEYS.findIndex((f) => f.key === selectedFormat);
+      if (currentIndex === -1) return;
+
+      const newIndex =
+        e.key === "ArrowLeft"
+          ? currentIndex === 0
+            ? FORMAT_KEYS.length - 1
+            : currentIndex - 1
+          : currentIndex === FORMAT_KEYS.length - 1
+            ? 0
+            : currentIndex + 1;
+
+      setSelectedFormat(FORMAT_KEYS[newIndex].key);
+      formatRefs.current[newIndex]?.focus();
+    }
+  });
+
+  const handleDocumentPointerDown = useEffectEvent((e: PointerEvent) => {
+    const target = e.target as Node | null;
+    if (!target) return;
+    if (modalRef.current?.contains(target)) return;
+    handleClose();
+  });
+
   // Manage focus when opening/closing
   useEffect(() => {
     if (!isOpen) return;
@@ -78,81 +144,16 @@ export function CitationPanel({
   useEffect(() => {
     if (!isOpen) return;
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-        return;
-      }
-
-      if (e.key === "Tab") {
-        const root = modalRef.current;
-        if (!root) return;
-        const focusables = Array.from(
-          root.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-          ),
-        ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
-
-        if (focusables.length === 0) {
-          e.preventDefault();
-          return;
-        }
-
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        const active = document.activeElement as HTMLElement | null;
-
-        if (active && !root.contains(active)) {
-          e.preventDefault();
-          (e.shiftKey ? last : first).focus();
-          return;
-        }
-
-        if (!e.shiftKey && active === last) {
-          e.preventDefault();
-          first.focus();
-        } else if (e.shiftKey && active === first) {
-          e.preventDefault();
-          last.focus();
-        }
-
-        return;
-      }
-
-      // Arrow key navigation between format tabs
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const currentIndex = FORMAT_KEYS.findIndex((f) => f.key === selectedFormat);
-        if (currentIndex === -1) return;
-
-        let newIndex: number;
-        if (e.key === "ArrowLeft") {
-          newIndex = currentIndex === 0 ? FORMAT_KEYS.length - 1 : currentIndex - 1;
-        } else {
-          newIndex = currentIndex === FORMAT_KEYS.length - 1 ? 0 : currentIndex + 1;
-        }
-
-        setSelectedFormat(FORMAT_KEYS[newIndex].key);
-        formatRefs.current[newIndex]?.focus();
-      }
-    };
-
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (modalRef.current?.contains(target)) return;
-      handleClose();
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", handleDocumentKeyDown);
+    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+      document.removeEventListener("pointerdown", handleDocumentPointerDown, true);
       document.body.style.overflow = "";
     };
-  }, [isOpen, handleClose, selectedFormat]);
+  }, [isOpen]);
 
   // Generate citations
   const citationContext = useMemo(() => {

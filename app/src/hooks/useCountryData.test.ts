@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { createQueryWrapper } from "../test/queryClient";
 import { useCountryData } from "./useCountryData";
 
 describe("useCountryData", () => {
@@ -17,8 +18,9 @@ describe("useCountryData", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    const { result } = renderHook(() =>
-      useCountryData({ countries: ["NGA", "USA"], indicator: "GDP_PCAP_PPP" }),
+    const { result } = renderHook(
+      () => useCountryData({ countries: ["NGA", "USA"], indicator: "GDP_PCAP_PPP" }),
+      { wrapper: createQueryWrapper() },
     );
 
     await waitFor(() => {
@@ -39,13 +41,15 @@ describe("useCountryData", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    const { result } = renderHook(() =>
-      useCountryData({
-        countries: ["NGA", "USA"],
-        indicator: "BAD_CODE",
-        enabled: false,
-        invalidIndicator: true,
-      }),
+    const { result } = renderHook(
+      () =>
+        useCountryData({
+          countries: ["NGA", "USA"],
+          indicator: "BAD_CODE",
+          enabled: false,
+          invalidIndicator: true,
+        }),
+      { wrapper: createQueryWrapper() },
     );
 
     expect(fetchMock).not.toHaveBeenCalled();

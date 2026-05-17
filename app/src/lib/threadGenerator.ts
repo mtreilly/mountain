@@ -6,7 +6,7 @@ import { svgStringToPngBlob } from "./chartExport";
 import { formatNumber, formatPercent, formatYears } from "./convergence";
 import { downloadBlob } from "./download";
 
-export type ThreadCardType = "main" | "sensitivity" | "historical" | "implications";
+type ThreadCardType = "main" | "sensitivity" | "historical" | "implications";
 
 export interface ThreadCard {
   type: ThreadCardType;
@@ -222,9 +222,15 @@ function getCardFilename(type: ThreadCardType): string {
 export async function downloadThreadZip(pkg: ThreadPackage): Promise<void> {
   const zip = new JSZip();
 
+  const pngFiles = await Promise.all(
+    pkg.cards.map(async (card) => ({
+      card,
+      pngBlob: await svgStringToPngBlob(card.svgString, CARD_DIMENSIONS, 2),
+    })),
+  );
+
   // Add PNG images
-  for (const card of pkg.cards) {
-    const pngBlob = await svgStringToPngBlob(card.svgString, CARD_DIMENSIONS, 2);
+  for (const { card, pngBlob } of pngFiles) {
     const filename = `0${card.index}-${getCardFilename(card.type)}.png`;
     zip.file(filename, pngBlob);
   }

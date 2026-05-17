@@ -14,7 +14,7 @@ export function loadDotEnv(cwd: string = process.cwd()) {
   for (const lineRaw of raw.split(/\r?\n/)) {
     const line = lineRaw.trim();
     if (!line || line.startsWith("#")) continue;
-    const idx = line.indexOf("=");
+    const idx = line.search("=");
     if (idx === -1) continue;
 
     const key = line.slice(0, idx).trim();

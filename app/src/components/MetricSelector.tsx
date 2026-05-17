@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { Indicator } from "../types";
@@ -81,6 +81,9 @@ export function MetricSelector({
     setActiveIndex(-1);
     setPopover(null);
   }, []);
+  const closeFromEffect = useEffectEvent(() => {
+    close();
+  });
 
   const open = () => {
     if (disabled) return;
@@ -115,11 +118,11 @@ export function MetricSelector({
       if (!target) return;
       if (triggerRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
-      close();
+      closeFromEffect();
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") closeFromEffect();
     };
 
     document.addEventListener("pointerdown", onPointerDown, true);
@@ -128,7 +131,7 @@ export function MetricSelector({
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [close, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && isMobile) {

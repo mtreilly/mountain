@@ -1,26 +1,22 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Country } from "../types";
 
+async function fetchCountries({ signal }: { signal?: AbortSignal }) {
+  const res = await fetch("/api/countries", { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.data || []) as Country[];
+}
+
 export function useCountries() {
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ["countries"],
+    queryFn: ({ signal }) => fetchCountries({ signal }),
+  });
 
-  useEffect(() => {
-    fetch("/api/countries")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setCountries(data.data || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  return { countries, loading, error };
+  return {
+    countries: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : null,
+  };
 }

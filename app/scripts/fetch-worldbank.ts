@@ -79,6 +79,7 @@ async function fetchIndicatorData(
   const url = `${WORLD_BANK_API}/country/all/indicator/${indicatorCode}?format=json&date=${startYear}:${endYear}&per_page=20000${
     source ? `&source=${encodeURIComponent(source)}` : ""
   }`;
+  // react-doctor-disable-next-line react-doctor/async-defer-await
   const [, data] = await fetchJSON<[unknown, WBDataPoint[] | null]>(url);
 
   if (!data) {
@@ -124,11 +125,16 @@ async function main() {
   const countryByIso2 = new Map(countries.map((c) => [c.iso2Code, c]));
   console.error(`Country maps: ${countryByIso3.size} by ISO3, ${countryByIso2.size} by ISO2`);
 
-  // Fetch and generate data for each indicator
-  for (const indicator of INDICATORS) {
-    console.log(`\n-- ${indicator.name} data`);
+  const indicatorData = await Promise.all(
+    INDICATORS.map(async (indicator) => ({
+      indicator,
+      data: await fetchIndicatorData(indicator.code, indicator.source),
+    })),
+  );
 
-    const data = await fetchIndicatorData(indicator.code, indicator.source);
+  // Generate data for each indicator
+  for (const { indicator, data } of indicatorData) {
+    console.log(`\n-- ${indicator.name} data`);
 
     // Group by country (ISO3) to reduce queries
     // API data uses ISO2 codes, so we need to look up by ISO2 and store by ISO3
@@ -169,6 +175,7 @@ async function main() {
     }
 
     // Small delay to be nice to the API
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     await new Promise((r) => setTimeout(r, 500));
   }
 

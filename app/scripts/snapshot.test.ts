@@ -345,6 +345,7 @@ async function run() {
 
   for (const [name, fn] of tests) {
     try {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
       await fn();
       process.stdout.write(`ok - ${name}\n`);
     } catch (err) {

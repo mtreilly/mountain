@@ -87,6 +87,16 @@ import {
 import { generateCaptions } from "../src/lib/threadGenerator";
 import type { Indicator } from "../src/types";
 
+const BIBTEX_ESCAPED_CHAR_PATTERNS = new Map([
+  ["&", /(^|[^\\])&/g],
+  ["%", /(^|[^\\])%/g],
+  ["$", /(^|[^\\])\$/g],
+  ["#", /(^|[^\\])#/g],
+  ["_", /(^|[^\\])_/g],
+  ["{", /(^|[^\\])\{/g],
+  ["}", /(^|[^\\])\}/g],
+]);
+
 function approxEqual(a: number, b: number, rel = 1e-10, abs = 1e-12) {
   const diff = Math.abs(a - b);
   if (diff <= abs) return true;
@@ -823,8 +833,7 @@ function testToolCitationBibtexEscapesTitle() {
 
       const titleField = titleLine!.slice(titleLine!.indexOf("{") + 1, titleLine!.lastIndexOf("}"));
       // Characters we escape for BibTeX must only appear with a leading backslash.
-      for (const ch of ["&", "%", "$", "#", "_", "{", "}"]) {
-        const re = new RegExp(`(^|[^\\\\])\\${ch}`, "g");
+      for (const [ch, re] of BIBTEX_ESCAPED_CHAR_PATTERNS) {
         assert.ok(!re.test(titleField), `unescaped ${ch} in title`);
       }
     }),
@@ -1260,9 +1269,9 @@ function testThreadCaptionsShape() {
       assert.ok(caps[2].startsWith("3/4 "));
       assert.ok(caps[3].startsWith("4/4 "));
       for (const c of caps) {
-        assert.ok(!c.includes("undefined"));
-        assert.ok(!c.includes("NaN"));
-        assert.ok(!c.includes("Infinity"));
+        assert.ok(!/undefined/.test(c));
+        assert.ok(!/NaN/.test(c));
+        assert.ok(!/Infinity/.test(c));
       }
     }),
     { numRuns: 120 },
@@ -1274,7 +1283,12 @@ function isRegionCodeLike(s: string) {
   return /^[A-Z]{2,3}(-[A-Z]{2})?[0-9]?$/.test(s);
 }
 
+function normalizeRegionCodeInput(s: string) {
+  return s.trim().toUpperCase();
+}
+
 function testShareStateRegionsModeParsing() {
+  // react-doctor-disable-next-line react-doctor/js-combine-iterations
   const arbValid = fc
     .oneof(
       fc.constantFrom(...OECD_REGION_CODES),
@@ -1292,14 +1306,17 @@ function testShareStateRegionsModeParsing() {
         })
         .map(({ a, b, c, dash, d, e, digit }) => `${a}${b}${c}${dash ? `-${d}${e}` : ""}${digit}`),
     )
-    .map((s) => s.trim().toUpperCase())
-    .filter((s) => isRegionCodeLike(s));
+    .filter((s) => isRegionCodeLike(normalizeRegionCodeInput(s)))
+    .map(normalizeRegionCodeInput);
 
+  // react-doctor-disable-next-line react-doctor/js-combine-iterations
   const arbInvalid = fc
     .string({ minLength: 1, maxLength: 12 })
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
-    .filter((s) => !isRegionCodeLike(s.toUpperCase()));
+    .filter((s) => {
+      const trimmed = s.trim();
+      return trimmed.length > 0 && !isRegionCodeLike(trimmed.toUpperCase());
+    })
+    .map((s) => s.trim());
 
   fc.assert(
     fc.property(arbValid, arbValid, (cr, tr) => {

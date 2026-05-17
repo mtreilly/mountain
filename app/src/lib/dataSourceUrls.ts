@@ -4,14 +4,6 @@
  * Maps data sources to their original URLs for proper attribution
  */
 
-export type DataSourceName =
-  | "World Bank"
-  | "Penn World Table"
-  | "UNDP"
-  | "Our World in Data"
-  | "OECD"
-  | string;
-
 /**
  * URL generators for each data source
  * Takes the source_code and returns a direct link to the data
@@ -123,7 +115,7 @@ export function getWorldBankUrl(indicatorCode: string): string | null {
 /**
  * License information for data sources
  */
-export const DATA_SOURCE_LICENSES: Record<string, { name: string; url: string }> = {
+const DATA_SOURCE_LICENSES: Record<string, { name: string; url: string }> = {
   "World Bank": {
     name: "CC-BY 4.0",
     url: "https://datacatalog.worldbank.org/public-licenses#cc-by",

@@ -3,7 +3,7 @@
  * Calculates how ±1% changes in growth rates affect convergence timelines.
  */
 
-export interface SensitivityScenario {
+interface SensitivityScenario {
   label: string;
   chaserGrowth: number;
   targetGrowth: number;

@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { createQueryWrapper } from "../test/queryClient";
 import { useIndicators } from "./useIndicators";
 
 describe("useIndicators", () => {
@@ -21,13 +22,16 @@ describe("useIndicators", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
-    const { result } = renderHook(() => useIndicators());
+    const { result } = renderHook(() => useIndicators(), { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/indicators");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/indicators",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(result.current.error).toBeNull();
     expect(result.current.indicators).toHaveLength(1);
     expect(result.current.indicators[0].code).toBe("GDP_PCAP_PPP");
@@ -36,7 +40,7 @@ describe("useIndicators", () => {
   it("sets error on HTTP failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
 
-    const { result } = renderHook(() => useIndicators());
+    const { result } = renderHook(() => useIndicators(), { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

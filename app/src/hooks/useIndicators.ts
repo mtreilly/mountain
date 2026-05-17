@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Indicator } from "../types";
 
 const VISIBLE_METRIC_CODES = [
@@ -14,30 +14,25 @@ const METRIC_ORDER: Record<string, number> = Object.fromEntries(
   VISIBLE_METRIC_CODES.map((code, index) => [code, index]),
 );
 
+async function fetchIndicators({ signal }: { signal?: AbortSignal }) {
+  const res = await fetch("/api/indicators", { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const all: Indicator[] = data.data || [];
+  return all
+    .filter((ind) => VISIBLE_METRIC_SET.has(ind.code))
+    .toSorted((a, b) => (METRIC_ORDER[a.code] ?? 99) - (METRIC_ORDER[b.code] ?? 99));
+}
+
 export function useIndicators() {
-  const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ["indicators"],
+    queryFn: ({ signal }) => fetchIndicators({ signal }),
+  });
 
-  useEffect(() => {
-    fetch("/api/indicators")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const all: Indicator[] = data.data || [];
-        const filtered = all
-          .filter((ind) => VISIBLE_METRIC_SET.has(ind.code))
-          .sort((a, b) => (METRIC_ORDER[a.code] ?? 99) - (METRIC_ORDER[b.code] ?? 99));
-        setIndicators(filtered);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  return { indicators, loading, error };
+  return {
+    indicators: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : null,
+  };
 }

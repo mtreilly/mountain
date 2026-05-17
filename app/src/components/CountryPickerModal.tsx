@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { Country } from "../types";
@@ -58,6 +58,10 @@ const G20_ISO3 = new Set([
 ]);
 
 const BRICS_ISO3 = new Set(["BRA", "RUS", "IND", "CHN", "ZAF"]);
+
+function escapeSearchPattern(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 const OECD_ISO3 = new Set([
   "AUS",
@@ -233,6 +237,9 @@ export function CountryPickerModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const closeFromEffect = useEffectEvent(() => {
+    onClose();
+  });
   const [groupKey, setGroupKey] = useState<GroupKey>("all");
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [incomeFilter, setIncomeFilter] = useState<string>("all");
@@ -255,23 +262,27 @@ export function CountryPickerModal({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const queryPattern = q ? new RegExp(escapeSearchPattern(q), "i") : null;
     const group = GROUPS.find((g) => g.key === groupKey) ?? GROUPS[0];
 
-    return countries
-      .filter((c) => c.iso_alpha3 !== excludeIso)
-      .filter((c) => group.matches(c.iso_alpha3))
-      .filter((c) =>
-        regionFilter === "all" ? true : (c.region?.trim() || "Other") === regionFilter,
-      )
-      .filter((c) =>
-        incomeFilter === "all" ? true : (c.income_group?.trim() || "Other") === incomeFilter,
-      )
-      .filter((c) => {
-        if (!q) return true;
-        return c.name.toLowerCase().includes(q) || c.iso_alpha3.toLowerCase().includes(q);
-      })
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const out: Country[] = [];
+    for (const country of countries) {
+      if (country.iso_alpha3 === excludeIso) continue;
+      if (!group.matches(country.iso_alpha3)) continue;
+      if (regionFilter !== "all" && (country.region?.trim() || "Other") !== regionFilter) continue;
+      if (incomeFilter !== "all" && (country.income_group?.trim() || "Other") !== incomeFilter) {
+        continue;
+      }
+      if (
+        queryPattern &&
+        !queryPattern.test(country.name) &&
+        !queryPattern.test(country.iso_alpha3)
+      ) {
+        continue;
+      }
+      out.push(country);
+    }
+    return out.toSorted((a, b) => a.name.localeCompare(b.name));
   }, [countries, excludeIso, groupKey, incomeFilter, query, regionFilter]);
 
   useEffect(() => {
@@ -290,7 +301,7 @@ export function CountryPickerModal({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        closeFromEffect();
         return;
       }
       if (e.key !== "Tab") return;
@@ -319,7 +330,7 @@ export function CountryPickerModal({
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  }, [open]);
 
   const colorConfig =
     color === "target"

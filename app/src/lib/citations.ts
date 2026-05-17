@@ -12,7 +12,7 @@ interface IndicatorInfo {
 }
 
 export type CitationFormat = "bibtex" | "apa" | "chicago" | "plaintext";
-export const DEFAULT_TOOL_AUTHOR = "Micheál Reilly";
+const DEFAULT_TOOL_AUTHOR = "Micheál Reilly";
 
 export interface CitationContext {
   // Tool info

@@ -74,10 +74,12 @@ function tryExtractOptionValues(payload: unknown): Array<string | number> {
 }
 
 function maxYear(values: Array<string | number>) {
-  const years = values
-    .map((x) => (typeof x === "string" ? parseYearMaybe(x) : x))
-    .filter((x): x is number => typeof x === "number" && Number.isFinite(x))
-    .sort((a, b) => a - b);
+  const years = values.reduce<number[]>((out, value) => {
+    const year = typeof value === "string" ? parseYearMaybe(value) : value;
+    if (typeof year === "number" && Number.isFinite(year)) out.push(year);
+    return out;
+  }, []);
+  years.sort((a, b) => a - b);
   return years.length ? years[years.length - 1] : null;
 }
 

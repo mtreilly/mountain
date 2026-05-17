@@ -1,7 +1,11 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { OECDRegion } from "../lib/oecdRegions";
+
+function escapeSearchPattern(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function RegionPickerModal({
   open,
@@ -29,29 +33,35 @@ export function RegionPickerModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const closeFromEffect = useEffectEvent(() => {
+    onClose();
+  });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return regions
-      .filter((r) => r.code !== excludeCode)
-      .filter((r) => (countryCode ? r.countryCode === countryCode : true))
-      .filter((r) => {
-        if (!q) return true;
-        return (
-          r.name.toLowerCase().includes(q) ||
-          r.code.toLowerCase().includes(q) ||
-          r.countryName.toLowerCase().includes(q) ||
-          r.countryCode.toLowerCase().includes(q)
-        );
-      })
-      .slice()
-      .sort((a, b) => {
-        const byCountry = a.countryName.localeCompare(b.countryName);
-        if (byCountry !== 0) return byCountry;
-        const byName = a.name.localeCompare(b.name);
-        if (byName !== 0) return byName;
-        return a.code.localeCompare(b.code);
-      });
+    const queryPattern = q ? new RegExp(escapeSearchPattern(q), "i") : null;
+    const out: OECDRegion[] = [];
+    for (const region of regions) {
+      if (region.code === excludeCode) continue;
+      if (countryCode && region.countryCode !== countryCode) continue;
+      if (
+        queryPattern &&
+        !queryPattern.test(region.name) &&
+        !queryPattern.test(region.code) &&
+        !queryPattern.test(region.countryName) &&
+        !queryPattern.test(region.countryCode)
+      ) {
+        continue;
+      }
+      out.push(region);
+    }
+    return out.toSorted((a, b) => {
+      const byCountry = a.countryName.localeCompare(b.countryName);
+      if (byCountry !== 0) return byCountry;
+      const byName = a.name.localeCompare(b.name);
+      if (byName !== 0) return byName;
+      return a.code.localeCompare(b.code);
+    });
   }, [countryCode, excludeCode, query, regions]);
 
   useEffect(() => {
@@ -70,7 +80,7 @@ export function RegionPickerModal({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        closeFromEffect();
         return;
       }
       if (e.key !== "Tab") return;
@@ -99,7 +109,7 @@ export function RegionPickerModal({
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  }, [open]);
 
   const colorConfig =
     color === "target"

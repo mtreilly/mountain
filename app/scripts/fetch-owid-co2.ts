@@ -64,16 +64,16 @@ async function* readLines(stream: ReadableStream<Uint8Array>) {
   let buffer = "";
 
   while (true) {
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    let idx = buffer.indexOf("\n");
-    while (idx !== -1) {
-      const line = buffer.slice(0, idx).replace(/\r$/, "");
-      buffer = buffer.slice(idx + 1);
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\r$/, "");
       yield line;
-      idx = buffer.indexOf("\n");
     }
   }
 
@@ -105,9 +105,10 @@ VALUES ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Dat
   for await (const line of readLines(res.body)) {
     if (!header) {
       header = parseCsvLine(line);
-      idxIso = header.indexOf("iso_code");
-      idxYear = header.indexOf("year");
-      idxCo2PerCap = header.indexOf("co2_per_capita");
+      const headerIndex = new Map(header.map((column, index) => [column, index]));
+      idxIso = headerIndex.get("iso_code") ?? -1;
+      idxYear = headerIndex.get("year") ?? -1;
+      idxCo2PerCap = headerIndex.get("co2_per_capita") ?? -1;
 
       if (idxIso === -1 || idxYear === -1 || idxCo2PerCap === -1) {
         throw new Error(`OWID CSV missing required columns: iso_code/year/co2_per_capita`);

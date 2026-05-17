@@ -190,7 +190,7 @@ export function useImplicationsComputed({
         gdpPcapFuture: gdpFuture,
       });
 
-      const isPercent = (indicator?.unit || "").toLowerCase().includes("percent");
+      const isPercent = /percent/.test((indicator?.unit || "").toLowerCase());
       const deltaLabel =
         impliedScenario == null || current == null
           ? null
