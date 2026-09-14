@@ -7,11 +7,16 @@ import { formatNumber, formatPercent, formatYears } from "./convergence";
 import { downloadBlob } from "./download";
 import type { ImplicationsSnapshot } from "./implicationsSnapshot";
 
-type ThreadCardType = "main" | "sensitivity" | "historical" | "implications";
+type ThreadCardType =
+  | "main"
+  | "sensitivity"
+  | "historical"
+  | "implications"
+  | "implications-assumptions";
 
 export interface ThreadCard {
   type: ThreadCardType;
-  svgString: string;
+  svgString: string | null;
   caption: string;
   index: number;
 }
@@ -54,7 +59,7 @@ function generateMainCaption(ctx: CaptionContext): string {
   const { chaserName, targetName, yearsToConvergence, chaserGrowthRate, targetGrowthRate } = ctx;
 
   if (yearsToConvergence === 0) {
-    return `1/4 ${chaserName} is already ahead of ${targetName}.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the lead compounds over time.\n\n#economics #convergence`;
+    return `1/5 ${chaserName} is already ahead of ${targetName}.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the lead compounds over time.\n\n#economics #convergence`;
   }
 
   if (
@@ -62,10 +67,10 @@ function generateMainCaption(ctx: CaptionContext): string {
     !Number.isFinite(yearsToConvergence) ||
     yearsToConvergence < 0
   ) {
-    return `1/4 ${chaserName} won't catch ${targetName} at current rates.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the gap keeps growing.\n\n#economics #convergence`;
+    return `1/5 ${chaserName} won't catch ${targetName} at current rates.\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the gap keeps growing.\n\n#economics #convergence`;
   }
 
-  return `1/4 ${chaserName} catches ${targetName} in ${formatYears(yearsToConvergence)}\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the math adds up.\n\n#economics #convergence`;
+  return `1/5 ${chaserName} catches ${targetName} in ${formatYears(yearsToConvergence)}\n\nAt ${formatPercent(chaserGrowthRate)}/yr vs ${formatPercent(targetGrowthRate)}/yr, the math adds up.\n\n#economics #convergence`;
 }
 
 /**
@@ -80,7 +85,7 @@ function generateSensitivityCaption(ctx: CaptionContext): string {
     return `${Math.round(years)} years`;
   };
 
-  return `2/4 What if growth changes by ±1%?\n\n• Optimistic: ${formatScenario(optimisticYears)}\n• Baseline: ${formatScenario(yearsToConvergence)}\n• Pessimistic: ${formatScenario(pessimisticYears)}\n\nSmall differences compound dramatically.`;
+  return `2/5 What if growth changes by ±1%?\n\n• Optimistic: ${formatScenario(optimisticYears)}\n• Baseline: ${formatScenario(yearsToConvergence)}\n• Pessimistic: ${formatScenario(pessimisticYears)}\n\nSmall differences compound dramatically.`;
 }
 
 /**
@@ -90,7 +95,7 @@ function generateHistoricalCaption(ctx: CaptionContext): string {
   const { chaserName, targetName, historicalData } = ctx;
 
   if (!historicalData) {
-    return `3/4 Where they started:\n\n${chaserName} and ${targetName} have had very different growth trajectories.`;
+    return `3/5 Where they started:\n\n${chaserName} and ${targetName} have had very different growth trajectories.`;
   }
 
   const { chaserStart, chaserCurrent, targetStart, targetCurrent } = historicalData;
@@ -114,17 +119,20 @@ function generateHistoricalCaption(ctx: CaptionContext): string {
       ? `${targetName}: $${formatNumber(targetStart.value)} → $${formatNumber(targetCurrent.value)} (${targetMult}×)`
       : `${targetName}: data unavailable`;
 
-  return `3/4 Where they started:\n\n${chaserLine}\n${targetLine}`;
+  return `3/5 Where they started:\n\n${chaserLine}\n${targetLine}`;
 }
 
 /**
- * Generate caption for the implications summary card (Card 4).
+ * Generate captions for the implications result and its assumptions (Tweets 4–5).
  */
-function generateImplicationsCaption(ctx: CaptionContext): string {
+function generateImplicationsCaptions(ctx: CaptionContext): [string, string] {
   const { chaserName, implicationsData, appUrl } = ctx;
 
   if (!implicationsData) {
-    return `4/4 Electricity implications are unavailable for ${chaserName}.\n\nExplore the scenario yourself:\n${appUrl}`;
+    return [
+      `4/5 Electricity implications are unavailable for ${chaserName}.`,
+      `5/5 Explore the scenario yourself:\n${appUrl}`,
+    ];
   }
 
   const electricity = implicationsData.electricity;
@@ -147,19 +155,23 @@ function generateImplicationsCaption(ctx: CaptionContext): string {
   ].filter((line): line is string => line != null);
 
   const scenarioName = controls.scenario.replace(/([A-Z])/g, " $1").toLowerCase();
-  const assumptions = `Assumptions: ${scenarioName}${controls.customized ? " with custom inputs" : ""}, UN ${controls.populationVariant} population, ${controls.assumptions.gridLossPct}% grid losses, ${controls.assumptions.netImportsPct}% net imports, ${controls.template}-like development path.`;
-  return `4/4 An illustrative ${implicationsData.horizon.years}-year electricity scenario for ${chaserName}:\n\n${scenarioLines.join("\n")}\n\n${assumptions} Scenario, not forecast.\n\n${appUrl}`;
+  const assumptions = `${scenarioName}${controls.customized ? " (custom)" : ""} · UN ${controls.populationVariant} population · ${controls.assumptions.gridLossPct}% grid losses · ${controls.assumptions.netImportsPct}% net imports · ${controls.template} path`;
+  return [
+    `4/5 An illustrative ${implicationsData.horizon.years}-year electricity scenario for ${chaserName}:\n\n${scenarioLines.join("\n")}`,
+    `5/5 ${assumptions}\n\nIllustrative, not a forecast.\n\n${appUrl}`,
+  ];
 }
 
 /**
  * Generate all captions for a thread.
  */
 export function generateCaptions(ctx: CaptionContext): string[] {
+  const implicationCaptions = generateImplicationsCaptions(ctx);
   return [
     generateMainCaption(ctx),
     generateSensitivityCaption(ctx),
     generateHistoricalCaption(ctx),
-    generateImplicationsCaption(ctx),
+    ...implicationCaptions,
   ];
 }
 
@@ -170,8 +182,12 @@ function generateCaptionsFile(cards: ThreadCard[]): string {
   const lines = ["=== TWITTER THREAD ===", ""];
 
   for (const card of cards) {
-    lines.push(`--- CARD ${card.index}/4 ---`);
-    lines.push(`[Paste with 0${card.index}-${getCardFilename(card.type)}.png]`);
+    lines.push(`--- TWEET ${card.index}/${cards.length} ---`);
+    if (card.svgString) {
+      lines.push(`[Paste with 0${card.index}-${getCardFilename(card.type)}.png]`);
+    } else {
+      lines.push("[Text-only reply]");
+    }
     lines.push("");
     lines.push(card.caption);
     lines.push("");
@@ -229,7 +245,7 @@ HOW TO USE:
 1. Open Twitter/X and start a new post
 2. Paste caption for Card 1 and attach 01-main-chart.png
 3. Reply to your post with Card 2 content
-4. Continue replying for Cards 3 and 4
+4. Continue replying through Tweet 5; Tweet 5 is text-only
 
 Generated by mountaintoclimb.com
 `;
@@ -245,6 +261,8 @@ function getCardFilename(type: ThreadCardType): string {
       return "historical";
     case "implications":
       return "implications";
+    case "implications-assumptions":
+      return "implications-assumptions";
     default:
       return "card";
   }
@@ -256,8 +274,11 @@ function getCardFilename(type: ThreadCardType): string {
 export async function downloadThreadZip(pkg: ThreadPackage): Promise<void> {
   const zip = new JSZip();
 
+  const cardsWithImages = pkg.cards.filter(
+    (card): card is ThreadCard & { svgString: string } => card.svgString != null,
+  );
   const pngFiles = await Promise.all(
-    pkg.cards.map(async (card) => ({
+    cardsWithImages.map(async (card) => ({
       card,
       pngBlob: await svgStringToPngBlob(card.svgString, CARD_DIMENSIONS, 2),
     })),
@@ -289,6 +310,6 @@ export async function downloadThreadZip(pkg: ThreadPackage): Promise<void> {
  * Copy all captions to clipboard.
  */
 export async function copyAllCaptions(cards: ThreadCard[]): Promise<void> {
-  const text = cards.map((c) => `--- ${c.index}/4 ---\n\n${c.caption}`).join("\n\n");
+  const text = cards.map((c) => `--- ${c.index}/${cards.length} ---\n\n${c.caption}`).join("\n\n");
   await navigator.clipboard.writeText(text);
 }

@@ -142,6 +142,12 @@ export function ThreadGeneratorModal({
       { type: "sensitivity", svgString: sensitivityCardSvg, caption: captions[1], index: 2 },
       { type: "historical", svgString: historicalCardSvg, caption: captions[2], index: 3 },
       { type: "implications", svgString: implicationsCardSvg, caption: captions[3], index: 4 },
+      {
+        type: "implications-assumptions",
+        svgString: null,
+        caption: captions[4],
+        index: 5,
+      },
     ];
   }, [
     appUrl,

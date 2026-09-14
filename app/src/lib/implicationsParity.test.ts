@@ -35,19 +35,25 @@ describe("implications panel/thread parity contract", () => {
   });
 
   it("renders the same rounded values and assumptions in card and caption", () => {
-    const implicationCaption = captions[3];
-    for (const text of [
-      "50 → 360 TWh/year",
-      "320 TWh/year",
-      "40.6",
-      "UN medium",
-      "0% grid losses",
-    ]) {
-      expect(implicationCaption).toContain(text);
+    const implicationResult = captions[3];
+    const implicationAssumptions = captions[4];
+    for (const text of ["50 → 360 TWh/year", "320 TWh/year", "40.6"]) {
+      expect(implicationResult).toContain(text);
+    }
+    for (const text of ["UN medium", "0% grid losses"]) {
+      expect(implicationAssumptions).toContain(text);
     }
     for (const text of ["50 → 360 TWh/yr", "320 TWh/yr", "40.6", "MEDIUM population"]) {
       expect(svg).toContain(text);
     }
+  });
+
+  it("splits implications into two tweets within the 280-character limit", () => {
+    expect(captions).toHaveLength(5);
+    expect(captions[3]).toMatch(/^4\/5 /);
+    expect(captions[4]).toMatch(/^5\/5 /);
+    expect(captions[3].length).toBeLessThanOrEqual(280);
+    expect(captions[4].length).toBeLessThanOrEqual(280);
   });
 
   it("never mislabels per-capita GDP or the implication horizon", () => {

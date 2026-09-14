@@ -1255,11 +1255,12 @@ function testThreadCaptionsShape() {
       };
       const caps = generateCaptions(ctx);
 
-      assert.equal(caps.length, 4);
-      assert.ok(caps[0].startsWith("1/4 "));
-      assert.ok(caps[1].startsWith("2/4 "));
-      assert.ok(caps[2].startsWith("3/4 "));
-      assert.ok(caps[3].startsWith("4/4 "));
+      assert.equal(caps.length, 5);
+      assert.ok(caps[0].startsWith("1/5 "));
+      assert.ok(caps[1].startsWith("2/5 "));
+      assert.ok(caps[2].startsWith("3/5 "));
+      assert.ok(caps[3].startsWith("4/5 "));
+      assert.ok(caps[4].startsWith("5/5 "));
       for (const c of caps) {
         assert.ok(!/undefined/.test(c));
         assert.ok(!/NaN/.test(c));

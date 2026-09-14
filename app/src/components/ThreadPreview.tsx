@@ -27,7 +27,7 @@ export function ThreadPreview({ cards, onCaptionChange }: ThreadPreviewProps) {
         <h4 className="text-sm font-semibold text-ink mb-2">Thread Summary</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="p-2 rounded-md bg-surface-raised">
-            <div className="font-medium text-ink-muted">Cards</div>
+            <div className="font-medium text-ink-muted">Tweets</div>
             <div className="text-lg font-semibold text-ink">{cards.length}</div>
           </div>
           <div className="p-2 rounded-md bg-surface-raised">
@@ -37,7 +37,7 @@ export function ThreadPreview({ cards, onCaptionChange }: ThreadPreviewProps) {
             </div>
           </div>
           <div className="p-2 rounded-md bg-surface-raised">
-            <div className="font-medium text-ink-muted">Avg per card</div>
+            <div className="font-medium text-ink-muted">Avg per tweet</div>
             <div className="text-lg font-semibold text-ink">
               {Math.round(cards.reduce((sum, c) => sum + c.caption.length, 0) / cards.length)}
             </div>

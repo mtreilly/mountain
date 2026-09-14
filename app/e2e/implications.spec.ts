@@ -74,13 +74,17 @@ test("selected assumptions persist into the thread with exact numeric parity", a
   await clickDeterministic(page.getByRole("button", { name: "Thread", exact: true }));
   const thread = page.getByRole("dialog");
   await expect(thread).toBeVisible();
-  const implicationTweet = thread.getByLabel("Tweet").nth(3);
-  const caption = await implicationTweet.inputValue();
-  expect(caption).toContain("UN low population");
-  expect(caption).toContain("7% grid losses");
-  expect(caption).toContain("12% net imports");
-  expect(caption).toContain(`${Math.round(Number(buildout))} TWh/year`);
-  expect(caption).not.toContain("What convergence means");
+  const implicationResultTweet = thread.getByLabel("Tweet").nth(3);
+  const implicationAssumptionsTweet = thread.getByLabel("Tweet").nth(4);
+  const resultCaption = await implicationResultTweet.inputValue();
+  const assumptionsCaption = await implicationAssumptionsTweet.inputValue();
+  expect(resultCaption).toContain(`${Math.round(Number(buildout))} TWh/year`);
+  expect(resultCaption).not.toContain("What convergence means");
+  expect(assumptionsCaption).toContain("UN low population");
+  expect(assumptionsCaption).toContain("7% grid losses");
+  expect(assumptionsCaption).toContain("12% net imports");
+  expect(resultCaption.length).toBeLessThanOrEqual(280);
+  expect(assumptionsCaption.length).toBeLessThanOrEqual(280);
 });
 
 test("Implications controls update template and scenario context", async ({ page }) => {
