@@ -18,8 +18,7 @@ export type SharedImplicationScenario =
   | "efficient"
   | "electrify"
   | "highIndustry"
-  | "importDependent"
-  | "custom";
+  | "importDependent";
 
 export interface ShareState {
   chaser: string;
@@ -40,6 +39,7 @@ export interface ShareState {
   impElecMode?: ElectricityMode; // Electricity mix card mode (default: compare)
   ipv?: SharedPopulationVariant;
   isc?: SharedImplicationScenario;
+  icu?: boolean;
   igl?: number;
   ini?: number;
   iscf?: number;
@@ -130,6 +130,7 @@ export const DEFAULT_SHARE_STATE: ShareState = {
   impElecMode: "compare",
   ipv: "medium",
   isc: "baseline",
+  icu: false,
   igl: 10,
   ini: 0,
   iscf: 0.2,
@@ -235,7 +236,6 @@ function parseImplicationScenario(value: string | null): SharedImplicationScenar
     "electrify",
     "highIndustry",
     "importDependent",
-    "custom",
   ];
   return valid.find((item) => item === value) ?? null;
 }
@@ -292,6 +292,7 @@ export function parseShareStateFromSearch(
     parseElectricityMode(params.get("impElecMode")) ?? defaults.impElecMode ?? "compare";
   const ipv = parsePopulationVariant(params.get("ipv")) ?? defaults.ipv ?? "medium";
   const isc = parseImplicationScenario(params.get("isc")) ?? defaults.isc ?? "baseline";
+  const icu = params.get("icu") === "1" || (defaults.icu ?? false);
   const numberParam = (name: string, fallback: number, min: number, max: number) =>
     clamp(parseRate(params.get(name)) ?? fallback, min, max);
   const igl = numberParam("igl", defaults.igl ?? 10, 0, 50);
@@ -328,6 +329,7 @@ export function parseShareStateFromSearch(
       impElecMode,
       ipv,
       isc,
+      icu,
       igl,
       ini,
       iscf,
@@ -368,6 +370,7 @@ export function parseShareStateFromSearch(
     impElecMode,
     ipv,
     isc,
+    icu,
     igl,
     ini,
     iscf,
@@ -409,6 +412,7 @@ export function toSearchParams(state: ShareState): URLSearchParams {
     params.set("impElecMode", state.impElecMode ?? "compare");
   if ((state.ipv ?? "medium") !== "medium") params.set("ipv", state.ipv ?? "medium");
   if ((state.isc ?? "baseline") !== "baseline") params.set("isc", state.isc ?? "baseline");
+  if (state.icu) params.set("icu", "1");
   const setNumber = (key: string, value: number | undefined, fallback: number) => {
     if (value != null && value !== fallback) params.set(key, String(value));
   };

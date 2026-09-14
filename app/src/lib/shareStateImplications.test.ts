@@ -4,13 +4,14 @@ import { parseShareStateFromSearch, toSearchString } from "./shareState";
 describe("implication share state", () => {
   it("round-trips every material implication assumption", () => {
     const state = parseShareStateFromSearch(
-      "?ipv=low&isc=custom&igl=7&ini=12&iscf=.24&iwcf=.41&incf=.92&iccf=.66&inw=1.4&icw=.8&ipw=450&iwt=6.2&ihs=3.5&imix=20,30,40,10",
+      "?ipv=low&isc=efficient&icu=1&igl=7&ini=12&iscf=.24&iwcf=.41&incf=.92&iccf=.66&inw=1.4&icw=.8&ipw=450&iwt=6.2&ihs=3.5&imix=20,30,40,10",
     );
     const reparsed = parseShareStateFromSearch(toSearchString(state));
 
     expect(reparsed).toMatchObject({
       ipv: "low",
-      isc: "custom",
+      isc: "efficient",
+      icu: true,
       igl: 7,
       ini: 12,
       iscf: 0.24,

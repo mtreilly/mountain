@@ -12,14 +12,11 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
-import type { ImplicationsControlsState } from "../lib/implicationsSnapshot";
+import type { ImplicationsSnapshot } from "../lib/implicationsSnapshot";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
 import { generateShareCardSvg, SHARE_CARD_SIZES, type ShareCardParams } from "../lib/shareCardSvg";
-import type { TemplateId } from "../lib/templatePaths";
 import { generateCaptions, type HistoricalData, type ThreadCard } from "../lib/threadGenerator";
-import { useImplicationsComputed } from "./implications/useImplicationsComputed";
-import { useImplicationsData } from "./implications/useImplicationsData";
 import { ThreadExportOptions } from "./ThreadExportOptions";
 import { ThreadPreview } from "./ThreadPreview";
 
@@ -28,13 +25,9 @@ export interface ThreadGeneratorModalProps {
   onClose: () => void;
   shareCardParams: ShareCardParams | null;
   historicalData: HistoricalData | null;
-  chaserIso: string;
   indicatorCode: string;
-  gdpCurrent: number;
-  template: TemplateId;
   baseYear: number;
-  horizonYears: number;
-  controls: ImplicationsControlsState;
+  implicationsSnapshot: ImplicationsSnapshot | null;
   appUrl: string;
 }
 
@@ -43,13 +36,9 @@ export function ThreadGeneratorModal({
   onClose,
   shareCardParams,
   historicalData,
-  chaserIso,
   indicatorCode,
-  gdpCurrent,
-  template,
   baseYear,
-  horizonYears,
-  controls,
+  implicationsSnapshot,
   appUrl,
 }: ThreadGeneratorModalProps) {
   const { t } = useTranslation();
@@ -63,43 +52,10 @@ export function ThreadGeneratorModal({
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">(initialTheme);
   const [captionOverrides, setCaptionOverrides] = useState<Record<number, string>>({});
   const [regenerateKey, setRegenerateKey] = useState(0);
-  const implicationsEnabled =
-    isOpen && indicatorCode === "GDP_PCAP_PPP" && Number.isFinite(gdpCurrent) && gdpCurrent > 0;
-
-  const {
-    data: implicationsRawData,
-    dataWithVintage: implicationsDataWithVintage,
-    indicatorByCode: implicationsIndicatorByCode,
-    getLatestValue: implicationsGetLatestValue,
-    templateDef: implicationsTemplateDef,
-  } = useImplicationsData({
-    chaserIso,
-    template,
-    enabled: implicationsEnabled,
-  });
-
-  const implicationsComputed = useImplicationsComputed({
-    chaserIso,
-    chaserName: shareCardParams?.chaserName,
-    gdpCurrent,
-    chaserGrowthRate: shareCardParams?.chaserGrowth ?? 0,
-    horizonYears,
-    baseYear,
-    templateDef: implicationsTemplateDef,
-    data: implicationsRawData,
-    dataWithVintage: implicationsDataWithVintage,
-    indicatorByCode: implicationsIndicatorByCode,
-    getLatestValue: implicationsGetLatestValue,
-    populationVariant: controls.populationVariant,
-    scenario: controls.scenario,
-    assumptions: controls.assumptions,
-    mix: controls.mix,
-  });
-
   const implicationsData = useMemo(() => {
-    if (!implicationsEnabled || !shareCardParams) return null;
-    return implicationsComputed.snapshot;
-  }, [implicationsComputed.snapshot, implicationsEnabled, shareCardParams]);
+    if (!isOpen || indicatorCode !== "GDP_PCAP_PPP" || !shareCardParams) return null;
+    return implicationsSnapshot;
+  }, [implicationsSnapshot, indicatorCode, isOpen, shareCardParams]);
 
   const baseCards = useMemo((): ThreadCard[] => {
     if (!isOpen || !shareCardParams) return [];

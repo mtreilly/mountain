@@ -58,7 +58,8 @@ export const DEFAULT_IMPLICATION_ASSUMPTIONS: ImplicationAssumptions = {
 export type ImplicationsControlsState = {
   template: TemplateId;
   horizonYears: number;
-  scenario: ScenarioId | "custom";
+  scenario: ScenarioId;
+  customized: boolean;
   populationVariant: PopulationVariant;
   assumptions: ImplicationAssumptions;
   mix: Record<PowerMixKey, number>;
@@ -68,6 +69,7 @@ export const DEFAULT_IMPLICATION_CONTROLS: ImplicationsControlsState = {
   template: "china",
   horizonYears: 25,
   scenario: "baseline",
+  customized: false,
   populationVariant: "medium",
   assumptions: DEFAULT_IMPLICATION_ASSUMPTIONS,
   mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },

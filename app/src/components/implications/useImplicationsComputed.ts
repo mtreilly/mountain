@@ -76,7 +76,8 @@ interface UseImplicationsComputedOptions {
   indicatorByCode: Record<string, Indicator>;
   getLatestValue: (code: string, iso: string) => number | null;
   populationVariant: PopulationVariant;
-  scenario: ScenarioId | "custom";
+  scenario: ScenarioId;
+  customized?: boolean;
   assumptions: ImplicationAssumptions;
   mix: Record<PowerMixKey, number>;
 }
@@ -95,6 +96,7 @@ export function useImplicationsComputed({
   getLatestValue,
   populationVariant,
   scenario,
+  customized = false,
   assumptions,
   mix,
 }: UseImplicationsComputedOptions) {
@@ -164,7 +166,7 @@ export function useImplicationsComputed({
         clampRange: metric.clamp,
       });
       const impliedScenario = applyScenarioToImpliedMetric({
-        scenarioId: scenario === "custom" ? "baseline" : scenario,
+        scenarioId: scenario,
         metricCode: metric.code,
         implied,
       });
@@ -353,6 +355,7 @@ export function useImplicationsComputed({
       template: templateDef.id,
       horizonYears,
       scenario,
+      customized,
       populationVariant,
       assumptions,
       mix,
@@ -422,6 +425,7 @@ export function useImplicationsComputed({
     populationVariant,
     rows,
     scenario,
+    customized,
     templateDef.id,
   ]);
 

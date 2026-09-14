@@ -17,6 +17,8 @@ import { DataStates } from "./components/DataStates";
 import { EmbedView } from "./components/EmbedView";
 import { GrowthRateBar } from "./components/GrowthRateBar";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
+import { useImplicationsComputed } from "./components/implications/useImplicationsComputed";
+import { useImplicationsData } from "./components/implications/useImplicationsData";
 import { ProjectionCard } from "./components/ProjectionCard";
 import { RegionalImplicationsPanel } from "./components/RegionalImplicationsPanel";
 import { ResultSummary } from "./components/ResultSummary";
@@ -124,6 +126,7 @@ function createAppUiState(state: ShareState): AppUiState {
       template: (state.tpl as "china" | "us" | "eu" | undefined) ?? "china",
       horizonYears: state.ih ?? 25,
       scenario: state.isc ?? "baseline",
+      customized: state.icu ?? false,
       populationVariant: state.ipv ?? "medium",
       assumptions: {
         solarCf: state.iscf ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.solarCf,
@@ -646,6 +649,7 @@ export default function App() {
       impCard,
       ipv: impControls.populationVariant,
       isc: impControls.scenario,
+      icu: impControls.customized,
       igl: impControls.assumptions.gridLossPct,
       ini: impControls.assumptions.netImportsPct,
       iscf: impControls.assumptions.solarCf,
@@ -701,6 +705,32 @@ export default function App() {
   const hasData = comparisonMode === "regions" ? hasRegionalData : hasCountryData;
 
   const showImplications = hasData && indicatorCode === "GDP_PCAP_PPP";
+  const implicationsEnabled = Boolean(
+    showImplications && (isImplicationsOpen || isThreadGeneratorOpen),
+  );
+  const implicationsDataState = useImplicationsData({
+    chaserIso,
+    template: impControls.template,
+    enabled: implicationsEnabled,
+  });
+  const implicationsComputed = useImplicationsComputed({
+    chaserIso,
+    chaserName: displayChaserName,
+    gdpCurrent: chaserValue ?? 0,
+    chaserGrowthRate,
+    horizonYears: impControls.horizonYears,
+    baseYear,
+    templateDef: implicationsDataState.templateDef,
+    data: implicationsDataState.data,
+    dataWithVintage: implicationsDataState.dataWithVintage,
+    indicatorByCode: implicationsDataState.indicatorByCode,
+    getLatestValue: implicationsDataState.getLatestValue,
+    populationVariant: impControls.populationVariant,
+    scenario: impControls.scenario,
+    customized: impControls.customized,
+    assumptions: impControls.assumptions,
+    mix: impControls.mix,
+  });
 
   const chartSvgRef = useRef<SVGSVGElement>(null);
   const lastSyncedSearchRef = useRef<string | null>(null);
@@ -1464,13 +1494,9 @@ export default function App() {
               onClose={() => setIsThreadGeneratorOpen(false)}
               shareCardParams={shareCardParams}
               historicalData={historicalData}
-              chaserIso={chaserIso}
               indicatorCode={indicatorCode}
-              gdpCurrent={chaserValue}
-              template={impTemplate}
               baseYear={baseYear}
-              horizonYears={impHorizonYears}
-              controls={impControls}
+              implicationsSnapshot={implicationsComputed.snapshot}
               appUrl={appUrl}
             />
           )}
@@ -1480,17 +1506,19 @@ export default function App() {
             <ImplicationsSlideOver
               isOpen
               onClose={() => setIsImplicationsOpen(false)}
-              chaserIso={chaserIso}
               chaserName={displayChaserName}
               gdpCurrent={chaserValue}
               chaserGrowthRate={chaserGrowthRate}
-              baseYear={baseYear}
               horizonYears={impHorizonYears}
               onHorizonYearsChange={setImpHorizonYears}
               template={impTemplate}
               onTemplateChange={setImpTemplate}
               controls={impControls}
               onControlsChange={setImpControls}
+              computed={implicationsComputed}
+              loading={implicationsDataState.loading}
+              error={implicationsDataState.error}
+              templateLabel={implicationsDataState.templateDef.label}
               activeCard={impCard}
               onActiveCardChange={setImpCard}
             />

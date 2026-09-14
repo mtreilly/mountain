@@ -10,16 +10,13 @@ import {
   type ImplicationAssumptions,
   useImplicationsComputed,
 } from "./useImplicationsComputed";
-import { useImplicationsData } from "./useImplicationsData";
 
 interface ImplicationsSlideOverProps {
   isOpen: boolean;
   onClose: () => void;
-  chaserIso: string;
   chaserName: string;
   gdpCurrent: number;
   chaserGrowthRate: number;
-  baseYear: number;
   horizonYears: number;
   onHorizonYearsChange: (years: number) => void;
   template: TemplateId;
@@ -28,6 +25,10 @@ interface ImplicationsSlideOverProps {
   onActiveCardChange: (card: ImplicationCardType) => void;
   controls: ImplicationsControlsState;
   onControlsChange: (controls: ImplicationsControlsState) => void;
+  computed: ReturnType<typeof useImplicationsComputed>;
+  loading: boolean;
+  error: string | null;
+  templateLabel: string;
 }
 
 function formatTWh(value: number | null) {
@@ -108,46 +109,23 @@ function AssumptionInput(props: {
 export function ImplicationsSlideOver({
   isOpen,
   onClose,
-  chaserIso,
   chaserName,
   gdpCurrent,
   chaserGrowthRate,
-  baseYear,
   horizonYears,
   onHorizonYearsChange,
   template,
   onTemplateChange,
   controls,
   onControlsChange,
+  computed,
+  loading,
+  error,
+  templateLabel,
 }: ImplicationsSlideOverProps) {
-  const { assumptions, mix, populationVariant, scenario } = controls;
+  const { assumptions, populationVariant, scenario } = controls;
   const updateAssumptions = (next: ImplicationAssumptions) =>
-    onControlsChange({ ...controls, scenario: "custom", assumptions: next });
-
-  const { data, dataWithVintage, indicatorByCode, loading, error, getLatestValue, templateDef } =
-    useImplicationsData({
-      chaserIso,
-      template,
-      enabled: isOpen,
-    });
-
-  const computed = useImplicationsComputed({
-    chaserIso,
-    chaserName,
-    gdpCurrent,
-    chaserGrowthRate,
-    horizonYears,
-    baseYear,
-    templateDef,
-    data,
-    dataWithVintage,
-    indicatorByCode,
-    getLatestValue,
-    populationVariant,
-    scenario,
-    assumptions,
-    mix,
-  });
+    onControlsChange({ ...controls, customized: true, assumptions: next });
 
   const {
     gdpFuture,
@@ -166,6 +144,7 @@ export function ImplicationsSlideOver({
     onControlsChange({
       ...controls,
       scenario: id,
+      customized: false,
       horizonYears: s?.presets?.horizonYears ?? controls.horizonYears,
       assumptions:
         id === "baseline"
@@ -310,6 +289,11 @@ export function ImplicationsSlideOver({
                 <span className="text-ink-faint">·</span>
                 <span className="text-xs text-ink-muted">{scenarioDef.blurb}</span>
               </>
+            )}
+            {controls.customized && (
+              <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-muted">
+                Custom assumptions
+              </span>
             )}
           </div>
         </div>
@@ -688,7 +672,7 @@ export function ImplicationsSlideOver({
                   </div>
                 ))}
                 <div>
-                  Template: {templateDef.label} · UN {populationVariant} population ·{" "}
+                  Template: {templateLabel} · UN {populationVariant} population ·{" "}
                   {assumptions.gridLossPct}% losses · {assumptions.netImportsPct}% net imports
                 </div>
               </div>
