@@ -22,6 +22,10 @@ const DATA_SOURCE_URL_GENERATORS: Record<string, (sourceCode: string | null) => 
     return "https://hdr.undp.org/data-center/human-development-index";
   },
 
+  "UN World Population Prospects": () => {
+    return "https://population.un.org/wpp/";
+  },
+
   "Our World in Data": (sourceCode) => {
     if (!sourceCode) return "https://ourworldindata.org";
     // OWID source codes are in format "owid-co2-data:co2_per_capita"
@@ -68,6 +72,7 @@ export function getDataSourceBaseUrl(source: string | null): string | null {
     "World Bank": "https://data.worldbank.org",
     "Penn World Table": "https://doi.org/10.34894/FABVLR",
     UNDP: "https://hdr.undp.org/data-center",
+    "UN World Population Prospects": "https://population.un.org/wpp/",
     "Our World in Data": "https://ourworldindata.org",
   };
 

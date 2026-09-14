@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS growth_rates (
 INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category) VALUES
     ('GDP_PCAP_PPP', 'GDP per capita (PPP)', 'constant 2017 US$ (PPP)', 'Penn World Table', 'pwt11.0:rgdpe/pop', 'economic'),
     ('POPULATION', 'Total population', 'persons', 'World Bank', 'SP.POP.TOTL', 'demographic'),
+    ('POPULATION_UN_MEDIUM', 'Population (UN medium scenario)', 'persons', 'UN World Population Prospects', 'WPP2024:Medium:PopTotal', 'demographic'),
+    ('POPULATION_UN_LOW', 'Population (UN low scenario)', 'persons', 'UN World Population Prospects', 'WPP2024:Low:PopTotal', 'demographic'),
+    ('POPULATION_UN_HIGH', 'Population (UN high scenario)', 'persons', 'UN World Population Prospects', 'WPP2024:High:PopTotal', 'demographic'),
     ('LIFE_EXPECT', 'Life expectancy at birth', 'years', 'World Bank', 'SP.DYN.LE00.IN', 'health'),
     ('HDI', 'Human Development Index', 'index 0-1', 'UNDP', NULL, 'composite'),
     ('CO2_PCAP', 'CO2 emissions per capita', 'metric tons', 'Our World in Data', 'owid-co2-data:co2_per_capita', 'environment'),

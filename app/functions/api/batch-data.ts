@@ -47,7 +47,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (limited) return limited;
 
   const url = new URL(context.request.url);
-  const maxYear = new Date().getFullYear() + 1;
+  // Pinned demographic projection series are available through 2100.
+  const maxYear = 2100;
 
   const countries = normalizeIso3(url.searchParams.get("countries")?.split(",") || []);
   const indicators = normalizeIndicatorCodes(url.searchParams.get("indicators")?.split(",") || []);
