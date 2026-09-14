@@ -49,7 +49,7 @@ export function populationSql(params: {
   populationThousands: number;
 }) {
   const code = VARIANT_CODES[params.variant];
-  const persons = params.populationThousands * 1000;
+  const persons = Math.round(params.populationThousands * 1000);
   return (
     "INSERT OR REPLACE INTO data_points " +
     "(country_id, indicator_id, year, value, is_projection, source_vintage) " +

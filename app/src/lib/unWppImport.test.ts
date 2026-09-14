@@ -26,6 +26,17 @@ describe("UN WPP importer", () => {
     expect(sql).toContain(WPP_VINTAGE);
   });
 
+  it("emits whole persons without floating-point artifacts", () => {
+    const sql = populationSql({
+      iso3: "NGA",
+      variant: "Low",
+      year: 2032,
+      populationThousands: 267_684.921,
+    });
+    expect(sql).toContain(", 267684921,");
+    expect(sql).not.toContain("267684920.99999997");
+  });
+
   it("marks WPP estimate-period rows as observations", () => {
     const sql = populationSql({
       iso3: "NGA",
