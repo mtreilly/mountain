@@ -40,10 +40,10 @@ export function AppHeader({
     <header className="app-header mb-4 lg:mb-4 animate-fade-in-up">
       <div className="flex items-center justify-between gap-3 min-w-0">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-semibold tracking-tight text-ink truncate">
+          <h1 className="text-[1.125rem] sm:text-2xl lg:text-3xl font-display font-semibold tracking-[-0.025em] text-ink whitespace-nowrap">
             {t("app.title")}
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-ink-muted truncate">
+          <p className="hidden sm:block mt-0.5 text-sm text-ink-muted truncate">
             {t("app.subtitle", {
               mode: comparisonMode === "regions" ? t("mode.regions") : t("mode.countries"),
             })}
@@ -61,7 +61,7 @@ export function AppHeader({
                 toast.error(t("header.copyFailed"));
               }
             }}
-            className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
+            className="pressable button-quiet inline-flex items-center justify-center gap-1.5 size-8 sm:size-auto sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium focus-ring disabled:opacity-50"
           >
             <svg
               className="size-3.5 sm:size-4"
@@ -83,7 +83,7 @@ export function AppHeader({
             type="button"
             disabled={!shareCardAvailable || disableShareActions}
             onClick={onOpenShareCardModal}
-            className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
+            className="pressable inline-flex items-center justify-center gap-1.5 size-8 sm:size-auto sm:px-3 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-semibold hover:bg-[var(--color-accent-light)] shadow-sm focus-ring disabled:opacity-50"
           >
             <svg
               className="size-3.5 sm:size-4"
@@ -105,7 +105,7 @@ export function AppHeader({
             type="button"
             disabled={!shareCardAvailable || disableShareActions}
             onClick={onOpenThreadGenerator}
-            className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[var(--color-accent)] text-white text-xs sm:text-sm font-medium hover:bg-[var(--color-accent-light)] transition-default focus-ring disabled:opacity-50"
+            className="pressable button-quiet inline-flex items-center justify-center gap-1.5 size-8 sm:size-auto sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium focus-ring disabled:opacity-50"
           >
             <svg
               className="size-3.5 sm:size-4"

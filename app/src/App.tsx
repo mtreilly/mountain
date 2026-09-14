@@ -1068,7 +1068,7 @@ export default function App() {
   return (
     <>
       {toaster}
-      <div className="min-h-screen bg-surface grain">
+      <div className="min-h-screen grain">
         <div className="app-shell max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-6">
           {/* Header - Compact */}
           <AppHeader
@@ -1210,7 +1210,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsImplicationsOpen(true)}
-                    className="w-full card p-4 text-left hover:bg-surface transition-default group"
+                    className="w-full card interactive-card p-4 text-left hover:bg-surface group"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -1297,7 +1297,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setIsImplicationsOpen(true)}
-                      className="w-full card p-4 text-left hover:bg-surface transition-default group"
+                      className="w-full card interactive-card p-4 text-left hover:bg-surface group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0 size-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">

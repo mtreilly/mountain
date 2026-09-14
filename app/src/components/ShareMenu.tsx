@@ -151,7 +151,7 @@ export function ShareMenu({
             queueMicrotask(() => focusLastMenuItem());
           }
         }}
-        className="inline-flex items-center justify-center size-8 sm:size-9 rounded-lg border border-surface bg-surface-raised text-ink-muted hover:text-ink hover:bg-surface transition-default disabled:opacity-50"
+        className="pressable button-quiet inline-flex items-center justify-center size-8 sm:size-9 rounded-lg focus-ring disabled:opacity-50"
       >
         <svg
           className="size-5"

@@ -83,7 +83,7 @@ export function ProjectionCard({
               {t("projection.table")}
             </button>
           </div>
-          {unit && <span className="text-xs text-ink-faint truncate">{unit}</span>}
+          {unit && <span className="hidden sm:inline text-xs text-ink-faint truncate">{unit}</span>}
         </div>
 
         {/* Right: Share / Export */}
