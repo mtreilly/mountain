@@ -11,6 +11,15 @@ export type ImplicationCardType =
   | "urban"
   | "co2";
 type ElectricityMode = "compare" | "mix";
+export type SharedPopulationVariant = "medium" | "low" | "high";
+export type SharedImplicationScenario =
+  | "baseline"
+  | "highGrowth"
+  | "efficient"
+  | "electrify"
+  | "highIndustry"
+  | "importDependent"
+  | "custom";
 
 export interface ShareState {
   chaser: string;
@@ -29,6 +38,20 @@ export interface ShareState {
   ih?: number; // Implications horizon years (default: 25)
   impCard?: ImplicationCardType; // Active implications card (default: gdp)
   impElecMode?: ElectricityMode; // Electricity mix card mode (default: compare)
+  ipv?: SharedPopulationVariant;
+  isc?: SharedImplicationScenario;
+  igl?: number;
+  ini?: number;
+  iscf?: number;
+  iwcf?: number;
+  incf?: number;
+  iccf?: number;
+  inw?: number;
+  icw?: number;
+  ipw?: number;
+  iwt?: number;
+  ihs?: number;
+  imix?: string;
   // Regional mode
   mode?: ComparisonMode; // "countries" (default) or "regions"
   cr?: string; // Chaser region code (e.g., "UKC")
@@ -105,6 +128,20 @@ export const DEFAULT_SHARE_STATE: ShareState = {
   ih: 25,
   impCard: "gdp",
   impElecMode: "compare",
+  ipv: "medium",
+  isc: "baseline",
+  igl: 10,
+  ini: 0,
+  iscf: 0.2,
+  iwcf: 0.35,
+  incf: 0.9,
+  iccf: 0.6,
+  inw: 1,
+  icw: 1,
+  ipw: 400,
+  iwt: 3,
+  ihs: 4,
+  imix: "60,30,10,0",
   mode: "countries",
   cr: "UKC", // North East England
   tr: "UKI", // London
@@ -186,6 +223,31 @@ function parseElectricityMode(value: string | null): ElectricityMode | null {
   return null;
 }
 
+function parsePopulationVariant(value: string | null): SharedPopulationVariant | null {
+  return value === "medium" || value === "low" || value === "high" ? value : null;
+}
+
+function parseImplicationScenario(value: string | null): SharedImplicationScenario | null {
+  const valid: SharedImplicationScenario[] = [
+    "baseline",
+    "highGrowth",
+    "efficient",
+    "electrify",
+    "highIndustry",
+    "importDependent",
+    "custom",
+  ];
+  return valid.find((item) => item === value) ?? null;
+}
+
+function parseMix(value: string | null, fallback: string): string {
+  if (!value) return fallback;
+  const numbers = value.split(",").map(Number);
+  return numbers.length === 4 && numbers.every((item) => Number.isFinite(item) && item >= 0)
+    ? numbers.join(",")
+    : fallback;
+}
+
 export function parseShareStateFromSearch(
   search: string,
   defaults: ShareState = DEFAULT_SHARE_STATE,
@@ -228,6 +290,22 @@ export function parseShareStateFromSearch(
   const impCard = parseImplicationCard(params.get("impCard")) ?? defaults.impCard ?? "gdp";
   const impElecMode =
     parseElectricityMode(params.get("impElecMode")) ?? defaults.impElecMode ?? "compare";
+  const ipv = parsePopulationVariant(params.get("ipv")) ?? defaults.ipv ?? "medium";
+  const isc = parseImplicationScenario(params.get("isc")) ?? defaults.isc ?? "baseline";
+  const numberParam = (name: string, fallback: number, min: number, max: number) =>
+    clamp(parseRate(params.get(name)) ?? fallback, min, max);
+  const igl = numberParam("igl", defaults.igl ?? 10, 0, 50);
+  const ini = numberParam("ini", defaults.ini ?? 0, -50, 50);
+  const iscf = numberParam("iscf", defaults.iscf ?? 0.2, 0.05, 0.5);
+  const iwcf = numberParam("iwcf", defaults.iwcf ?? 0.35, 0.05, 0.7);
+  const incf = numberParam("incf", defaults.incf ?? 0.9, 0.05, 0.98);
+  const iccf = numberParam("iccf", defaults.iccf ?? 0.6, 0.05, 0.95);
+  const inw = numberParam("inw", defaults.inw ?? 1, 0.3, 2);
+  const icw = numberParam("icw", defaults.icw ?? 1, 0.3, 2);
+  const ipw = numberParam("ipw", defaults.ipw ?? 400, 100, 1000);
+  const iwt = numberParam("iwt", defaults.iwt ?? 3, 0.5, 20);
+  const ihs = numberParam("ihs", defaults.ihs ?? 4, 1, 10);
+  const imix = parseMix(params.get("imix"), defaults.imix ?? "60,30,10,0");
 
   if (tmode === "static") {
     return {
@@ -248,6 +326,20 @@ export function parseShareStateFromSearch(
       ih,
       impCard,
       impElecMode,
+      ipv,
+      isc,
+      igl,
+      ini,
+      iscf,
+      iwcf,
+      incf,
+      iccf,
+      inw,
+      icw,
+      ipw,
+      iwt,
+      ihs,
+      imix,
       mode,
       cr,
       tr,
@@ -274,6 +366,20 @@ export function parseShareStateFromSearch(
     ih,
     impCard,
     impElecMode,
+    ipv,
+    isc,
+    igl,
+    ini,
+    iscf,
+    iwcf,
+    incf,
+    iccf,
+    inw,
+    icw,
+    ipw,
+    iwt,
+    ihs,
+    imix,
     mode,
     cr,
     tr,
@@ -301,6 +407,25 @@ export function toSearchParams(state: ShareState): URLSearchParams {
   if ((state.impCard ?? "gdp") !== "gdp") params.set("impCard", state.impCard ?? "gdp");
   if ((state.impElecMode ?? "compare") !== "compare")
     params.set("impElecMode", state.impElecMode ?? "compare");
+  if ((state.ipv ?? "medium") !== "medium") params.set("ipv", state.ipv ?? "medium");
+  if ((state.isc ?? "baseline") !== "baseline") params.set("isc", state.isc ?? "baseline");
+  const setNumber = (key: string, value: number | undefined, fallback: number) => {
+    if (value != null && value !== fallback) params.set(key, String(value));
+  };
+  setNumber("igl", state.igl, 10);
+  setNumber("ini", state.ini, 0);
+  setNumber("iscf", state.iscf, 0.2);
+  setNumber("iwcf", state.iwcf, 0.35);
+  setNumber("incf", state.incf, 0.9);
+  setNumber("iccf", state.iccf, 0.6);
+  setNumber("inw", state.inw, 1);
+  setNumber("icw", state.icw, 1);
+  setNumber("ipw", state.ipw, 400);
+  setNumber("iwt", state.iwt, 3);
+  setNumber("ihs", state.ihs, 4);
+  if ((state.imix ?? "60,30,10,0") !== "60,30,10,0") {
+    params.set("imix", state.imix ?? "60,30,10,0");
+  }
   // Regional mode - only include when in regions mode
   if (state.mode === "regions") {
     params.set("mode", "regions");

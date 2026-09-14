@@ -31,6 +31,10 @@ import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
 import type { HeadlineData } from "./lib/headlineGenerator";
+import {
+  DEFAULT_IMPLICATION_CONTROLS,
+  type ImplicationsControlsState,
+} from "./lib/implicationsSnapshot";
 import { ALL_TL2_REGIONS, getRegionByCode, getRegionDataSeries } from "./lib/oecdRegions";
 import {
   toRegionalObservedCsv,
@@ -86,8 +90,7 @@ type AppUiState = {
   useTargetAdjusted: boolean;
   catchUpYears: number;
   showMilestones: boolean;
-  impTemplate: "china" | "us" | "eu";
-  impHorizonYears: number;
+  impControls: ImplicationsControlsState;
   impCard: NonNullable<ShareState["impCard"]>;
   isExportModalOpen: boolean;
   isShareCardModalOpen: boolean;
@@ -101,6 +104,7 @@ type AppUiAction =
   | { type: "reset"; state: AppUiState };
 
 function createAppUiState(state: ShareState): AppUiState {
+  const mixValues = (state.imix ?? "60,30,10,0").split(",").map(Number);
   return {
     comparisonMode: state.mode ?? "countries",
     chaserIso: state.chaser,
@@ -116,8 +120,31 @@ function createAppUiState(state: ShareState): AppUiState {
     useTargetAdjusted: state.adjT ?? true,
     catchUpYears: state.goal ?? 25,
     showMilestones: state.ms ?? true,
-    impTemplate: (state.tpl as "china" | "us" | "eu" | undefined) ?? "china",
-    impHorizonYears: state.ih ?? 25,
+    impControls: {
+      template: (state.tpl as "china" | "us" | "eu" | undefined) ?? "china",
+      horizonYears: state.ih ?? 25,
+      scenario: state.isc ?? "baseline",
+      populationVariant: state.ipv ?? "medium",
+      assumptions: {
+        solarCf: state.iscf ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.solarCf,
+        windCf: state.iwcf ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.windCf,
+        nuclearCf: state.incf ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.nuclearCf,
+        coalCf: state.iccf ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.coalCf,
+        nuclearPlantGw: state.inw ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.nuclearPlantGw,
+        coalPlantGw: state.icw ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.coalPlantGw,
+        panelWatts: state.ipw ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.panelWatts,
+        windTurbineMw: state.iwt ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.windTurbineMw,
+        householdSize: state.ihs ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.householdSize,
+        gridLossPct: state.igl ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.gridLossPct,
+        netImportsPct: state.ini ?? DEFAULT_IMPLICATION_CONTROLS.assumptions.netImportsPct,
+      },
+      mix: {
+        solar: mixValues[0] ?? 60,
+        wind: mixValues[1] ?? 30,
+        nuclear: mixValues[2] ?? 10,
+        coal: mixValues[3] ?? 0,
+      },
+    },
     impCard: state.impCard ?? "gdp",
     isExportModalOpen: false,
     isShareCardModalOpen: false,
@@ -211,8 +238,7 @@ export default function App() {
     useTargetAdjusted,
     catchUpYears,
     showMilestones,
-    impTemplate,
-    impHorizonYears,
+    impControls,
     impCard,
     isExportModalOpen,
     isShareCardModalOpen,
@@ -220,6 +246,8 @@ export default function App() {
     isThreadGeneratorOpen,
     isImplicationsOpen,
   } = uiState;
+  const impTemplate = impControls.template;
+  const impHorizonYears = impControls.horizonYears;
 
   const setComparisonMode = useCallback(
     (comparisonMode: AppUiState["comparisonMode"]) => updateUiState({ comparisonMode }),
@@ -278,11 +306,16 @@ export default function App() {
     [updateUiState],
   );
   const setImpTemplate = useCallback(
-    (impTemplate: AppUiState["impTemplate"]) => updateUiState({ impTemplate }),
-    [updateUiState],
+    (template: ImplicationsControlsState["template"]) =>
+      updateUiState({ impControls: { ...impControls, template } }),
+    [impControls, updateUiState],
   );
   const setImpHorizonYears = useCallback(
-    (impHorizonYears: number) => updateUiState({ impHorizonYears }),
+    (horizonYears: number) => updateUiState({ impControls: { ...impControls, horizonYears } }),
+    [impControls, updateUiState],
+  );
+  const setImpControls = useCallback(
+    (next: ImplicationsControlsState) => updateUiState({ impControls: next }),
     [updateUiState],
   );
   const setImpCard = useCallback(
@@ -611,6 +644,25 @@ export default function App() {
       tpl: impTemplate,
       ih: impHorizonYears,
       impCard,
+      ipv: impControls.populationVariant,
+      isc: impControls.scenario,
+      igl: impControls.assumptions.gridLossPct,
+      ini: impControls.assumptions.netImportsPct,
+      iscf: impControls.assumptions.solarCf,
+      iwcf: impControls.assumptions.windCf,
+      incf: impControls.assumptions.nuclearCf,
+      iccf: impControls.assumptions.coalCf,
+      inw: impControls.assumptions.nuclearPlantGw,
+      icw: impControls.assumptions.coalPlantGw,
+      ipw: impControls.assumptions.panelWatts,
+      iwt: impControls.assumptions.windTurbineMw,
+      ihs: impControls.assumptions.householdSize,
+      imix: [
+        impControls.mix.solar,
+        impControls.mix.wind,
+        impControls.mix.nuclear,
+        impControls.mix.coal,
+      ].join(","),
       mode: comparisonMode,
       cr: chaserRegionCode,
       tr: targetRegionCode,
@@ -623,6 +675,7 @@ export default function App() {
     chaserRegionCode,
     comparisonMode,
     impCard,
+    impControls,
     indicatorCode,
     impHorizonYears,
     impTemplate,
@@ -1417,6 +1470,7 @@ export default function App() {
               template={impTemplate}
               baseYear={baseYear}
               horizonYears={impHorizonYears}
+              controls={impControls}
               appUrl={appUrl}
             />
           )}
@@ -1435,6 +1489,8 @@ export default function App() {
               onHorizonYearsChange={setImpHorizonYears}
               template={impTemplate}
               onTemplateChange={setImpTemplate}
+              controls={impControls}
+              onControlsChange={setImpControls}
               activeCard={impCard}
               onActiveCardChange={setImpCard}
             />

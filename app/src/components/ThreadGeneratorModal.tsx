@@ -12,20 +12,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { generateHistoricalCardSvg } from "../lib/historicalCardSvg";
 import { generateImplicationsCardSvg } from "../lib/implicationsCardSvg";
+import type { ImplicationsControlsState } from "../lib/implicationsSnapshot";
 import { calculateSensitivityScenarios } from "../lib/sensitivityAnalysis";
 import { generateSensitivityCardSvg } from "../lib/sensitivityCardSvg";
 import { generateShareCardSvg, SHARE_CARD_SIZES, type ShareCardParams } from "../lib/shareCardSvg";
 import type { TemplateId } from "../lib/templatePaths";
-import {
-  generateCaptions,
-  type HistoricalData,
-  type ImplicationsData,
-  type ThreadCard,
-} from "../lib/threadGenerator";
-import {
-  DEFAULT_ASSUMPTIONS,
-  useImplicationsComputed,
-} from "./implications/useImplicationsComputed";
+import { generateCaptions, type HistoricalData, type ThreadCard } from "../lib/threadGenerator";
+import { useImplicationsComputed } from "./implications/useImplicationsComputed";
 import { useImplicationsData } from "./implications/useImplicationsData";
 import { ThreadExportOptions } from "./ThreadExportOptions";
 import { ThreadPreview } from "./ThreadPreview";
@@ -41,6 +34,7 @@ export interface ThreadGeneratorModalProps {
   template: TemplateId;
   baseYear: number;
   horizonYears: number;
+  controls: ImplicationsControlsState;
   appUrl: string;
 }
 
@@ -55,6 +49,7 @@ export function ThreadGeneratorModal({
   template,
   baseYear,
   horizonYears,
+  controls,
   appUrl,
 }: ThreadGeneratorModalProps) {
   const { t } = useTranslation();
@@ -85,6 +80,7 @@ export function ThreadGeneratorModal({
 
   const implicationsComputed = useImplicationsComputed({
     chaserIso,
+    chaserName: shareCardParams?.chaserName,
     gdpCurrent,
     chaserGrowthRate: shareCardParams?.chaserGrowth ?? 0,
     horizonYears,
@@ -94,29 +90,16 @@ export function ThreadGeneratorModal({
     dataWithVintage: implicationsDataWithVintage,
     indicatorByCode: implicationsIndicatorByCode,
     getLatestValue: implicationsGetLatestValue,
-    popAssumption: "trend",
-    scenario: "baseline",
-    assumptions: DEFAULT_ASSUMPTIONS,
-    mix: { solar: 60, wind: 30, nuclear: 10, coal: 0 },
+    populationVariant: controls.populationVariant,
+    scenario: controls.scenario,
+    assumptions: controls.assumptions,
+    mix: controls.mix,
   });
 
-  const implicationsData = useMemo<ImplicationsData | null>(() => {
+  const implicationsData = useMemo(() => {
     if (!implicationsEnabled || !shareCardParams) return null;
-    if (!shareCardParams.yearsToConvergence) return null;
-
-    const gdpFuture = gdpCurrent * Math.pow(1 + shareCardParams.chaserGrowth, horizonYears);
-    const electricityDeltaTWh =
-      implicationsComputed.macro.electricity.equivalents?.deltaTWh ?? null;
-    const nuclearPlants =
-      implicationsComputed.macro.electricity.equivalents?.nuclear.plants ?? null;
-
-    return {
-      electricityDeltaTWh,
-      nuclearPlants,
-      gdpCurrent,
-      gdpFuture,
-    };
-  }, [gdpCurrent, horizonYears, implicationsComputed, implicationsEnabled, shareCardParams]);
+    return implicationsComputed.snapshot;
+  }, [implicationsComputed.snapshot, implicationsEnabled, shareCardParams]);
 
   const baseCards = useMemo((): ThreadCard[] => {
     if (!isOpen || !shareCardParams) return [];
@@ -186,10 +169,8 @@ export function ThreadGeneratorModal({
       ? generateImplicationsCardSvg({
           chaserName: shareCardParams.chaserName,
           implicationsData,
-          horizonYear: baseYear + horizonYears,
           theme: selectedTheme,
           siteUrl: shareCardParams.siteUrl,
-          dataSource: shareCardParams.dataSource,
         })
       : generatePlaceholderSvg(
           t("thread.implicationsSummary"),
@@ -210,7 +191,6 @@ export function ThreadGeneratorModal({
     appUrl,
     baseYear,
     historicalData,
-    horizonYears,
     implicationsData,
     isOpen,
     regenerateKey,
@@ -464,6 +444,7 @@ export function ThreadGeneratorModal({
               targetCode={shareCardParams.targetCode}
               theme={selectedTheme}
               onRegenerate={handleRegenerate}
+              implicationsSnapshot={implicationsData}
             />
           </section>
 

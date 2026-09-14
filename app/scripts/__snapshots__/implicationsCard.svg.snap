@@ -14,7 +14,7 @@
     Nigeria
   </text>
   <text x="48" y="75" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#5c574f">
-    What convergence means by 2045
+    Illustrative 22-year scenario · MEDIUM population
   </text>
 
   <!-- Implication Cards -->
@@ -27,20 +27,21 @@
     <text x="40" y="50" text-anchor="middle" font-size="28">⚡</text>
 
     <!-- Title -->
-    <text x="80" y="35" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a847a" letter-spacing="0.8">ELECTRICITY BUILDOUT</text>
+    <text x="80" y="35" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a847a" letter-spacing="0.8">ELECTRICITY SCENARIO</text>
 
     <!-- Value -->
     
-    <text x="24" y="100" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="32" font-weight="800" fill="#1a1815">+320 TWh</text>
+    <text x="24" y="100" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="32" font-weight="800" fill="#1a1815">50 → 360 TWh/yr</text>
     
 
     <!-- Subtitle -->
     
-    <text x="24" y="140" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" fill="#5c574f">≈22 nuclear plants</text>
+    <text x="24" y="140" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" fill="#5c574f">New domestic generation: 320 TWh/yr</text>
     
 
-    <text x="24" y="170" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" fill="#8a847a">
-      Additional annual electricity required by 2045
+    <text x="24" y="168" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" fill="#8a847a">Annual-energy equivalent: 40.6 × 1 GW unit at 90% CF</text>
+    <text x="24" y="192" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">
+      End-use demand 2022 → 2045; buildout above observed 2023 generation
     </text>
 
     <!-- Accent bar (bottom rounded corners via clip-path) -->
@@ -62,24 +63,24 @@
     <text x="50" y="48" text-anchor="middle" font-size="22">💰</text>
 
     <!-- GDP Label -->
-    <text x="90" y="30" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a847a" letter-spacing="0.8">GDP (TOTAL)</text>
+    <text x="90" y="30" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a847a" letter-spacing="0.8">GDP PER CAPITA (CONSTANT PPP)</text>
 
     <!-- GDP Values -->
     
-    <text x="90" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#1a1815">$1.3T</text>
+    <text x="90" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#1a1815">$5.4K</text>
     <text x="250" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" fill="#5c574f">→</text>
-    <text x="280" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#8b5cf6">$4.9T</text>
+    <text x="280" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#8b5cf6">$10.3K</text>
     <text x="430" y="55" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" fill="#5c574f">by 2045</text>
     
   </g>
 
   <!-- Disclaimer -->
   <text x="600" y="476" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">
-    Estimates based on template country development paths. Actual outcomes vary by policy and technology.
+    Scenario, not forecast. Annual-energy equivalents do not model reliability, storage, networks, or peak demand.
   </text>
 
   <!-- Footer -->
   <line x1="48" y1="625" x2="1152" y2="625" stroke="#e5e0d8" stroke-opacity="0.5"/>
   <text x="48" y="657" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" fill="#8a847a">convergence.example.com</text>
-  <text x="1152" y="657" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">Data: World Bank</text>
+  <text x="1152" y="657" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">Sources: Penn World Table; UN World Population Prospects; World Bank; Our World in Data</text>
 </svg>

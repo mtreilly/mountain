@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import type { ImplicationsSnapshot } from "../lib/implicationsSnapshot";
 import {
   copyAllCaptions,
   downloadThreadZip,
@@ -14,6 +15,7 @@ interface ThreadExportOptionsProps {
   targetCode: string;
   theme: "light" | "dark";
   onRegenerate: () => void;
+  implicationsSnapshot: ImplicationsSnapshot | null;
 }
 
 export function ThreadExportOptions({
@@ -22,6 +24,7 @@ export function ThreadExportOptions({
   targetCode,
   theme,
   onRegenerate,
+  implicationsSnapshot,
 }: ThreadExportOptionsProps) {
   const { t } = useTranslation();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -37,6 +40,7 @@ export function ThreadExportOptions({
         theme,
         chaserCode,
         targetCode,
+        implicationsSnapshot,
       };
       await downloadThreadZip(pkg);
       toast.success(t("thread.downloadedThread"));

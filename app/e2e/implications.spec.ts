@@ -42,12 +42,45 @@ test("Implications panel opens and renders finite values", async ({ page }) => {
   const panel = page.getByRole("dialog", { name: "Development Implications" });
   await expect(panel.getByRole("heading", { name: "Economic Output" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "Electricity" })).toBeVisible();
-  await expect(panel.getByText("GDP/capita")).toBeVisible();
-  await expect(panel.getByText("Projected demand", { exact: true })).toBeVisible();
+  await expect(panel.getByText("GDP/capita (2023)")).toBeVisible();
+  await expect(panel.getByText("End-use demand", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Gross supply required", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Domestic generation required", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Observed domestic generation", { exact: true })).toBeVisible();
+  await expect(panel.getByText("New domestic generation", { exact: true })).toBeVisible();
+  await expect(panel.getByText("376 TWh (2023) → 482 TWh (2048)")).toBeVisible();
+  await expect(panel.getByText("536 TWh", { exact: true }).first()).toBeVisible();
+  await expect(panel.getByText("40 TWh", { exact: true })).toBeVisible();
+  await expect(panel.getByText("496 TWh", { exact: true }).first()).toBeVisible();
 
   await expect(panel).not.toContainText("NaN");
   await expect(panel).not.toContainText("undefined");
-  await expect(panel).toContainText("Illustrative projections based on historical patterns");
+  await expect(panel).toContainText("Illustrative scenario, not a forecast");
+});
+
+test("selected assumptions persist into the thread with exact numeric parity", async ({ page }) => {
+  await page.goto("/");
+  await openImplications(page);
+
+  const panel = page.getByRole("dialog", { name: "Development Implications" });
+  await clickDeterministic(panel.getByRole("button", { name: "UN low" }));
+  await panel.getByRole("spinbutton", { name: "Grid losses %" }).fill("7");
+  await panel.getByRole("spinbutton", { name: "Net imports (gross supply share) %" }).fill("12");
+  const buildoutText = await panel.getByText(/Shared buildout used for every row:/).textContent();
+  const buildout = buildoutText?.match(/([\d.]+) TWh/)?.[1];
+  expect(buildout).toBeTruthy();
+
+  await clickDeterministic(panel.getByRole("button", { name: "Close Development Implications" }));
+  await clickDeterministic(page.getByRole("button", { name: "Thread", exact: true }));
+  const thread = page.getByRole("dialog");
+  await expect(thread).toBeVisible();
+  const implicationTweet = thread.getByLabel("Tweet").nth(3);
+  const caption = await implicationTweet.inputValue();
+  expect(caption).toContain("UN low population");
+  expect(caption).toContain("7% grid losses");
+  expect(caption).toContain("12% net imports");
+  expect(caption).toContain(`${Math.round(Number(buildout))} TWh/year`);
+  expect(caption).not.toContain("What convergence means");
 });
 
 test("Implications controls update template and scenario context", async ({ page }) => {

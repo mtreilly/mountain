@@ -13,6 +13,7 @@ import { generateShareCardSvg } from "../src/lib/shareCardSvg";
 import { parseShareStateFromSearch, toSearchString } from "../src/lib/shareState";
 import { generateCaptions } from "../src/lib/threadGenerator";
 import type { Indicator } from "../src/types";
+import { fixtureImplicationsSnapshot } from "./implicationsFixture";
 
 function bench(name: string, fn: () => void, budgetMs: number, iterations = 200) {
   for (let i = 0; i < 20; i++) fn();
@@ -118,16 +119,7 @@ function benchmarkGenerateThreadArtifacts() {
   });
   const implicationsSvg = generateImplicationsCardSvg({
     chaserName: "Nigeria",
-    implicationsData: {
-      electricityDeltaTWh: 320,
-      nuclearPlants: 22,
-      urbanDeltaPersons: 48_000_000,
-      homesNeeded: 10_500_000,
-      co2DeltaMt: 95,
-      gdpCurrent: 1.3e12,
-      gdpFuture: 4.9e12,
-    },
-    horizonYear: 2045,
+    implicationsData: fixtureImplicationsSnapshot(),
     theme: "light",
   });
 
@@ -146,15 +138,7 @@ function benchmarkGenerateThreadArtifacts() {
       targetStart: { year: 2000, value: 42000 },
       targetCurrent: { year: 2023, value: 68000 },
     },
-    implicationsData: {
-      electricityDeltaTWh: 320,
-      nuclearPlants: 22,
-      urbanDeltaPersons: 48_000_000,
-      homesNeeded: 10_500_000,
-      co2DeltaMt: 95,
-      gdpCurrent: 1.3e12,
-      gdpFuture: 4.9e12,
-    },
+    implicationsData: fixtureImplicationsSnapshot(),
     appUrl: "https://convergence.example.com",
   });
 

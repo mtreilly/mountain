@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { formatMetricValue, formatNumber } from "../../lib/convergence";
 import { IMPLICATION_SCENARIOS, type ScenarioId } from "../../lib/implicationsScenarios";
+import type { ImplicationsControlsState, PopulationVariant } from "../../lib/implicationsSnapshot";
 import type { ImplicationCardType } from "../../lib/shareState";
 import type { TemplateId } from "../../lib/templatePaths";
 import { TEMPLATE_PATHS } from "../../lib/templatePaths";
@@ -8,13 +8,9 @@ import { SlideOver } from "../ui/SlideOver";
 import {
   DEFAULT_ASSUMPTIONS,
   type ImplicationAssumptions,
-  MIX_PRESETS,
   useImplicationsComputed,
 } from "./useImplicationsComputed";
 import { useImplicationsData } from "./useImplicationsData";
-
-type PopAssumption = "trend" | "static";
-type PowerMixKey = "solar" | "wind" | "nuclear" | "coal";
 
 interface ImplicationsSlideOverProps {
   isOpen: boolean;
@@ -30,6 +26,8 @@ interface ImplicationsSlideOverProps {
   onTemplateChange: (id: TemplateId) => void;
   activeCard: ImplicationCardType;
   onActiveCardChange: (card: ImplicationCardType) => void;
+  controls: ImplicationsControlsState;
+  onControlsChange: (controls: ImplicationsControlsState) => void;
 }
 
 function formatTWh(value: number | null) {
@@ -119,11 +117,12 @@ export function ImplicationsSlideOver({
   onHorizonYearsChange,
   template,
   onTemplateChange,
+  controls,
+  onControlsChange,
 }: ImplicationsSlideOverProps) {
-  const [popAssumption, setPopAssumption] = useState<PopAssumption>("trend");
-  const [assumptions, setAssumptions] = useState<ImplicationAssumptions>(DEFAULT_ASSUMPTIONS);
-  const [mix] = useState<Record<PowerMixKey, number>>(MIX_PRESETS[0].mix);
-  const [scenario, setScenario] = useState<ScenarioId>("baseline");
+  const { assumptions, mix, populationVariant, scenario } = controls;
+  const updateAssumptions = (next: ImplicationAssumptions) =>
+    onControlsChange({ ...controls, scenario: "custom", assumptions: next });
 
   const { data, dataWithVintage, indicatorByCode, loading, error, getLatestValue, templateDef } =
     useImplicationsData({
@@ -134,6 +133,7 @@ export function ImplicationsSlideOver({
 
   const computed = useImplicationsComputed({
     chaserIso,
+    chaserName,
     gdpCurrent,
     chaserGrowthRate,
     horizonYears,
@@ -143,7 +143,7 @@ export function ImplicationsSlideOver({
     dataWithVintage,
     indicatorByCode,
     getLatestValue,
-    popAssumption,
+    populationVariant,
     scenario,
     assumptions,
     mix,
@@ -154,44 +154,38 @@ export function ImplicationsSlideOver({
     year,
     popCurrent,
     popFuture,
-    popTrendRate,
     scenarioDef,
     hasAny,
     observedElectricity,
     macro,
+    snapshot,
   } = computed;
 
   const handleScenarioChange = (id: ScenarioId) => {
-    setScenario(id);
     const s = IMPLICATION_SCENARIOS.find((x) => x.id === id);
-    if (s?.presets?.horizonYears != null) onHorizonYearsChange(s.presets.horizonYears);
-    if (s?.presets?.gridLossPct != null || s?.presets?.netImportsPct != null) {
-      setAssumptions((a) => ({
-        ...a,
-        gridLossPct: s.presets?.gridLossPct ?? a.gridLossPct,
-        netImportsPct: s.presets?.netImportsPct ?? a.netImportsPct,
-      }));
-    }
+    onControlsChange({
+      ...controls,
+      scenario: id,
+      horizonYears: s?.presets?.horizonYears ?? controls.horizonYears,
+      assumptions:
+        id === "baseline"
+          ? DEFAULT_ASSUMPTIONS
+          : {
+              ...assumptions,
+              gridLossPct: s?.presets?.gridLossPct ?? assumptions.gridLossPct,
+              netImportsPct: s?.presets?.netImportsPct ?? assumptions.netImportsPct,
+            },
+    });
   };
 
   const electricityDelta = macro.electricity.buildoutDeltaTWh;
-  const demandIncreaseTWh = Math.max(0, macro.electricity.demandDeltaTWh ?? 0);
   const solarCf = clamp(assumptions.solarCf, 0.05, 0.5);
   const windCf = clamp(assumptions.windCf, 0.05, 0.7);
   const nuclearCf = clamp(assumptions.nuclearCf, 0.05, 0.98);
   const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
   const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
   const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
-  const solarPanelKwhPerYear = (panelWatts / 1000) * solarCf * 8760;
-  const windTurbineGwhPerYear = windTurbineMw * windCf * 8.76;
-  const nuclearPlantTwhPerYear = nuclearPlantGw * nuclearCf * 8.76;
-  const solarPanelTwhPerYear = solarPanelKwhPerYear / 1e9;
-  const solarPanelsForDemand =
-    solarPanelTwhPerYear > 0 ? demandIncreaseTWh / solarPanelTwhPerYear : null;
-  const windTurbinesForDemand =
-    windTurbineGwhPerYear > 0 ? (demandIncreaseTWh * 1000) / windTurbineGwhPerYear : null;
-  const nuclearPlantsForDemand =
-    nuclearPlantTwhPerYear > 0 ? demandIncreaseTWh / nuclearPlantTwhPerYear : null;
+  const annualEnergyEquivalents = snapshot?.electricity.annualEnergyEquivalents ?? null;
 
   const templateFlags: Record<TemplateId, string> = {
     china: "🇨🇳",
@@ -216,12 +210,14 @@ export function ImplicationsSlideOver({
               <input
                 type="number"
                 min={1}
-                max={150}
+                max={Math.max(1, 2100 - (year - horizonYears))}
                 value={horizonYears}
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   if (Number.isFinite(next)) {
-                    onHorizonYearsChange(Math.max(1, Math.min(150, Math.round(next))));
+                    onHorizonYearsChange(
+                      Math.max(1, Math.min(2100 - (year - horizonYears), Math.round(next))),
+                    );
                   }
                 }}
                 className="w-16 px-2 py-1.5 rounded-lg bg-surface border border-surface text-ink font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
@@ -290,37 +286,25 @@ export function ImplicationsSlideOver({
           <div className="flex items-center gap-3">
             <span className="text-xs text-ink-muted">Population:</span>
             <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => setPopAssumption("trend")}
-                className={[
-                  "px-2 py-0.5 rounded text-xs transition-default",
-                  popAssumption === "trend"
-                    ? "bg-surface-raised text-ink font-medium"
-                    : "text-ink-muted hover:text-ink",
-                ].join(" ")}
-              >
-                Trend
-              </button>
-              <button
-                type="button"
-                onClick={() => setPopAssumption("static")}
-                className={[
-                  "px-2 py-0.5 rounded text-xs transition-default",
-                  popAssumption === "static"
-                    ? "bg-surface-raised text-ink font-medium"
-                    : "text-ink-muted hover:text-ink",
-                ].join(" ")}
-              >
-                Static
-              </button>
+              {(["medium", "low", "high"] as PopulationVariant[]).map((variant) => (
+                <button
+                  key={variant}
+                  type="button"
+                  onClick={() => onControlsChange({ ...controls, populationVariant: variant })}
+                  className={[
+                    "px-2 py-0.5 rounded text-xs capitalize transition-default",
+                    populationVariant === variant
+                      ? "bg-surface-raised text-ink font-medium"
+                      : "text-ink-muted hover:text-ink",
+                  ].join(" ")}
+                >
+                  UN {variant}
+                </button>
+              ))}
             </div>
-            {popAssumption === "trend" && popTrendRate !== 0 && (
-              <span className="text-xs text-ink-faint">
-                ({popTrendRate >= 0 ? "+" : ""}
-                {(popTrendRate * 100).toFixed(1)}%/yr)
-              </span>
-            )}
+            <span className="text-[11px] text-ink-faint">
+              WPP 2024 · low/high are scenarios, not confidence bounds
+            </span>
             {scenario !== "baseline" && (
               <>
                 <span className="text-ink-faint">·</span>
@@ -348,14 +332,14 @@ export function ImplicationsSlideOver({
         )}
 
         {/* Empty state */}
-        {!loading && !error && !hasAny && (
+        {!loading && !error && (!hasAny || !snapshot) && (
           <div className="m-5 p-6 rounded-xl bg-surface border border-surface text-center">
             <p className="text-ink-muted">Not enough data available for these projections.</p>
           </div>
         )}
 
         {/* Cards */}
-        {!loading && !error && hasAny && (
+        {!loading && !error && hasAny && snapshot && (
           <div className="p-4 space-y-3">
             {/* Economic Output Card */}
             <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
@@ -366,26 +350,37 @@ export function ImplicationsSlideOver({
               <div className="p-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <div className="text-xs text-ink-muted mb-0.5">GDP/capita</div>
+                    <div className="text-xs text-ink-muted mb-0.5">
+                      GDP/capita ({snapshot.gdp.perCapitaCurrent.year})
+                    </div>
                     <div className="font-semibold text-ink">
                       {formatMetricValue(gdpCurrent, "int$")}
                     </div>
+                    <div className="text-xs text-ink-faint mt-1">Projected ({year})</div>
                     <div className="text-lg font-bold text-[var(--color-accent)]">
                       {formatMetricValue(gdpFuture, "int$")}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-ink-muted mb-0.5">Total GDP</div>
+                    <div className="text-xs text-ink-muted mb-0.5">
+                      Total GDP ({snapshot.gdp.totalCurrent.year})
+                    </div>
                     <div className="font-semibold text-ink">
                       {formatDollars(macro.gdpTotalCurrent)}
                     </div>
+                    <div className="text-xs text-ink-faint mt-1">Projected ({year})</div>
                     <div className="text-lg font-bold text-[var(--color-accent)]">
                       {formatDollars(macro.gdpTotalFuture)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-ink-muted mb-0.5">Population</div>
+                    <div className="text-xs text-ink-muted mb-0.5">
+                      Population ({snapshot.population.current.year})
+                    </div>
                     <div className="font-semibold text-ink">{formatPeople(popCurrent)}</div>
+                    <div className="text-xs text-ink-faint mt-1">
+                      UN {populationVariant} ({year})
+                    </div>
                     <div className="text-lg font-bold text-ink">{formatPeople(popFuture)}</div>
                   </div>
                 </div>
@@ -401,35 +396,67 @@ export function ImplicationsSlideOver({
                 </span>
               </div>
               <div className="p-4 space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-ink-muted mb-0.5">Current demand</div>
-                    <div className="text-xl font-bold text-ink">
-                      {formatTWh(macro.electricity.demandCurrentTWh)}
+                <div className="rounded-lg border border-surface bg-surface overflow-hidden">
+                  {[
+                    {
+                      label: "End-use demand",
+                      value: `${formatTWh(macro.electricity.demandCurrentTWh)} (${snapshot.electricity.endUseDemandCurrentTWh?.year ?? "—"}) → ${formatTWh(macro.electricity.demandFutureTWh)} (${year})`,
+                      note: "Electricity consumed after system losses",
+                    },
+                    {
+                      label: "Gross supply required",
+                      value: formatTWh(macro.electricity.grossSupplyRequiredFutureTWh),
+                      note: `${assumptions.gridLossPct}% grid-loss assumption`,
+                    },
+                    {
+                      label: "Assumed net imports",
+                      value: formatTWh(macro.electricity.importsFutureTWh),
+                      note: `${assumptions.netImportsPct}% of gross supply`,
+                    },
+                    {
+                      label: "Domestic generation required",
+                      value: formatTWh(macro.electricity.requiredDomesticGenerationFutureTWh),
+                      note: `Scenario for ${year}`,
+                    },
+                    {
+                      label: "Observed domestic generation",
+                      value: formatTWh(
+                        snapshot.electricity.domesticGenerationObservedCurrentTWh?.value ?? null,
+                      ),
+                      note: `${snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "year unavailable"}`,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between gap-4 px-3 py-2 border-b border-surface-sunken last:border-b-0"
+                    >
+                      <div>
+                        <div className="text-xs font-medium text-ink">{item.label}</div>
+                        <div className="text-[11px] text-ink-faint">{item.note}</div>
+                      </div>
+                      <div className="text-sm font-semibold text-ink text-right">{item.value}</div>
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-ink-muted mb-0.5">Projected demand</div>
-                    <div className="text-xl font-bold text-[var(--color-accent)]">
-                      {formatTWh(macro.electricity.demandFutureTWh)}
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                {electricityDelta != null && electricityDelta > 0 && (
-                  <div className="p-3 rounded-lg bg-surface space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs text-ink-muted">New generation needed</div>
-                        <div className="text-lg font-bold text-ink">
-                          +{formatTWh(electricityDelta)}
-                        </div>
+                {electricityDelta != null && (
+                  <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-ink-muted">New domestic generation</div>
+                      <div className="text-xl font-bold text-ink">
+                        {formatTWh(electricityDelta)}
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs text-ink-muted">Avg. power</div>
-                        <div className="font-semibold text-ink">
-                          {formatGW(macro.electricity.buildoutDeltaAvgGW)}
-                        </div>
+                      <div className="text-[11px] text-ink-faint">
+                        Above observed{" "}
+                        {snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ??
+                          "baseline"}{" "}
+                        generation
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-ink-muted">Average output</div>
+                      <div className="font-semibold text-ink">
+                        {formatGW(macro.electricity.buildoutDeltaAvgGW)} average
                       </div>
                     </div>
                   </div>
@@ -446,15 +473,35 @@ export function ImplicationsSlideOver({
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <AssumptionInput
+                      label="Grid losses"
+                      value={assumptions.gridLossPct}
+                      unit="%"
+                      min={0}
+                      max={50}
+                      step={1}
+                      onChange={(value) =>
+                        updateAssumptions({ ...assumptions, gridLossPct: value })
+                      }
+                    />
+                    <AssumptionInput
+                      label="Net imports (gross supply share)"
+                      value={assumptions.netImportsPct}
+                      unit="%"
+                      min={-50}
+                      max={50}
+                      step={1}
+                      onChange={(value) =>
+                        updateAssumptions({ ...assumptions, netImportsPct: value })
+                      }
+                    />
+                    <AssumptionInput
                       label="Panel size"
                       value={assumptions.panelWatts}
                       unit="W"
                       min={100}
                       max={1000}
                       step={10}
-                      onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, panelWatts: value }))
-                      }
+                      onChange={(value) => updateAssumptions({ ...assumptions, panelWatts: value })}
                     />
                     <AssumptionInput
                       label="Solar capacity factor"
@@ -464,7 +511,7 @@ export function ImplicationsSlideOver({
                       max={50}
                       step={1}
                       onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, solarCf: value / 100 }))
+                        updateAssumptions({ ...assumptions, solarCf: value / 100 })
                       }
                     />
                     <AssumptionInput
@@ -475,7 +522,7 @@ export function ImplicationsSlideOver({
                       max={20}
                       step={0.1}
                       onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, windTurbineMw: value }))
+                        updateAssumptions({ ...assumptions, windTurbineMw: value })
                       }
                     />
                     <AssumptionInput
@@ -486,7 +533,7 @@ export function ImplicationsSlideOver({
                       max={70}
                       step={1}
                       onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, windCf: value / 100 }))
+                        updateAssumptions({ ...assumptions, windCf: value / 100 })
                       }
                     />
                     <AssumptionInput
@@ -497,7 +544,7 @@ export function ImplicationsSlideOver({
                       max={2}
                       step={0.1}
                       onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, nuclearPlantGw: value }))
+                        updateAssumptions({ ...assumptions, nuclearPlantGw: value })
                       }
                     />
                     <AssumptionInput
@@ -508,76 +555,98 @@ export function ImplicationsSlideOver({
                       max={98}
                       step={1}
                       onChange={(value) =>
-                        setAssumptions((prev) => ({ ...prev, nuclearCf: value / 100 }))
+                        updateAssumptions({ ...assumptions, nuclearCf: value / 100 })
                       }
                     />
                   </div>
                   <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
-                    Per unit output used: 1 panel = {solarPanelKwhPerYear.toFixed(0)} kWh/yr, 1 wind
-                    turbine = {windTurbineGwhPerYear.toFixed(2)} GWh/yr, 1 nuclear plant ={" "}
-                    {nuclearPlantTwhPerYear.toFixed(2)} TWh/yr.
+                    Positive net imports reduce domestic generation; negative values represent net
+                    exports. All technology comparisons below use the same annual buildout value.
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
                   <div className="text-xs font-medium text-ink">
-                    Buildout options to cover the full projected increase
+                    Annual-energy equivalents for the same buildout
                   </div>
                   <div className="text-[11px] text-ink-faint">
-                    Each row assumes one technology covers the entire additional demand.
+                    Each row produces the same {formatTWh(electricityDelta)} of additional annual
+                    domestic generation. These are comparisons, not a system plan.
                   </div>
                   <div className="text-[11px] text-ink-muted">
-                    Projected increase used for these rows: +{formatTWh(demandIncreaseTWh)}
+                    Shared buildout used for every row: {formatTWh(electricityDelta)}
                   </div>
-                  {demandIncreaseTWh <= 0 ? (
+                  {(electricityDelta ?? 0) <= 0 ? (
                     <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 text-[11px] text-ink-muted">
-                      Projected demand does not exceed current demand in this scenario, so
-                      additional units needed is 0.
+                      Projected demand does not exceed current demand in this scenario, so no
+                      additional annual generation is required in this scenario.
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">Solar panels</div>
+                          <div className="text-xs font-semibold text-ink">
+                            Solar annual-energy equivalent
+                          </div>
                           <div className="text-[11px] text-ink-faint">
                             {panelWatts.toFixed(0)}W panels at {(solarCf * 100).toFixed(0)}%
                             capacity factor
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {formatGW(annualEnergyEquivalents?.solar.installedGW ?? null)} installed
+                          </div>
                           <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(solarPanelsForDemand)} panels
+                            {formatCountCompact(
+                              annualEnergyEquivalents?.solar.referenceUnits ?? null,
+                            )}{" "}
+                            panels
                           </div>
                         </div>
                       </div>
                       <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">Wind turbines</div>
+                          <div className="text-xs font-semibold text-ink">
+                            Wind annual-energy equivalent
+                          </div>
                           <div className="text-[11px] text-ink-faint">
                             {windTurbineMw.toFixed(1)}MW turbines at {(windCf * 100).toFixed(0)}%
                             capacity factor
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {formatGW(annualEnergyEquivalents?.wind.installedGW ?? null)} installed
+                          </div>
                           <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(windTurbinesForDemand)} turbines
+                            {formatCountCompact(
+                              annualEnergyEquivalents?.wind.referenceUnits ?? null,
+                            )}{" "}
+                            turbines
                           </div>
                         </div>
                       </div>
                       <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">Nuclear plants</div>
+                          <div className="text-xs font-semibold text-ink">
+                            Nuclear annual-energy equivalent
+                          </div>
                           <div className="text-[11px] text-ink-faint">
                             {nuclearPlantGw.toFixed(1)}GW plants at {(nuclearCf * 100).toFixed(0)}%
                             capacity factor
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">Total needed</div>
+                          <div className="text-[11px] text-ink-faint">
+                            {formatGW(annualEnergyEquivalents?.nuclear.installedGW ?? null)}{" "}
+                            installed
+                          </div>
                           <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(nuclearPlantsForDemand)} plants
+                            {formatCountCompact(
+                              annualEnergyEquivalents?.nuclear.referenceUnits ?? null,
+                            )}{" "}
+                            reference units
                           </div>
                         </div>
                       </div>
@@ -606,9 +675,30 @@ export function ImplicationsSlideOver({
               </div>
             </section>
 
+            <details className="rounded-lg border border-surface bg-surface-raised px-4 py-3">
+              <summary className="cursor-pointer text-xs font-semibold text-ink">
+                Sources and assumptions
+              </summary>
+              <div className="mt-2 space-y-1 text-[11px] text-ink-muted">
+                {snapshot.provenance.map((source) => (
+                  <div key={`${source.indicator}:${source.observedYear}:${source.source}`}>
+                    {source.indicator}: {source.source}
+                    {source.observedYear != null ? ` (${source.observedYear})` : ""}
+                    {source.sourceVintage ? ` · ${source.sourceVintage}` : ""}
+                  </div>
+                ))}
+                <div>
+                  Template: {templateDef.label} · UN {populationVariant} population ·{" "}
+                  {assumptions.gridLossPct}% losses · {assumptions.netImportsPct}% net imports
+                </div>
+              </div>
+            </details>
+
             {/* Disclaimer */}
             <p className="text-xs text-ink-muted text-center pt-2">
-              Illustrative projections based on historical patterns, not forecasts
+              Illustrative scenario, not a forecast or complete power-system plan. Peak demand,
+              storage, reliability, reserves, networks, curtailment, and construction constraints
+              are outside this annual-energy comparison.
             </p>
           </div>
         )}

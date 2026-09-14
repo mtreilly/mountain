@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  type BuildImplicationsSnapshotInput,
   buildImplicationsSnapshot,
   DEFAULT_IMPLICATION_CONTROLS,
-  type BuildImplicationsSnapshotInput,
   type ObservedValue,
 } from "./implicationsSnapshot";
 
@@ -98,7 +98,9 @@ describe("buildImplicationsSnapshot", () => {
 
   it("requires a UN population point for the exact target year", () => {
     expect(() =>
-      buildImplicationsSnapshot(fixture({ populationFuture: observed(250_000_000, 2049, "persons") })),
+      buildImplicationsSnapshot(
+        fixture({ populationFuture: observed(250_000_000, 2049, "persons") }),
+      ),
     ).toThrow(/expected 2048/);
   });
 

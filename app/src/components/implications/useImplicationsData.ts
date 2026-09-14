@@ -30,6 +30,9 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
     () => [
       "GDP_PCAP_PPP",
       "POPULATION",
+      "POPULATION_UN_MEDIUM",
+      "POPULATION_UN_LOW",
+      "POPULATION_UN_HIGH",
       ...IMPLICATION_METRIC_CODES,
       "ELECTRICITY_GEN_TOTAL",
       "ELECTRICITY_GEN_SOLAR",
@@ -44,27 +47,18 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
     [],
   );
 
-  const vintageCountries = useMemo(() => [chaserIso], [chaserIso]);
-  const vintageIndicators = useMemo(() => ["ELECTRICITY_GEN_TOTAL"], []);
-
   const { data, indicatorByCode, loading, error, getLatestValue } = useBatchData({
     countries,
     indicators,
     startYear: 1990,
-    enabled,
-  });
-
-  const { data: dataWithVintage } = useBatchData({
-    countries: vintageCountries,
-    indicators: vintageIndicators,
-    startYear: 1990,
+    endYear: 2100,
     enabled,
     includeSourceVintage: true,
   });
 
   return {
     data,
-    dataWithVintage,
+    dataWithVintage: data,
     indicatorByCode,
     loading,
     error,

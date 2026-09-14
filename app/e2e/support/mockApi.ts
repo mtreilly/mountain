@@ -122,6 +122,27 @@ function syntheticBase(code: string, iso: string) {
 }
 
 function syntheticSeries(code: string, iso: string): Array<{ year: number; value: number }> {
+  if (code.startsWith("POPULATION_UN_")) {
+    const current = seriesByIndicatorAndIso.POPULATION?.[iso]?.[0]?.value ?? 25_000_000;
+    const variantFactor = code.endsWith("_LOW") ? 0.996 : code.endsWith("_HIGH") ? 1.004 : 1;
+    return Array.from({ length: 111 }, (_, index) => {
+      const year = 1990 + index;
+      const elapsed = year - 2023;
+      return {
+        year,
+        value: Math.round(current * Math.pow(1.01 * variantFactor, elapsed)),
+        source_vintage: "un-wpp@2024",
+      };
+    });
+  }
+  const generationTWh: Record<string, number> = {
+    ELECTRICITY_GEN_TOTAL: 40,
+    ELECTRICITY_GEN_SOLAR: 5,
+    ELECTRICITY_GEN_WIND: 10,
+    ELECTRICITY_GEN_NUCLEAR: 5,
+    ELECTRICITY_GEN_COAL: 20,
+  };
+  if (code in generationTWh) return [{ year: 2023, value: generationTWh[code] }];
   const base = syntheticBase(code, iso);
   const growth = 1 + ((syntheticBase(iso, code) % 8) + 1) / 200; // 1.5%..4.5%
   return [
@@ -199,8 +220,11 @@ export async function installApiMocks(page: Page) {
             code,
             name: code,
             description: null,
-            unit: null,
-            source: "World Bank",
+            unit: code.startsWith("POPULATION_UN_") ? "persons" : null,
+            source: code.startsWith("POPULATION_UN_")
+              ? "UN World Population Prospects"
+              : "World Bank",
+            source_code: code.startsWith("POPULATION_UN_") ? `WPP2024:${code}` : null,
             category: "other",
           } as const);
       }

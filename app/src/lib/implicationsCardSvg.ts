@@ -4,15 +4,13 @@
  */
 
 import { formatNumber } from "./convergence";
-import type { ImplicationsData } from "./threadGenerator";
+import type { ImplicationsSnapshot } from "./implicationsSnapshot";
 
 export interface ImplicationsCardParams {
   chaserName: string;
-  implicationsData: ImplicationsData;
-  horizonYear: number;
+  implicationsData: ImplicationsSnapshot;
   theme: "light" | "dark";
   siteUrl?: string;
-  dataSource?: string;
 }
 
 const PALETTES = {
@@ -70,21 +68,22 @@ function formatLargeNumber(value: number): string {
 }
 
 export function generateImplicationsCardSvg(params: ImplicationsCardParams): string {
-  const {
-    chaserName,
-    implicationsData,
-    horizonYear,
-    theme,
-    siteUrl = "mountaintoclimb.com",
-    dataSource = "Penn World Table",
-  } = params;
+  const { chaserName, implicationsData, theme, siteUrl = "mountaintoclimb.com" } = params;
 
   const width = 1200;
   const height = 675;
   const palette = PALETTES[theme];
   const font = FONT_FAMILY;
 
-  const { electricityDeltaTWh, nuclearPlants, gdpCurrent, gdpFuture } = implicationsData;
+  const { electricity, gdp, horizon, assumptions } = implicationsData;
+  const horizonYear = horizon.targetYear;
+  const currentDemand = electricity.endUseDemandCurrentTWh;
+  const futureDemand = electricity.endUseDemandFutureTWh;
+  const buildout = electricity.newDomesticGenerationTWh;
+  const generationYear = electricity.domesticGenerationObservedCurrentTWh?.year;
+  const nuclear = electricity.annualEnergyEquivalents?.nuclear;
+  const sourceNames = [...new Set(implicationsData.provenance.map((source) => source.source))];
+  const sourceLabel = sourceNames.length ? sourceNames.join("; ") : "Sources unavailable";
 
   // Layout
   const headerHeight = 100;
@@ -103,15 +102,24 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     title: string;
     value: string | null;
     subtitle: string | null;
+    detail: string | null;
     color: string;
   }
 
   const cards: ImplCard[] = [
     {
       icon: "⚡",
-      title: "ELECTRICITY",
-      value: electricityDeltaTWh != null ? `+${Math.round(electricityDeltaTWh)} TWh` : null,
-      subtitle: nuclearPlants != null ? `≈${Math.round(nuclearPlants)} nuclear plants` : null,
+      title: "ELECTRICITY SCENARIO",
+      value:
+        currentDemand && futureDemand
+          ? `${Math.round(currentDemand.value)} → ${Math.round(futureDemand.value)} TWh/yr`
+          : null,
+      subtitle:
+        buildout != null ? `New domestic generation: ${Math.round(buildout.value)} TWh/yr` : null,
+      detail:
+        nuclear != null
+          ? `Annual-energy equivalent: ${nuclear.referenceUnits.toFixed(1)} × ${nuclear.referenceUnitLabel} at ${(nuclear.capacityFactor * 100).toFixed(0)}% CF`
+          : null,
       color: palette.electricity,
     },
   ];
@@ -132,7 +140,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     ${escapeXml(truncateName(chaserName, 30))}
   </text>
   <text x="48" y="75" font-family="${font}" font-size="18" font-weight="500" fill="${palette.muted}">
-    What convergence means by ${horizonYear}
+    Illustrative ${horizon.years}-year scenario · ${assumptions.populationVariant.toUpperCase()} population
   </text>
 
   <!-- Implication Cards -->
@@ -147,7 +155,7 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="40" y="50" text-anchor="middle" font-size="28">${card.icon}</text>
 
     <!-- Title -->
-    <text x="80" y="35" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(card.title)} BUILDOUT</text>
+    <text x="80" y="35" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">${escapeXml(card.title)}</text>
 
     <!-- Value -->
     ${
@@ -169,8 +177,9 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
         : ""
     }
 
-    <text x="24" y="170" font-family="${font}" font-size="12" fill="${palette.faint}">
-      Additional annual electricity required by ${horizonYear}
+    ${card.detail != null ? `<text x="24" y="168" font-family="${font}" font-size="12" fill="${palette.faint}">${escapeXml(card.detail)}</text>` : ""}
+    <text x="24" y="192" font-family="${font}" font-size="11" fill="${palette.faint}">
+      End-use demand ${currentDemand?.year ?? "—"} → ${horizonYear}; buildout above observed ${generationYear ?? "—"} generation
     </text>
 
     <!-- Accent bar (bottom rounded corners via clip-path) -->
@@ -194,15 +203,15 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
     <text x="50" y="48" text-anchor="middle" font-size="22">💰</text>
 
     <!-- GDP Label -->
-    <text x="90" y="30" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">GDP (TOTAL)</text>
+    <text x="90" y="30" font-family="${font}" font-size="11" font-weight="700" fill="${palette.faint}" letter-spacing="0.8">GDP PER CAPITA (CONSTANT PPP)</text>
 
     <!-- GDP Values -->
     ${
-      gdpCurrent != null && gdpFuture != null
+      gdp.perCapitaCurrent != null && gdp.perCapitaFuture != null
         ? `
-    <text x="90" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.ink}">$${formatLargeNumber(gdpCurrent)}</text>
+    <text x="90" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.ink}">$${formatLargeNumber(gdp.perCapitaCurrent.value)}</text>
     <text x="250" y="55" font-family="${font}" font-size="18" fill="${palette.muted}">→</text>
-    <text x="280" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.gdp}">$${formatLargeNumber(gdpFuture)}</text>
+    <text x="280" y="55" font-family="${font}" font-size="24" font-weight="700" fill="${palette.gdp}">$${formatLargeNumber(gdp.perCapitaFuture.value)}</text>
     <text x="430" y="55" font-family="${font}" font-size="14" fill="${palette.muted}">by ${horizonYear}</text>
     `
         : `
@@ -213,13 +222,13 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
 
   <!-- Disclaimer -->
   <text x="${width / 2}" y="${gdpY + 108}" text-anchor="middle" font-family="${font}" font-size="11" fill="${palette.faint}">
-    Estimates based on template country development paths. Actual outcomes vary by policy and technology.
+    Scenario, not forecast. Annual-energy equivalents do not model reliability, storage, networks, or peak demand.
   </text>
 
   <!-- Footer -->
   <line x1="48" y1="${height - footerHeight}" x2="${width - 48}" y2="${height - footerHeight}" stroke="${palette.border}" stroke-opacity="0.5"/>
   <text x="48" y="${height - 18}" font-family="${font}" font-size="13" fill="${palette.faint}">${escapeXml(siteUrl)}</text>
-  <text x="${width - 48}" y="${height - 18}" text-anchor="end" font-family="${font}" font-size="11" fill="${palette.faint}">Data: ${escapeXml(dataSource)}</text>
+  <text x="${width - 48}" y="${height - 18}" text-anchor="end" font-family="${font}" font-size="11" fill="${palette.faint}">Sources: ${escapeXml(sourceLabel)}</text>
 </svg>`;
 
   return svg;

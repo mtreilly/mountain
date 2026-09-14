@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import { svgStringToPngBlob } from "./chartExport";
 import { formatNumber, formatPercent, formatYears } from "./convergence";
 import { downloadBlob } from "./download";
+import type { ImplicationsSnapshot } from "./implicationsSnapshot";
 
 type ThreadCardType = "main" | "sensitivity" | "historical" | "implications";
 
@@ -20,13 +21,7 @@ export interface ThreadPackage {
   theme: "light" | "dark";
   chaserCode: string;
   targetCode: string;
-}
-
-export interface ImplicationsData {
-  electricityDeltaTWh: number | null;
-  nuclearPlants: number | null;
-  gdpCurrent: number | null;
-  gdpFuture: number | null;
+  implicationsSnapshot?: ImplicationsSnapshot | null;
 }
 
 export interface HistoricalData {
@@ -46,7 +41,7 @@ interface CaptionContext {
   optimisticYears: number | null;
   pessimisticYears: number | null;
   historicalData: HistoricalData | null;
-  implicationsData: ImplicationsData | null;
+  implicationsData: ImplicationsSnapshot | null;
   appUrl: string;
 }
 
@@ -129,21 +124,30 @@ function generateImplicationsCaption(ctx: CaptionContext): string {
   const { chaserName, implicationsData, appUrl } = ctx;
 
   if (!implicationsData) {
-    return `4/4 What convergence means for ${chaserName}:\n\nExplore the implications yourself:\n${appUrl}`;
+    return `4/4 Electricity implications are unavailable for ${chaserName}.\n\nExplore the scenario yourself:\n${appUrl}`;
   }
 
-  const parts: string[] = [];
+  const electricity = implicationsData.electricity;
+  const currentDemand = electricity.endUseDemandCurrentTWh;
+  const futureDemand = electricity.endUseDemandFutureTWh;
+  const buildout = electricity.newDomesticGenerationTWh;
+  const nuclear = electricity.annualEnergyEquivalents?.nuclear;
+  const generationYear = electricity.domesticGenerationObservedCurrentTWh?.year;
+  const controls = implicationsData.assumptions;
+  const scenarioLines = [
+    currentDemand && futureDemand
+      ? `⚡ End-use demand: ${Math.round(currentDemand.value)} → ${Math.round(futureDemand.value)} TWh/year`
+      : null,
+    buildout
+      ? `🏗 New domestic generation: ${Math.round(buildout.value)} TWh/year${generationYear ? ` above ${generationYear} output` : ""}`
+      : null,
+    nuclear
+      ? `≈ Annual output of ${nuclear.referenceUnits.toFixed(1)} ${nuclear.referenceUnitLabel}s at ${(nuclear.capacityFactor * 100).toFixed(0)}% capacity factor`
+      : null,
+  ].filter((line): line is string => line != null);
 
-  if (implicationsData.electricityDeltaTWh != null && implicationsData.nuclearPlants != null) {
-    parts.push(
-      `⚡ +${Math.round(implicationsData.electricityDeltaTWh)} TWh (≈${Math.round(implicationsData.nuclearPlants)} nuclear plants)`,
-    );
-  }
-
-  const implText =
-    parts.length > 0 ? parts.join("\n") : "Explore the full implications at the link below.";
-
-  return `4/4 What convergence means for ${chaserName}:\n\n${implText}\n\n${appUrl}`;
+  const assumptions = `Assumptions: UN ${controls.populationVariant} population, ${controls.assumptions.gridLossPct}% grid losses, ${controls.assumptions.netImportsPct}% net imports, ${controls.template}-like development path.`;
+  return `4/4 An illustrative ${implicationsData.horizon.years}-year electricity scenario for ${chaserName}:\n\n${scenarioLines.join("\n")}\n\n${assumptions} Scenario, not forecast.\n\n${appUrl}`;
 }
 
 /**
@@ -178,8 +182,32 @@ function generateCaptionsFile(cards: ThreadCard[]): string {
 /**
  * Generate README.txt content.
  */
-function generateReadmeFile(chaserCode: string, targetCode: string): string {
+function generateReadmeFile(
+  chaserCode: string,
+  targetCode: string,
+  snapshot?: ImplicationsSnapshot | null,
+): string {
   const date = new Date().toISOString().slice(0, 10);
+  const implicationsNote = snapshot
+    ? `
+IMPLICATIONS SCENARIO:
+- Horizon: ${snapshot.horizon.years} years (${snapshot.horizon.baseYear}-${snapshot.horizon.targetYear})
+- Population: UN ${snapshot.assumptions.populationVariant} scenario
+- Template: ${snapshot.assumptions.template}-like development path
+- Grid losses: ${snapshot.assumptions.assumptions.gridLossPct}%
+- Net imports: ${snapshot.assumptions.assumptions.netImportsPct}% of gross supply
+
+SOURCES:
+${snapshot.provenance
+  .map(
+    (source) =>
+      `- ${source.indicator}: ${source.source}${source.observedYear ? ` (${source.observedYear})` : ""}${source.sourceVintage ? ` [${source.sourceVintage}]` : ""}${source.sourceCode ? ` — ${source.sourceCode}` : ""}`,
+  )
+  .join("\n")}
+
+The implications are an illustrative annual-energy scenario, not a forecast or a complete power-system plan.
+`
+    : "";
   return `Convergence Thread Package
 Generated: ${date}
 Comparison: ${chaserCode} → ${targetCode}
@@ -190,6 +218,7 @@ FILES:
 - 03-historical.png: Historical context comparison
 - 04-implications.png: Macro implications summary
 - captions.txt: Copy-paste captions for each card
+${implicationsNote}
 
 HOW TO USE:
 1. Open Twitter/X and start a new post
@@ -239,7 +268,10 @@ export async function downloadThreadZip(pkg: ThreadPackage): Promise<void> {
   zip.file("captions.txt", generateCaptionsFile(pkg.cards));
 
   // Add README.txt
-  zip.file("README.txt", generateReadmeFile(pkg.chaserCode, pkg.targetCode));
+  zip.file(
+    "README.txt",
+    generateReadmeFile(pkg.chaserCode, pkg.targetCode, pkg.implicationsSnapshot),
+  );
 
   // Generate and download ZIP
   const zipBlob = await zip.generateAsync({ type: "blob" });

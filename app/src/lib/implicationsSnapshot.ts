@@ -146,7 +146,8 @@ const TWH_PER_GWH = 1000;
 const KWH_PER_TWH = 1e9;
 
 function finiteNonNegative(value: number, label: string): number {
-  if (!Number.isFinite(value) || value < 0) throw new Error(`${label} must be finite and non-negative`);
+  if (!Number.isFinite(value) || value < 0)
+    throw new Error(`${label} must be finite and non-negative`);
   return value;
 }
 
@@ -223,7 +224,9 @@ export function buildImplicationsSnapshot(
   const baseYear = input.gdpPerCapitaCurrent.year;
   const targetYear = baseYear + input.controls.horizonYears;
   if (input.populationFuture.year !== targetYear) {
-    throw new Error(`population projection is for ${input.populationFuture.year}, expected ${targetYear}`);
+    throw new Error(
+      `population projection is for ${input.populationFuture.year}, expected ${targetYear}`,
+    );
   }
 
   const futureGdpPerCapita =

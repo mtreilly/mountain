@@ -86,6 +86,7 @@ import {
 } from "../src/lib/templatePaths";
 import { generateCaptions } from "../src/lib/threadGenerator";
 import type { Indicator } from "../src/types";
+import { fixtureImplicationsSnapshot } from "./implicationsFixture";
 
 const BIBTEX_ESCAPED_CHAR_PATTERNS = new Map([
   ["&", /(^|[^\\])&/g],
@@ -1159,7 +1160,7 @@ function testCardSvgGeneratorsNoInvalidNumbers() {
     targetValue: fc.double({ min: 1e-6, max: 1e9, noNaN: true, noInfinity: true }),
     chaserGrowthRate: fc.double({ min: 0.0, max: 0.2, noNaN: true, noInfinity: true }),
     targetGrowthRate: fc.double({ min: 0.0, max: 0.2, noNaN: true, noInfinity: true }),
-    horizonYear: fc.integer({ min: 2000, max: 2300 }),
+    horizonYear: fc.integer({ min: 2024, max: 2100 }),
   });
 
   fc.assert(
@@ -1203,16 +1204,7 @@ function testCardSvgGeneratorsNoInvalidNumbers() {
 
       const implSvg = generateImplicationsCardSvg({
         chaserName: p.chaserName,
-        implicationsData: {
-          electricityDeltaTWh: 100,
-          nuclearPlants: 5,
-          urbanDeltaPersons: 1_000_000,
-          homesNeeded: 200_000,
-          co2DeltaMt: -10,
-          gdpCurrent: 1e9,
-          gdpFuture: 2e9,
-        },
-        horizonYear: p.horizonYear,
+        implicationsData: fixtureImplicationsSnapshot(p.horizonYear),
         theme: p.theme,
       });
       assert.ok(implSvg.startsWith("<svg"));
