@@ -1,6 +1,10 @@
 import { formatMetricValue, formatNumber } from "../../lib/convergence";
 import { IMPLICATION_SCENARIOS, type ScenarioId } from "../../lib/implicationsScenarios";
-import type { ImplicationsControlsState, PopulationVariant } from "../../lib/implicationsSnapshot";
+import type {
+  ImplicationsControlsState,
+  ImplicationsSnapshot,
+  PopulationVariant,
+} from "../../lib/implicationsSnapshot";
 import type { ImplicationCardType } from "../../lib/shareState";
 import type { TemplateId } from "../../lib/templatePaths";
 import { TEMPLATE_PATHS } from "../../lib/templatePaths";
@@ -106,6 +110,234 @@ function AssumptionInput(props: {
   );
 }
 
+type ComputedImplications = ReturnType<typeof useImplicationsComputed>;
+
+function ElectricityWaterfall(props: {
+  snapshot: ImplicationsSnapshot;
+  macro: ComputedImplications["macro"];
+}) {
+  const { snapshot, macro } = props;
+  const { assumptions } = snapshot.assumptions;
+  const rows = [
+    {
+      label: "End-use demand",
+      value: `${formatTWh(macro.electricity.demandCurrentTWh)} (${snapshot.electricity.endUseDemandCurrentTWh?.year ?? "—"}) → ${formatTWh(macro.electricity.demandFutureTWh)} (${snapshot.horizon.targetYear})`,
+      note: "Electricity consumed after system losses",
+    },
+    {
+      label: "Gross supply required",
+      value: formatTWh(macro.electricity.grossSupplyRequiredFutureTWh),
+      note: `${assumptions.gridLossPct}% grid-loss assumption`,
+    },
+    {
+      label: "Assumed net imports",
+      value: formatTWh(macro.electricity.importsFutureTWh),
+      note: `${assumptions.netImportsPct}% of gross supply`,
+    },
+    {
+      label: "Domestic generation required",
+      value: formatTWh(macro.electricity.requiredDomesticGenerationFutureTWh),
+      note: `Scenario for ${snapshot.horizon.targetYear}`,
+    },
+    {
+      label: "Observed domestic generation",
+      value: formatTWh(snapshot.electricity.domesticGenerationObservedCurrentTWh?.value ?? null),
+      note: `${snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "year unavailable"}`,
+    },
+  ];
+  return (
+    <div className="rounded-lg border border-surface bg-surface overflow-hidden">
+      {rows.map((item) => (
+        <div
+          key={item.label}
+          className="flex items-center justify-between gap-4 px-3 py-2 border-b border-surface-sunken last:border-b-0"
+        >
+          <div>
+            <div className="text-xs font-medium text-ink">{item.label}</div>
+            <div className="text-[11px] text-ink-faint">{item.note}</div>
+          </div>
+          <div className="text-sm font-semibold text-ink text-right">{item.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ElectricityAssumptionsEditor(props: {
+  assumptions: ImplicationAssumptions;
+  onChange: (assumptions: ImplicationAssumptions) => void;
+}) {
+  const { assumptions, onChange } = props;
+  const fields = [
+    ["Grid losses", "gridLossPct", assumptions.gridLossPct, "%", 0, 50, 1, 1],
+    [
+      "Net imports (gross supply share)",
+      "netImportsPct",
+      assumptions.netImportsPct,
+      "%",
+      -50,
+      50,
+      1,
+      1,
+    ],
+    ["Panel size", "panelWatts", assumptions.panelWatts, "W", 100, 1000, 10, 1],
+    ["Solar capacity factor", "solarCf", assumptions.solarCf * 100, "%", 5, 50, 1, 0.01],
+    ["Wind turbine size", "windTurbineMw", assumptions.windTurbineMw, "MW", 0.5, 20, 0.1, 1],
+    ["Wind capacity factor", "windCf", assumptions.windCf * 100, "%", 5, 70, 1, 0.01],
+    ["Nuclear unit size", "nuclearPlantGw", assumptions.nuclearPlantGw, "GW", 0.3, 2, 0.1, 1],
+    ["Nuclear capacity factor", "nuclearCf", assumptions.nuclearCf * 100, "%", 5, 98, 1, 0.01],
+    ["Coal unit size", "coalPlantGw", assumptions.coalPlantGw, "GW", 0.3, 2, 0.1, 1],
+    ["Coal capacity factor", "coalCf", assumptions.coalCf * 100, "%", 5, 95, 1, 0.01],
+  ] as const;
+  return (
+    <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-ink">Equivalent assumptions</span>
+        <span className="text-[11px] text-ink-faint">Editable</span>
+      </div>
+      <div className="text-[11px] text-ink-faint">
+        Capacity factor is average annual output as a share of rated output. Positive net imports
+        reduce domestic generation; negative values represent net exports.
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {fields.map(([label, key, value, unit, min, max, step, scale]) => (
+          <AssumptionInput
+            key={key}
+            label={label}
+            value={value}
+            unit={unit}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(next) => onChange({ ...assumptions, [key]: next * scale })}
+          />
+        ))}
+      </div>
+      <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
+        All technology comparisons use the same annual buildout value.
+      </div>
+    </div>
+  );
+}
+
+function AnnualEnergyEquivalents({ snapshot }: { snapshot: ImplicationsSnapshot }) {
+  const buildout = snapshot.electricity.newDomesticGenerationTWh?.value ?? null;
+  const equivalents = snapshot.electricity.annualEnergyEquivalents;
+  const technologies = ["solar", "wind", "nuclear", "coal"] as const;
+  return (
+    <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
+      <div className="text-xs font-medium text-ink">
+        Annual-energy equivalents for the same buildout
+      </div>
+      <div className="text-[11px] text-ink-faint">
+        Each row produces the same {formatTWh(buildout)} of additional annual domestic generation.
+        These are comparisons, not a system plan.
+      </div>
+      <div className="text-[11px] text-ink-muted">
+        Shared buildout used for every row: {formatTWh(buildout)}
+      </div>
+      {buildout === 0 || !equivalents ? (
+        <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 text-[11px] text-ink-muted">
+          No additional annual generation is required in this scenario.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {technologies.map((technology) => {
+            const equivalent = equivalents[technology];
+            return (
+              <div
+                key={technology}
+                className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-ink capitalize">
+                    {technology} annual-energy equivalent
+                  </div>
+                  <div className="text-[11px] text-ink-faint">
+                    {equivalent.referenceUnitLabel} at{" "}
+                    {(equivalent.capacityFactor * 100).toFixed(0)}% capacity factor
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] text-ink-faint">
+                    {formatGW(equivalent.installedGW)} installed
+                  </div>
+                  <div className="text-sm font-semibold text-ink">
+                    {formatCountCompact(equivalent.referenceUnits)} reference units
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ElectricitySection(props: {
+  snapshot: ImplicationsSnapshot;
+  macro: ComputedImplications["macro"];
+  observedElectricity: ComputedImplications["observedElectricity"];
+  onAssumptionsChange: (assumptions: ImplicationAssumptions) => void;
+}) {
+  const { snapshot, macro, observedElectricity, onAssumptionsChange } = props;
+  const buildout = snapshot.electricity.newDomesticGenerationTWh?.value ?? null;
+  return (
+    <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
+        <h3 className="font-semibold text-ink">Electricity</h3>
+        <span className="text-xs text-ink-muted">Annual energy at projected income</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <ElectricityWaterfall snapshot={snapshot} macro={macro} />
+        {buildout != null && (
+          <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-ink-muted">New domestic generation</div>
+              <div className="text-xl font-bold text-ink">{formatTWh(buildout)}</div>
+              <div className="text-[11px] text-ink-faint">
+                Above observed{" "}
+                {snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "baseline"}{" "}
+                generation
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-ink-muted">Average output</div>
+              <div className="font-semibold text-ink">
+                {formatGW(snapshot.electricity.newDomesticGenerationAverageGW?.value ?? null)}{" "}
+                average
+              </div>
+            </div>
+          </div>
+        )}
+        <ElectricityAssumptionsEditor
+          assumptions={snapshot.assumptions.assumptions}
+          onChange={onAssumptionsChange}
+        />
+        <AnnualEnergyEquivalents snapshot={snapshot} />
+        {observedElectricity && (
+          <div className="flex items-center gap-3 pt-2 border-t border-surface">
+            <span className="text-xs text-ink-muted">
+              Observed mix ({observedElectricity.year})
+            </span>
+            <div className="flex gap-2 flex-wrap">
+              {(["solar", "wind", "nuclear", "coal"] as const).map((source) => {
+                const share = observedElectricity.shares[source];
+                return share != null && share >= 1 ? (
+                  <span key={source} className="px-2 py-0.5 rounded bg-surface text-xs">
+                    <span className="capitalize">{source}</span> {share.toFixed(0)}%
+                  </span>
+                ) : null;
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function ImplicationsSlideOver({
   isOpen,
   onClose,
@@ -137,6 +369,7 @@ export function ImplicationsSlideOver({
     observedElectricity,
     macro,
     snapshot,
+    snapshotUnavailable,
   } = computed;
 
   const handleScenarioChange = (id: ScenarioId) => {
@@ -156,17 +389,6 @@ export function ImplicationsSlideOver({
             },
     });
   };
-
-  const electricityDelta = macro.electricity.buildoutDeltaTWh;
-  const solarCf = clamp(assumptions.solarCf, 0.05, 0.5);
-  const windCf = clamp(assumptions.windCf, 0.05, 0.7);
-  const nuclearCf = clamp(assumptions.nuclearCf, 0.05, 0.98);
-  const coalCf = clamp(assumptions.coalCf, 0.05, 0.95);
-  const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
-  const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
-  const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
-  const coalPlantGw = clamp(assumptions.coalPlantGw, 0.3, 2);
-  const annualEnergyEquivalents = snapshot?.electricity.annualEnergyEquivalents ?? null;
 
   const templateFlags: Record<TemplateId, string> = {
     china: "🇨🇳",
@@ -321,7 +543,9 @@ export function ImplicationsSlideOver({
         {/* Empty state */}
         {!loading && !error && (!hasAny || !snapshot) && (
           <div className="m-5 p-6 rounded-xl bg-surface border border-surface text-center">
-            <p className="text-ink-muted">Not enough data available for these projections.</p>
+            <p className="text-ink-muted">
+              {snapshotUnavailable?.message ?? "Not enough data available for these projections."}
+            </p>
           </div>
         )}
 
@@ -374,338 +598,12 @@ export function ImplicationsSlideOver({
               </div>
             </section>
 
-            {/* Electricity Card */}
-            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
-                <h3 className="font-semibold text-ink">Electricity</h3>
-                <span className="text-xs text-ink-muted">
-                  Annual generation at projected income
-                </span>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="rounded-lg border border-surface bg-surface overflow-hidden">
-                  {[
-                    {
-                      label: "End-use demand",
-                      value: `${formatTWh(macro.electricity.demandCurrentTWh)} (${snapshot.electricity.endUseDemandCurrentTWh?.year ?? "—"}) → ${formatTWh(macro.electricity.demandFutureTWh)} (${year})`,
-                      note: "Electricity consumed after system losses",
-                    },
-                    {
-                      label: "Gross supply required",
-                      value: formatTWh(macro.electricity.grossSupplyRequiredFutureTWh),
-                      note: `${assumptions.gridLossPct}% grid-loss assumption`,
-                    },
-                    {
-                      label: "Assumed net imports",
-                      value: formatTWh(macro.electricity.importsFutureTWh),
-                      note: `${assumptions.netImportsPct}% of gross supply`,
-                    },
-                    {
-                      label: "Domestic generation required",
-                      value: formatTWh(macro.electricity.requiredDomesticGenerationFutureTWh),
-                      note: `Scenario for ${year}`,
-                    },
-                    {
-                      label: "Observed domestic generation",
-                      value: formatTWh(
-                        snapshot.electricity.domesticGenerationObservedCurrentTWh?.value ?? null,
-                      ),
-                      note: `${snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "year unavailable"}`,
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between gap-4 px-3 py-2 border-b border-surface-sunken last:border-b-0"
-                    >
-                      <div>
-                        <div className="text-xs font-medium text-ink">{item.label}</div>
-                        <div className="text-[11px] text-ink-faint">{item.note}</div>
-                      </div>
-                      <div className="text-sm font-semibold text-ink text-right">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {electricityDelta != null && (
-                  <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs text-ink-muted">New domestic generation</div>
-                      <div className="text-xl font-bold text-ink">
-                        {formatTWh(electricityDelta)}
-                      </div>
-                      <div className="text-[11px] text-ink-faint">
-                        Above observed{" "}
-                        {snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ??
-                          "baseline"}{" "}
-                        generation
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-ink-muted">Average output</div>
-                      <div className="font-semibold text-ink">
-                        {formatGW(macro.electricity.buildoutDeltaAvgGW)} average
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-ink">Equivalent assumptions</span>
-                    <span className="text-[11px] text-ink-faint">Editable</span>
-                  </div>
-                  <div className="text-[11px] text-ink-faint">
-                    Capacity factor means average annual output as a percent of max rated output.
-                    Unit size means rated capacity per panel, turbine, or nuclear plant.
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <AssumptionInput
-                      label="Grid losses"
-                      value={assumptions.gridLossPct}
-                      unit="%"
-                      min={0}
-                      max={50}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, gridLossPct: value })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Net imports (gross supply share)"
-                      value={assumptions.netImportsPct}
-                      unit="%"
-                      min={-50}
-                      max={50}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, netImportsPct: value })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Panel size"
-                      value={assumptions.panelWatts}
-                      unit="W"
-                      min={100}
-                      max={1000}
-                      step={10}
-                      onChange={(value) => updateAssumptions({ ...assumptions, panelWatts: value })}
-                    />
-                    <AssumptionInput
-                      label="Solar capacity factor"
-                      value={assumptions.solarCf * 100}
-                      unit="%"
-                      min={5}
-                      max={50}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, solarCf: value / 100 })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Wind turbine size"
-                      value={assumptions.windTurbineMw}
-                      unit="MW"
-                      min={0.5}
-                      max={20}
-                      step={0.1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, windTurbineMw: value })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Wind capacity factor"
-                      value={assumptions.windCf * 100}
-                      unit="%"
-                      min={5}
-                      max={70}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, windCf: value / 100 })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Nuclear plant size"
-                      value={assumptions.nuclearPlantGw}
-                      unit="GW"
-                      min={0.3}
-                      max={2}
-                      step={0.1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, nuclearPlantGw: value })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Nuclear capacity factor"
-                      value={assumptions.nuclearCf * 100}
-                      unit="%"
-                      min={5}
-                      max={98}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, nuclearCf: value / 100 })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Coal unit size"
-                      value={assumptions.coalPlantGw}
-                      unit="GW"
-                      min={0.3}
-                      max={2}
-                      step={0.1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, coalPlantGw: value })
-                      }
-                    />
-                    <AssumptionInput
-                      label="Coal capacity factor"
-                      value={assumptions.coalCf * 100}
-                      unit="%"
-                      min={5}
-                      max={95}
-                      step={1}
-                      onChange={(value) =>
-                        updateAssumptions({ ...assumptions, coalCf: value / 100 })
-                      }
-                    />
-                  </div>
-                  <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
-                    Positive net imports reduce domestic generation; negative values represent net
-                    exports. All technology comparisons below use the same annual buildout value.
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
-                  <div className="text-xs font-medium text-ink">
-                    Annual-energy equivalents for the same buildout
-                  </div>
-                  <div className="text-[11px] text-ink-faint">
-                    Each row produces the same {formatTWh(electricityDelta)} of additional annual
-                    domestic generation. These are comparisons, not a system plan.
-                  </div>
-                  <div className="text-[11px] text-ink-muted">
-                    Shared buildout used for every row: {formatTWh(electricityDelta)}
-                  </div>
-                  {(electricityDelta ?? 0) <= 0 ? (
-                    <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 text-[11px] text-ink-muted">
-                      Projected demand does not exceed current demand in this scenario, so no
-                      additional annual generation is required in this scenario.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">
-                            Solar annual-energy equivalent
-                          </div>
-                          <div className="text-[11px] text-ink-faint">
-                            {panelWatts.toFixed(0)}W panels at {(solarCf * 100).toFixed(0)}%
-                            capacity factor
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">
-                            {formatGW(annualEnergyEquivalents?.solar.installedGW ?? null)} installed
-                          </div>
-                          <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(
-                              annualEnergyEquivalents?.solar.referenceUnits ?? null,
-                            )}{" "}
-                            panels
-                          </div>
-                        </div>
-                      </div>
-                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">
-                            Coal annual-energy equivalent
-                          </div>
-                          <div className="text-[11px] text-ink-faint">
-                            {coalPlantGw.toFixed(1)}GW units at {(coalCf * 100).toFixed(0)}%
-                            capacity factor
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">
-                            {formatGW(annualEnergyEquivalents?.coal.installedGW ?? null)} installed
-                          </div>
-                          <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(
-                              annualEnergyEquivalents?.coal.referenceUnits ?? null,
-                            )}{" "}
-                            reference units
-                          </div>
-                        </div>
-                      </div>
-                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">
-                            Wind annual-energy equivalent
-                          </div>
-                          <div className="text-[11px] text-ink-faint">
-                            {windTurbineMw.toFixed(1)}MW turbines at {(windCf * 100).toFixed(0)}%
-                            capacity factor
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">
-                            {formatGW(annualEnergyEquivalents?.wind.installedGW ?? null)} installed
-                          </div>
-                          <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(
-                              annualEnergyEquivalents?.wind.referenceUnits ?? null,
-                            )}{" "}
-                            turbines
-                          </div>
-                        </div>
-                      </div>
-                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-ink">
-                            Nuclear annual-energy equivalent
-                          </div>
-                          <div className="text-[11px] text-ink-faint">
-                            {nuclearPlantGw.toFixed(1)}GW plants at {(nuclearCf * 100).toFixed(0)}%
-                            capacity factor
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-[11px] text-ink-faint">
-                            {formatGW(annualEnergyEquivalents?.nuclear.installedGW ?? null)}{" "}
-                            installed
-                          </div>
-                          <div className="text-sm font-semibold text-ink">
-                            {formatCountCompact(
-                              annualEnergyEquivalents?.nuclear.referenceUnits ?? null,
-                            )}{" "}
-                            reference units
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {observedElectricity && (
-                  <div className="flex items-center gap-3 pt-2 border-t border-surface">
-                    <span className="text-xs text-ink-muted">
-                      Current mix ({observedElectricity.year})
-                    </span>
-                    <div className="flex gap-2 flex-wrap">
-                      {(["solar", "wind", "nuclear", "coal"] as const).map((source) => {
-                        const share = observedElectricity.shares[source];
-                        if (share == null || share < 1) return null;
-                        return (
-                          <span key={source} className="px-2 py-0.5 rounded bg-surface text-xs">
-                            <span className="capitalize">{source}</span> {share.toFixed(0)}%
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
+            <ElectricitySection
+              snapshot={snapshot}
+              macro={macro}
+              observedElectricity={observedElectricity}
+              onAssumptionsChange={updateAssumptions}
+            />
             <details className="rounded-lg border border-surface bg-surface-raised px-4 py-3">
               <summary className="cursor-pointer text-xs font-semibold text-ink">
                 Sources and assumptions

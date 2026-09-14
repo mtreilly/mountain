@@ -82,5 +82,5 @@
   <!-- Footer -->
   <line x1="48" y1="625" x2="1152" y2="625" stroke="#e5e0d8" stroke-opacity="0.5"/>
   <text x="48" y="657" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" fill="#8a847a">convergence.example.com</text>
-  <text x="1152" y="657" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">Sources: Penn World Table; UN World Population Prospects; World Bank; Our World in Data</text>
+  <text x="1152" y="657" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#8a847a">Sources: PWT; UN WPP 2024; World Bank; OWID</text>
 </svg>

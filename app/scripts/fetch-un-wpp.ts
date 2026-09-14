@@ -81,8 +81,9 @@ async function main() {
     const line = rawLine.replace(/^\uFEFF/, "");
     if (!header) {
       header = parseCsvLine(line);
+      const headerColumns = new Set(header);
       for (const required of ["ISO3_code", "Variant", "Time", "PopTotal"]) {
-        if (!header.includes(required)) throw new Error(`UN WPP CSV missing ${required}`);
+        if (!headerColumns.has(required)) throw new Error(`UN WPP CSV missing ${required}`);
       }
       continue;
     }

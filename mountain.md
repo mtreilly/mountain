@@ -835,26 +835,26 @@ Exit criterion: all automated checks pass and a manual spot check confirms the p
 
 The work is complete only when all of the following are true:
 
-- [ ] One immutable `ImplicationsSnapshot` is calculated per active implication scenario.
-- [ ] The panel, SVG card, caption, and export README receive that same snapshot or a pure presentation DTO derived from it.
-- [ ] No implication renderer recomputes GDP, demand, buildout, capacity, or reference-unit counts.
-- [ ] End-use demand, gross supply, net imports, domestic generation, and new buildout are separately named and displayed.
-- [ ] Net imports are explicitly defined as a percentage of gross supply and the formula implements that definition.
-- [ ] Every technology comparison uses `newDomesticGenerationTWh` as its annual-energy numerator.
-- [ ] Every plant/panel/turbine comparison says “annual-energy equivalent” or equivalent wording.
-- [ ] Population comes from a pinned UN WPP medium/low/high series, with no historical-CAGR fallback.
-- [ ] Implication horizons beyond the UN data range cannot produce a numeric result.
-- [ ] Current values display their actual observation years.
-- [ ] Current electricity demand uses population aligned to the electricity-use observation year.
-- [ ] Thread GDP values are correctly labeled per capita or are true population-adjusted totals.
-- [ ] Fixed-horizon implication copy does not claim to be the convergence year.
-- [ ] All selected assumptions survive closing the panel and appear in the generated thread.
-- [ ] Shared URLs reproduce all material implication assumptions.
-- [ ] The thread cites every material data family, not only GDP.
-- [ ] The UI explicitly calls the output an illustrative scenario, not a forecast or complete power-system plan.
-- [ ] Exact fixture tests assert every major intermediate value.
-- [ ] Automated tests assert exact panel/card/caption parity.
-- [ ] Unit, property, component, E2E, accessibility, visual, lint, typecheck, build, and React Doctor checks pass without regression.
+- [x] One immutable `ImplicationsSnapshot` is calculated per active implication scenario.
+- [x] The panel, SVG card, caption, and export README receive that same snapshot or a pure presentation DTO derived from it.
+- [x] No implication renderer recomputes GDP, demand, buildout, capacity, or reference-unit counts.
+- [x] End-use demand, gross supply, net imports, domestic generation, and new buildout are separately named and displayed.
+- [x] Net imports are explicitly defined as a percentage of gross supply and the formula implements that definition.
+- [x] Every technology comparison uses `newDomesticGenerationTWh` as its annual-energy numerator.
+- [x] Every plant/panel/turbine comparison says “annual-energy equivalent” or equivalent wording.
+- [x] Population comes from a pinned UN WPP medium/low/high series, with no historical-CAGR fallback.
+- [x] Implication horizons beyond the UN data range cannot produce a numeric result.
+- [x] Current values display their actual observation years.
+- [x] Current electricity demand uses population aligned to the electricity-use observation year.
+- [x] Thread GDP values are correctly labeled per capita or are true population-adjusted totals.
+- [x] Fixed-horizon implication copy does not claim to be the convergence year.
+- [x] All selected assumptions survive closing the panel and appear in the generated thread.
+- [x] Shared URLs reproduce all material implication assumptions.
+- [x] The thread cites every material data family, not only GDP.
+- [x] The UI explicitly calls the output an illustrative scenario, not a forecast or complete power-system plan.
+- [x] Exact fixture tests assert every major intermediate value.
+- [x] Automated tests assert exact panel/card/caption parity.
+- [x] Unit, property, component, E2E, accessibility, visual, lint, typecheck, build, and React Doctor checks pass without regression.
 
 ## Recommended delivery boundaries
 

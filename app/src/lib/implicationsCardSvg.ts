@@ -82,7 +82,15 @@ export function generateImplicationsCardSvg(params: ImplicationsCardParams): str
   const buildout = electricity.newDomesticGenerationTWh;
   const generationYear = electricity.domesticGenerationObservedCurrentTWh?.year;
   const nuclear = electricity.annualEnergyEquivalents?.nuclear;
-  const sourceNames = [...new Set(implicationsData.provenance.map((source) => source.source))];
+  const compactSource = (source: string) => {
+    if (source === "Penn World Table") return "PWT";
+    if (source === "UN World Population Prospects") return "UN WPP 2024";
+    if (source === "Our World in Data") return "OWID";
+    return source;
+  };
+  const sourceNames = [
+    ...new Set(implicationsData.provenance.map((source) => compactSource(source.source))),
+  ];
   const sourceLabel = sourceNames.length ? sourceNames.join("; ") : "Sources unavailable";
 
   // Layout

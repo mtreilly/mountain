@@ -133,6 +133,10 @@ const DATA_SOURCE_LICENSES: Record<string, { name: string; url: string }> = {
     name: "CC-BY 3.0 IGO",
     url: "https://hdr.undp.org/copyright-and-terms-use",
   },
+  "UN World Population Prospects": {
+    name: "CC-BY 3.0 IGO",
+    url: "https://population.un.org/wpp/Download/Standard/MostUsed/",
+  },
   "Our World in Data": {
     name: "CC-BY 4.0",
     url: "https://ourworldindata.org/faqs#can-i-use-or-reproduce-your-data-visualizations",

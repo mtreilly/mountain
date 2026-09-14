@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fixtureImplicationsSnapshot } from "../../scripts/implicationsFixture";
 import { generateImplicationsCardSvg } from "./implicationsCardSvg";
-import { generateCaptions } from "./threadGenerator";
+import { generateCaptions, generateReadmeFile } from "./threadGenerator";
 
 describe("implications panel/thread parity contract", () => {
   const snapshot = fixtureImplicationsSnapshot();
@@ -55,5 +55,23 @@ describe("implications panel/thread parity contract", () => {
     expect(svg).not.toContain("GDP (TOTAL)");
     expect(svg).not.toContain("What convergence means");
     expect(captions[3]).toContain("illustrative 22-year electricity scenario");
+  });
+
+  it("exports the full assumption and provenance record", () => {
+    const readme = generateReadmeFile("NGA", "USA", snapshot);
+    for (const text of [
+      "UN medium scenario",
+      "Grid losses: 0%",
+      "Net imports: 0% of gross supply",
+      "Capacity factors:",
+      "Generation mix:",
+      "Penn World Table",
+      "UN World Population Prospects",
+      "World Bank",
+      "Our World in Data",
+      "not a forecast",
+    ]) {
+      expect(readme).toContain(text);
+    }
   });
 });

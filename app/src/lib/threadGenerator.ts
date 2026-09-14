@@ -183,7 +183,7 @@ function generateCaptionsFile(cards: ThreadCard[]): string {
 /**
  * Generate README.txt content.
  */
-function generateReadmeFile(
+export function generateReadmeFile(
   chaserCode: string,
   targetCode: string,
   snapshot?: ImplicationsSnapshot | null,

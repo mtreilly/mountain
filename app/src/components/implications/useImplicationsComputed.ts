@@ -123,6 +123,17 @@ export function useImplicationsComputed({
   );
   const populationCode = `POPULATION_UN_${populationVariant.toUpperCase()}`;
   const populationFuturePoint = findPoint(data, populationCode, chaserIso, year);
+  const snapshotUnavailable = !mediumPopulationCurrentPoint
+    ? {
+        code: "population_year_unavailable" as const,
+        message: `UN WPP 2024 has no population estimate for ${observedBaseYear}.`,
+      }
+    : !populationFuturePoint
+      ? {
+          code: "population_year_unavailable" as const,
+          message: `UN WPP 2024 has no ${populationVariant} population scenario for ${year}.`,
+        }
+      : null;
   const popCurrent = mediumPopulationCurrentPoint?.value ?? null;
   const popFuture = populationFuturePoint?.value ?? null;
 
@@ -270,14 +281,6 @@ export function useImplicationsComputed({
     for (const p of sorted) {
       if (p.value == null || !Number.isFinite(p.value) || p.value <= 0) continue;
       const yr = p.year;
-      const solar = valueAtYear("ELECTRICITY_GEN_SOLAR", yr);
-      const wind = valueAtYear("ELECTRICITY_GEN_WIND", yr);
-      const coal = valueAtYear("ELECTRICITY_GEN_COAL", yr);
-      const nuclear = valueAtYear("ELECTRICITY_GEN_NUCLEAR", yr);
-      const hasAnySource = [solar, wind, coal, nuclear].some(
-        (x) => x != null && Number.isFinite(x) && x >= 0,
-      );
-      if (!hasAnySource) continue;
       snapshot = { year: yr, total: p.value };
       break;
     }
@@ -840,5 +843,6 @@ export function useImplicationsComputed({
     baselineMultipliers,
     mixBuildout,
     snapshot,
+    snapshotUnavailable,
   };
 }
