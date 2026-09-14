@@ -47,6 +47,7 @@
     "impElecMode": "compare",
     "ipv": "medium",
     "isc": "baseline",
+    "icu": false,
     "igl": 10,
     "ini": 0,
     "iscf": 0.2,

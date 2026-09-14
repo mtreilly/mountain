@@ -1,0 +1,4 @@
+SortOrder,LocID,Notes,ISO3_code,ISO2_code,SDMX_code,LocTypeID,LocTypeName,ParentID,Location,VarID,Variant,Time,MidPeriod,PopMale,PopFemale,PopTotal,PopDensity
+160,566,,NGA,NG,566,4,Country/Area,914,Nigeria,2,Medium,2023,2023.5,110000,113800,223800,246.2
+160,566,,NGA,NG,566,4,Country/Area,914,Nigeria,3,High,2048,2048.5,184000,190300.759,374300.759,411.5
+160,566,,NGA,NG,566,4,Country/Area,914,Nigeria,4,Low,2048,2048.5,160000,166673.934,326673.934,359.2

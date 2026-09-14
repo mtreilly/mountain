@@ -270,7 +270,7 @@ export function parseShareStateFromSearch(
   const cg = round(clamp(cgRaw ?? defaults.cg, -0.05, 0.12), 0.001);
   const baseYear = clamp(baseYearRaw ?? defaults.baseYear, 1950, 2100);
   const goal = clamp(goalRaw ?? defaults.goal ?? 25, 1, 150);
-  const ih = clamp(ihRaw ?? defaults.ih ?? 25, 1, 150);
+  const ih = clamp(ihRaw ?? defaults.ih ?? 25, 1, Math.max(1, 2100 - baseYear));
 
   // Parse adjustment toggles ("0" = false, anything else or missing = true)
   const adjCRaw = params.get("adjC");

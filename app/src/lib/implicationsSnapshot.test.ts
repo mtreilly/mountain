@@ -132,4 +132,42 @@ describe("buildImplicationsSnapshot", () => {
       ),
     ).toThrow(/capacity factor/);
   });
+
+  it("preserves the model's monotonic physical invariants", () => {
+    const baseline = buildImplicationsSnapshot(fixture());
+    const higherLosses = buildImplicationsSnapshot(
+      fixture({
+        controls: {
+          ...fixture().controls,
+          assumptions: { ...fixture().controls.assumptions, gridLossPct: 20 },
+        },
+      }),
+    );
+    const higherImports = buildImplicationsSnapshot(
+      fixture({
+        controls: {
+          ...fixture().controls,
+          assumptions: { ...fixture().controls.assumptions, netImportsPct: 20 },
+        },
+      }),
+    );
+    const higherNuclearCf = buildImplicationsSnapshot(
+      fixture({
+        controls: {
+          ...fixture().controls,
+          assumptions: { ...fixture().controls.assumptions, nuclearCf: 0.95 },
+        },
+      }),
+    );
+
+    expect(higherLosses.electricity.grossSupplyRequiredFutureTWh!.value).toBeGreaterThan(
+      baseline.electricity.grossSupplyRequiredFutureTWh!.value,
+    );
+    expect(higherImports.electricity.domesticGenerationRequiredFutureTWh!.value).toBeLessThan(
+      baseline.electricity.domesticGenerationRequiredFutureTWh!.value,
+    );
+    expect(higherNuclearCf.electricity.annualEnergyEquivalents!.nuclear.installedGW).toBeLessThan(
+      baseline.electricity.annualEnergyEquivalents!.nuclear.installedGW,
+    );
+  });
 });

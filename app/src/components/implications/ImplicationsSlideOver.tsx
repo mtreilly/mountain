@@ -161,9 +161,11 @@ export function ImplicationsSlideOver({
   const solarCf = clamp(assumptions.solarCf, 0.05, 0.5);
   const windCf = clamp(assumptions.windCf, 0.05, 0.7);
   const nuclearCf = clamp(assumptions.nuclearCf, 0.05, 0.98);
+  const coalCf = clamp(assumptions.coalCf, 0.05, 0.95);
   const panelWatts = clamp(assumptions.panelWatts, 100, 1000);
   const windTurbineMw = clamp(assumptions.windTurbineMw, 0.5, 20);
   const nuclearPlantGw = clamp(assumptions.nuclearPlantGw, 0.3, 2);
+  const coalPlantGw = clamp(assumptions.coalPlantGw, 0.3, 2);
   const annualEnergyEquivalents = snapshot?.electricity.annualEnergyEquivalents ?? null;
 
   const templateFlags: Record<TemplateId, string> = {
@@ -202,6 +204,7 @@ export function ImplicationsSlideOver({
                 className="w-16 px-2 py-1.5 rounded-lg bg-surface border border-surface text-ink font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
               <span className="text-sm text-ink-muted">years → {year}</span>
+              <span className="text-[11px] text-ink-faint">UN projections through 2100</span>
             </div>
 
             <div className="w-px h-6 bg-surface" />
@@ -542,6 +545,28 @@ export function ImplicationsSlideOver({
                         updateAssumptions({ ...assumptions, nuclearCf: value / 100 })
                       }
                     />
+                    <AssumptionInput
+                      label="Coal unit size"
+                      value={assumptions.coalPlantGw}
+                      unit="GW"
+                      min={0.3}
+                      max={2}
+                      step={0.1}
+                      onChange={(value) =>
+                        updateAssumptions({ ...assumptions, coalPlantGw: value })
+                      }
+                    />
+                    <AssumptionInput
+                      label="Coal capacity factor"
+                      value={assumptions.coalCf * 100}
+                      unit="%"
+                      min={5}
+                      max={95}
+                      step={1}
+                      onChange={(value) =>
+                        updateAssumptions({ ...assumptions, coalCf: value / 100 })
+                      }
+                    />
                   </div>
                   <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
                     Positive net imports reduce domestic generation; negative values represent net
@@ -586,6 +611,28 @@ export function ImplicationsSlideOver({
                               annualEnergyEquivalents?.solar.referenceUnits ?? null,
                             )}{" "}
                             panels
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-ink">
+                            Coal annual-energy equivalent
+                          </div>
+                          <div className="text-[11px] text-ink-faint">
+                            {coalPlantGw.toFixed(1)}GW units at {(coalCf * 100).toFixed(0)}%
+                            capacity factor
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[11px] text-ink-faint">
+                            {formatGW(annualEnergyEquivalents?.coal.installedGW ?? null)} installed
+                          </div>
+                          <div className="text-sm font-semibold text-ink">
+                            {formatCountCompact(
+                              annualEnergyEquivalents?.coal.referenceUnits ?? null,
+                            )}{" "}
+                            reference units
                           </div>
                         </div>
                       </div>

@@ -146,7 +146,8 @@ function generateImplicationsCaption(ctx: CaptionContext): string {
       : null,
   ].filter((line): line is string => line != null);
 
-  const assumptions = `Assumptions: UN ${controls.populationVariant} population, ${controls.assumptions.gridLossPct}% grid losses, ${controls.assumptions.netImportsPct}% net imports, ${controls.template}-like development path.`;
+  const scenarioName = controls.scenario.replace(/([A-Z])/g, " $1").toLowerCase();
+  const assumptions = `Assumptions: ${scenarioName}${controls.customized ? " with custom inputs" : ""}, UN ${controls.populationVariant} population, ${controls.assumptions.gridLossPct}% grid losses, ${controls.assumptions.netImportsPct}% net imports, ${controls.template}-like development path.`;
   return `4/4 An illustrative ${implicationsData.horizon.years}-year electricity scenario for ${chaserName}:\n\n${scenarioLines.join("\n")}\n\n${assumptions} Scenario, not forecast.\n\n${appUrl}`;
 }
 
@@ -196,6 +197,10 @@ IMPLICATIONS SCENARIO:
 - Template: ${snapshot.assumptions.template}-like development path
 - Grid losses: ${snapshot.assumptions.assumptions.gridLossPct}%
 - Net imports: ${snapshot.assumptions.assumptions.netImportsPct}% of gross supply
+- Scenario: ${snapshot.assumptions.scenario}${snapshot.assumptions.customized ? " (customized)" : ""}
+- Capacity factors: solar ${snapshot.assumptions.assumptions.solarCf}, wind ${snapshot.assumptions.assumptions.windCf}, nuclear ${snapshot.assumptions.assumptions.nuclearCf}, coal ${snapshot.assumptions.assumptions.coalCf}
+- Reference units: ${snapshot.assumptions.assumptions.panelWatts} W solar panel; ${snapshot.assumptions.assumptions.windTurbineMw} MW wind turbine; ${snapshot.assumptions.assumptions.nuclearPlantGw} GW nuclear unit; ${snapshot.assumptions.assumptions.coalPlantGw} GW coal unit
+- Generation mix: solar ${snapshot.assumptions.mix.solar}%, wind ${snapshot.assumptions.mix.wind}%, nuclear ${snapshot.assumptions.mix.nuclear}%, coal ${snapshot.assumptions.mix.coal}%
 
 SOURCES:
 ${snapshot.provenance
