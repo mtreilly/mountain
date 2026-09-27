@@ -43,7 +43,6 @@ function RateRow({
   const key = speedKey(rate);
   const colors = COLOR_CLASSES[color];
   const fill = ((rate - RATE_RANGE.min) / (max - RATE_RANGE.min)) * 100;
-
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-3">
@@ -89,7 +88,6 @@ export function GrowthSpeedCard({
   targetName,
   chaserRate,
   targetRate,
-  chaserAhead,
   onChaserRateChange,
   onTargetRateChange,
 }: {
@@ -97,19 +95,10 @@ export function GrowthSpeedCard({
   targetName: string;
   chaserRate: number;
   targetRate: number;
-  chaserAhead: boolean;
   onChaserRateChange: (rate: number) => void;
   onTargetRateChange: (rate: number) => void;
 }) {
   const { t } = useTranslation();
-  const closing = chaserRate > targetRate;
-
-  const verdict = chaserAhead
-    ? t("sidebar.alreadyAhead", { chaser: chaserName, target: targetName })
-    : closing
-      ? t("sidebar.gapCloses", { chaser: chaserName })
-      : t("sidebar.gapStays", { chaser: chaserName });
-
   return (
     <section className="card p-4 space-y-4" aria-labelledby="growth-speed-heading">
       <header>
@@ -133,18 +122,6 @@ export function GrowthSpeedCard({
         color="target"
         onChange={onTargetRateChange}
       />
-
-      <p
-        className={[
-          "flex items-start gap-2 rounded-lg px-3 py-2 text-xs leading-relaxed transition-colors duration-200",
-          chaserAhead || closing
-            ? "bg-convergence-soft text-ink"
-            : "bg-amber-500/10 text-amber-800 dark:text-amber-200",
-        ].join(" ")}
-        aria-live="polite"
-      >
-        {verdict}
-      </p>
     </section>
   );
 }

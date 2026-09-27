@@ -279,9 +279,6 @@
       "veryFast": "Very fast",
       "rare": "Rarely seen"
     },
-    "gapCloses": "{{chaser}} grows faster, so the gap shrinks every year.",
-    "gapStays": "{{chaser}} isn't growing faster, so the gap never closes.",
-    "alreadyAhead": "{{chaser}} is already ahead of {{target}}.",
     "deadlineHeading": "Set a deadline",
     "deadlineHint": "What would it take to catch up in time?",
     "within": "Catch up within",
@@ -289,8 +286,6 @@
     "fewerYears": "5 fewer years",
     "moreYears": "5 more years",
     "needs": "{{chaser}} would need",
-    "onTrack": "Its current {{rate}} is enough.",
-    "shortfall": "It grows {{rate}} now, so it would need to speed up.",
     "ambitious": "Very ambitious: few countries have kept this up.",
     "unprecedented": "No country has kept this up for long.",
     "implicationsTitle": "Development implications",

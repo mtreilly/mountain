@@ -37,7 +37,6 @@ export function GrowthSidebarContent({
       targetName={targetName}
       chaserRate={chaserGrowthRate}
       targetRate={targetGrowthRate}
-      chaserAhead={chaserValue >= targetValue}
       onChaserRateChange={onChaserGrowthRateChange}
       onTargetRateChange={onTargetGrowthRateChange}
     />,
@@ -46,7 +45,6 @@ export function GrowthSidebarContent({
       chaserName={chaserName}
       chaserValue={chaserValue}
       targetValue={targetValue}
-      chaserGrowthRate={chaserGrowthRate}
       targetGrowthRate={targetGrowthRate}
       years={catchUpYears}
       onYearsChange={onCatchUpYearsChange}

@@ -15,7 +15,6 @@ export function GrowthCalculator({
   chaserName,
   chaserValue,
   targetValue,
-  chaserGrowthRate,
   targetGrowthRate,
   years,
   onYearsChange,
@@ -23,7 +22,6 @@ export function GrowthCalculator({
   chaserName: string;
   chaserValue: number;
   targetValue: number;
-  chaserGrowthRate: number;
   targetGrowthRate: number;
   years: number;
   onYearsChange: (years: number) => void;
@@ -43,21 +41,13 @@ export function GrowthCalculator({
   if (required == null) return null;
 
   const bench = benchmarkGrowthRate(required);
-  const onTrack = chaserGrowthRate >= required;
-  const note =
+  // Only speak up when the required pace is historically unrealistic.
+  const warning =
     bench.tone === "unprecedented"
-      ? t("sidebar.unprecedented")
+      ? { text: t("sidebar.unprecedented"), tone: "text-rose-700 dark:text-rose-300" }
       : bench.tone === "ambitious"
-        ? t("sidebar.ambitious")
-        : onTrack
-          ? t("sidebar.onTrack", { rate: formatPercent(chaserGrowthRate) })
-          : t("sidebar.shortfall", { rate: formatPercent(chaserGrowthRate) });
-  const noteTone =
-    bench.tone === "unprecedented"
-      ? "text-rose-700 dark:text-rose-300"
-      : bench.tone === "ambitious" || !onTrack
-        ? "text-amber-700 dark:text-amber-300"
-        : "text-emerald-700 dark:text-emerald-300";
+        ? { text: t("sidebar.ambitious"), tone: "text-amber-700 dark:text-amber-300" }
+        : null;
 
   const stepperButton =
     "pressable focus-ring grid size-8 place-items-center rounded-md text-ink-muted hover:bg-surface-raised hover:text-ink disabled:opacity-40";
@@ -130,9 +120,11 @@ export function GrowthCalculator({
           </span>
           <span className="text-sm text-ink-muted">{t("sidebar.perYear")}</span>
         </p>
-        <p key={noteTone} className={`animate-swap mt-1 text-xs ${noteTone}`}>
-          {note}
-        </p>
+        {warning && (
+          <p key={warning.tone} className={`animate-swap mt-1 text-xs ${warning.tone}`}>
+            {warning.text}
+          </p>
+        )}
       </div>
     </section>
   );
