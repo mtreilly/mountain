@@ -1172,8 +1172,9 @@ export default function App() {
   return (
     <>
       {toaster}
-      <div className="min-h-screen grain">
-        <div className="app-shell max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-6">
+      <div className="min-h-dvh flex flex-col grain">
+        {/* Flex column + footer mt-auto keeps the footer at the bottom on short pages */}
+        <div className="app-shell flex flex-1 flex-col w-full max-w-screen-2xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           {/* Header - Compact */}
           <AppHeader
             comparisonMode={comparisonMode}

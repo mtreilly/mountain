@@ -107,43 +107,52 @@ export function AppFooter({
   }, [isDataSourcesOpen]);
 
   return (
-    <footer className="mt-10 lg:mt-12 pt-6 border-t border-surface">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-ink-faint">
-        <p>
-          {t("footer.data")}{" "}
-          <button
-            type="button"
-            onClick={() => setIsDataSourcesOpen(true)}
-            className="text-[var(--color-accent)] hover:underline focus-ring rounded-sm"
-            aria-label={t("footer.openDataSources")}
-          >
-            {t("footer.dataSources")}
-          </button>
-          {" · "}
-          {t("footer.inspiredBy")}{" "}
-          <a
-            href="https://oliverwkim.com/The-Mountain-To-Climb/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--color-accent)] hover:underline"
-          >
-            Oliver Kim
-          </a>
-          {" · "}
-          <a
-            href="https://www.global-developments.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--color-accent)] hover:underline"
-          >
-            Global Developments
-          </a>
-          {" · "}
-          {isRegions
-            ? t("footer.regionsCount", { count: regionsCount ?? 0 })
-            : t("footer.countriesCount", { count: countriesCount })}
-        </p>
-        <p className="flex items-center gap-1.5">
+    <footer className="mt-auto pt-10 lg:pt-12">
+      <div className="flex flex-col gap-3 border-t border-surface pt-5 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between">
+        {/* Items wrap as whole units so a separator never starts a line */}
+        <ul className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <li>
+            {t("footer.data")}{" "}
+            <button
+              type="button"
+              onClick={() => setIsDataSourcesOpen(true)}
+              className="text-[var(--color-accent)] hover:underline focus-ring rounded-sm"
+              aria-label={t("footer.openDataSources")}
+            >
+              {t("footer.dataSources")}
+            </button>
+          </li>
+          <li aria-hidden="true">·</li>
+          <li>
+            {t("footer.inspiredBy")}{" "}
+            <a
+              href="https://oliverwkim.com/The-Mountain-To-Climb/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] hover:underline focus-ring rounded-sm"
+            >
+              Oliver Kim
+            </a>
+          </li>
+          <li aria-hidden="true">·</li>
+          <li>
+            <a
+              href="https://www.global-developments.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] hover:underline focus-ring rounded-sm"
+            >
+              Global Developments
+            </a>
+          </li>
+          <li aria-hidden="true">·</li>
+          <li className="tabular-nums">
+            {isRegions
+              ? t("footer.regionsCount", { count: regionsCount ?? 0 })
+              : t("footer.countriesCount", { count: countriesCount })}
+          </li>
+        </ul>
+        <p className="flex shrink-0 items-center gap-1">
           <span>{t("footer.builtBy")}</span>
           <a
             href="https://actuallymaybe.com"
@@ -153,12 +162,14 @@ export function AppFooter({
           >
             Micheál
           </a>
-          <span className="text-ink-faint/50">·</span>
+          <span className="text-ink-faint/50" aria-hidden="true">
+            ·
+          </span>
           <a
             href="https://x.com/MichealReilly"
             target="_blank"
             rel="noopener noreferrer me"
-            className="text-ink-faint hover:text-[var(--color-accent)] transition-colors"
+            className="inline-grid size-7 place-items-center rounded-md text-ink-faint hover:text-[var(--color-accent)] transition-colors focus-ring"
             aria-label="Twitter"
           >
             <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -169,7 +180,7 @@ export function AppFooter({
             href="https://bsky.app/profile/michealrs.bsky.social"
             target="_blank"
             rel="noopener noreferrer me"
-            className="text-ink-faint hover:text-[var(--color-accent)] transition-colors"
+            className="inline-grid size-7 place-items-center rounded-md text-ink-faint hover:text-[var(--color-accent)] transition-colors focus-ring"
             aria-label="Bluesky"
           >
             <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
