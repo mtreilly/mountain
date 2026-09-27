@@ -1,4 +1,6 @@
 import { strict as assert } from "node:assert";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { generateShareCardPng, svgStringToPngBlob } from "../src/lib/chartExport";
 import {
   buildPermalink,
@@ -127,6 +129,45 @@ function installCanvasDomStubs(options?: { decodeReject?: boolean }) {
       g.document = originalDocument;
     },
   };
+}
+
+function flattenKeys(obj: Record<string, unknown>, prefix = ""): string[] {
+  return Object.entries(obj).flatMap(([key, value]) =>
+    value && typeof value === "object"
+      ? flattenKeys(value as Record<string, unknown>, `${prefix}${key}.`)
+      : [`${prefix}${key}`],
+  );
+}
+
+function listSourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return listSourceFiles(path);
+    return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path] : [];
+  });
+}
+
+function testTranslationKeysExist() {
+  const translations = JSON.parse(readFileSync("public/locales/en/translation.json", "utf8"));
+  const keys = new Set(flattenKeys(translations));
+  // i18next plural keys (count_one/count_other) are referenced by their base name
+  for (const key of [...keys]) keys.add(key.replace(/_(zero|one|two|few|many|other)$/, ""));
+
+  const missing: string[] = [];
+  for (const file of listSourceFiles("src")) {
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(/\bt\(\s*(["'`])([^"'`]+)\1/g)) {
+      const key = match[2];
+      if (key.includes("${")) {
+        // Dynamic key: require at least one translation under its static prefix
+        const prefix = key.slice(0, key.indexOf("${"));
+        if (![...keys].some((k) => k.startsWith(prefix))) missing.push(`${file}: ${key}`);
+      } else if (!keys.has(key)) {
+        missing.push(`${file}: ${key}`);
+      }
+    }
+  }
+  assert.deepEqual(missing, [], `Missing translation keys:\n${missing.join("\n")}`);
 }
 
 function testShareStateRoundtrip() {
@@ -982,6 +1023,7 @@ function testShareCardFilenamePattern() {
 
 async function run() {
   const tests = [
+    ["i18n: every t() key exists in en translations", testTranslationKeysExist],
     ["shareState roundtrip", testShareStateRoundtrip],
     ["tmode static forces tg=0", testStaticTargetForcesTgZero],
     ["embed mode preserves embed params", testEmbedUrlSyncPreservesEmbedParams],
