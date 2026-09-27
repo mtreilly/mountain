@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { GrowthCalculator } from "./GrowthCalculator";
-import { GrowthRateControls } from "./GrowthRateControls";
+import { GrowthSpeedCard } from "./GrowthSpeedCard";
 
 export function GrowthSidebarContent({
-  compact,
   chaserName,
   targetName,
   chaserValue,
@@ -15,10 +14,8 @@ export function GrowthSidebarContent({
   catchUpYears,
   onCatchUpYearsChange,
   contextCards,
-  showControls = true,
-  showCalculator = true,
+  footer,
 }: {
-  compact?: boolean;
   chaserName: string;
   targetName: string;
   chaserValue: number;
@@ -30,35 +27,33 @@ export function GrowthSidebarContent({
   catchUpYears: number;
   onCatchUpYearsChange: (years: number) => void;
   contextCards?: ReactNode;
-  showControls?: boolean;
-  showCalculator?: boolean;
+  footer?: ReactNode;
 }) {
-  return (
-    <>
-      {showControls && (
-        <GrowthRateControls
-          chaserRate={chaserGrowthRate}
-          targetRate={targetGrowthRate}
-          onChaserRateChange={onChaserGrowthRateChange}
-          onTargetRateChange={onTargetGrowthRateChange}
-          chaserName={chaserName}
-          targetName={targetName}
-          compact={compact}
-        />
-      )}
-      {showCalculator && (
-        <GrowthCalculator
-          chaserName={chaserName}
-          targetName={targetName}
-          chaserValue={chaserValue}
-          targetValue={targetValue}
-          chaserGrowthRate={chaserGrowthRate}
-          targetGrowthRate={targetGrowthRate}
-          years={catchUpYears}
-          onYearsChange={onCatchUpYearsChange}
-        />
-      )}
-      {contextCards}
-    </>
-  );
+  // Each child is its own step so the stagger reads top to bottom: speed → deadline → more.
+  const steps = [
+    <GrowthSpeedCard
+      key="speed"
+      chaserName={chaserName}
+      targetName={targetName}
+      chaserRate={chaserGrowthRate}
+      targetRate={targetGrowthRate}
+      chaserAhead={chaserValue >= targetValue}
+      onChaserRateChange={onChaserGrowthRateChange}
+      onTargetRateChange={onTargetGrowthRateChange}
+    />,
+    <GrowthCalculator
+      key="deadline"
+      chaserName={chaserName}
+      chaserValue={chaserValue}
+      targetValue={targetValue}
+      chaserGrowthRate={chaserGrowthRate}
+      targetGrowthRate={targetGrowthRate}
+      years={catchUpYears}
+      onYearsChange={onCatchUpYearsChange}
+    />,
+    footer ? <div key="footer">{footer}</div> : null,
+    contextCards ? <div key="context">{contextCards}</div> : null,
+  ].filter(Boolean);
+
+  return <div className="stagger-children space-y-3">{steps}</div>;
 }

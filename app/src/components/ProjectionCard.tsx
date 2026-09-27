@@ -4,6 +4,7 @@ import type { Milestone } from "../lib/convergence";
 import type { ShareState } from "../lib/shareState";
 import { ConvergenceChartInteractive } from "./ConvergenceChartInteractive";
 import { ProjectionTable } from "./ProjectionTable";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 export function ProjectionCard({
   view,
@@ -45,7 +46,7 @@ export function ProjectionCard({
   const { t } = useTranslation();
   return (
     <div className="card p-2.5 sm:p-3 animate-fade-in-up stagger-3">
-      <div className="flex items-center justify-between gap-2 mb-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 mb-1.5">
         {/* Left: controls */}
         <div className="flex items-center gap-2 min-w-0">
           <label className="inline-flex items-center gap-1.5 text-xs text-ink-muted select-none">
@@ -57,32 +58,14 @@ export function ProjectionCard({
             />
             {t("projection.milestones")}
           </label>
-          <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-            <button
-              type="button"
-              onClick={() => onViewChange("chart")}
-              className={[
-                "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-                view === "chart"
-                  ? "bg-surface-raised text-ink shadow-sm"
-                  : "text-ink-muted hover:bg-surface-raised/60",
-              ].join(" ")}
-            >
-              {t("projection.chart")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewChange("table")}
-              className={[
-                "px-2.5 py-1 text-xs font-medium transition-default focus-ring",
-                view === "table"
-                  ? "bg-surface-raised text-ink shadow-sm"
-                  : "text-ink-muted hover:bg-surface-raised/60",
-              ].join(" ")}
-            >
-              {t("projection.table")}
-            </button>
-          </div>
+          <SegmentedControl<"chart" | "table">
+            value={view ?? "chart"}
+            onChange={onViewChange}
+            options={[
+              { value: "chart", label: t("projection.chart") },
+              { value: "table", label: t("projection.table") },
+            ]}
+          />
           {unit && <span className="hidden sm:inline text-xs text-ink-faint truncate">{unit}</span>}
         </div>
 

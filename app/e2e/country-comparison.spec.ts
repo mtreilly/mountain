@@ -40,7 +40,10 @@ test("Country comparison flow updates selectors, growth, and projection view", a
     "Life expectancy at birth",
   );
 
-  await page.getByRole("button", { name: "Rapid" }).first().click();
+  await page
+    .getByRole("slider", { name: "Poland growth rate" })
+    .locator("visible=true")
+    .fill("0.07");
   await expect(page).toHaveURL(/cg=0\.070/);
 
   const summary = page

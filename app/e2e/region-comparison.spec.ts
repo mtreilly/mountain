@@ -40,7 +40,10 @@ test("Region comparison flow switches mode, selects regions, and updates project
   await selectRegion(page, /Target( Region)?:/i, "London");
   await expect(page.getByRole("button", { name: /Target( Region)?: London/i })).toBeVisible();
 
-  await page.getByRole("button", { name: "Fast" }).first().click();
+  await page
+    .getByRole("slider", { name: "California growth rate" })
+    .locator("visible=true")
+    .fill("0.05");
   await expect(page).toHaveURL(/cg=0\.050/);
 
   await page

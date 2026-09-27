@@ -15,8 +15,8 @@ import { AppHeader } from "./components/AppHeader";
 import { CountryContextCard } from "./components/CountryContextCard";
 import { DataStates } from "./components/DataStates";
 import { EmbedView } from "./components/EmbedView";
-import { GrowthRateBar } from "./components/GrowthRateBar";
 import { GrowthSidebarContent } from "./components/GrowthSidebarContent";
+import { ImplicationsTrigger } from "./components/ImplicationsTrigger";
 import { useImplicationsComputed } from "./components/implications/useImplicationsComputed";
 import { useImplicationsData } from "./components/implications/useImplicationsData";
 import { ProjectionCard } from "./components/ProjectionCard";
@@ -1071,6 +1071,27 @@ export default function App() {
       </div>
     ) : null;
 
+  const sidebarContent = (
+    <GrowthSidebarContent
+      chaserName={displayChaserName}
+      targetName={displayTargetName}
+      chaserValue={displayChaserValue ?? 0}
+      targetValue={displayTargetValue ?? 0}
+      chaserGrowthRate={chaserGrowthRate}
+      targetGrowthRate={targetGrowthRate}
+      onChaserGrowthRateChange={setChaserGrowthRate}
+      onTargetGrowthRateChange={setTargetGrowthRate}
+      catchUpYears={catchUpYears}
+      onCatchUpYearsChange={setCatchUpYears}
+      contextCards={contextCards}
+      footer={
+        showImplications && comparisonMode === "countries" ? (
+          <ImplicationsTrigger onOpen={() => setIsImplicationsOpen(true)} />
+        ) : null
+      }
+    />
+  );
+
   const toaster =
     embedParams.embed && embedParams.interactive === false ? null : (
       <Toaster theme={theme} position="bottom-right" closeButton richColors />
@@ -1197,16 +1218,6 @@ export default function App() {
                   onSwapRegions={swapRegions}
                 />
               </div>
-              <div className="growth-bar-block hidden lg:block no-print">
-                <GrowthRateBar
-                  chaserName={displayChaserName}
-                  targetName={displayTargetName}
-                  chaserRate={chaserGrowthRate}
-                  targetRate={targetGrowthRate}
-                  onChaserRateChange={setChaserGrowthRate}
-                  onTargetRateChange={setTargetGrowthRate}
-                />
-              </div>
               <div className="data-states-block">
                 <DataStates
                   loading={countriesLoading || dataLoading || indicatorsLoading}
@@ -1287,40 +1298,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Implications trigger button (mobile only - desktop is in sidebar) */}
-              {showImplications && comparisonMode === "countries" && (
-                <div className="animate-fade-in-up stagger-4 lg:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setIsImplicationsOpen(true)}
-                    className="w-full card interactive-card p-4 text-left hover:bg-surface group"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
-                          Development Implications
-                        </h3>
-                        <p className="text-sm text-ink-muted mt-1">
-                          Explore economic output and electricity needs
-                        </p>
-                      </div>
-                      <svg
-                        className="size-5 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </button>
-                </div>
-              )}
               {comparisonMode === "regions" && (
                 <div className="animate-fade-in-up stagger-4">
                   <RegionalImplicationsPanel
@@ -1335,95 +1312,13 @@ export default function App() {
                 </div>
               )}
 
-              {/* Growth controls and context cards - shown below chart on mobile/tablet */}
-              {hasData && (
-                <div className="sidebar-mobile animate-fade-in-up stagger-4 no-print space-y-4">
-                  <GrowthSidebarContent
-                    chaserName={displayChaserName}
-                    targetName={displayTargetName}
-                    chaserValue={displayChaserValue ?? 0}
-                    targetValue={displayTargetValue ?? 0}
-                    chaserGrowthRate={chaserGrowthRate}
-                    targetGrowthRate={targetGrowthRate}
-                    onChaserGrowthRateChange={setChaserGrowthRate}
-                    onTargetGrowthRateChange={setTargetGrowthRate}
-                    catchUpYears={catchUpYears}
-                    onCatchUpYearsChange={setCatchUpYears}
-                    contextCards={contextCards}
-                  />
-                </div>
-              )}
+              {/* Growth controls - shown below chart on mobile/tablet */}
+              {hasData && <div className="sidebar-mobile no-print">{sidebarContent}</div>}
             </div>
 
             {/* Right column - Growth controls and context cards sidebar (desktop only) */}
             <aside className="sidebar-desktop">
-              {hasData && (
-                <div className="sticky top-6 space-y-4 animate-fade-in-up stagger-2 no-print">
-                  <GrowthSidebarContent
-                    compact
-                    chaserName={displayChaserName}
-                    targetName={displayTargetName}
-                    chaserValue={displayChaserValue ?? 0}
-                    targetValue={displayTargetValue ?? 0}
-                    chaserGrowthRate={chaserGrowthRate}
-                    targetGrowthRate={targetGrowthRate}
-                    onChaserGrowthRateChange={setChaserGrowthRate}
-                    onTargetGrowthRateChange={setTargetGrowthRate}
-                    catchUpYears={catchUpYears}
-                    onCatchUpYearsChange={setCatchUpYears}
-                    contextCards={contextCards}
-                    showControls={false}
-                  />
-
-                  {/* Implications trigger (desktop sidebar) */}
-                  {showImplications && comparisonMode === "countries" && (
-                    <button
-                      type="button"
-                      onClick={() => setIsImplicationsOpen(true)}
-                      className="w-full card interactive-card p-4 text-left hover:bg-surface group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 size-10 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
-                          <svg
-                            className="size-5 text-[var(--color-accent)]"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-ink group-hover:text-[var(--color-accent)] transition-default">
-                            Implications
-                          </h3>
-                          <p className="text-xs text-ink-muted truncate">
-                            Economic output + electricity
-                          </p>
-                        </div>
-                        <svg
-                          className="size-4 text-ink-faint group-hover:text-[var(--color-accent)] transition-default flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              )}
+              {hasData && <div className="sticky top-6 no-print">{sidebarContent}</div>}
             </aside>
           </div>
 

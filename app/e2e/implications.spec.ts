@@ -7,23 +7,12 @@ async function clickDeterministic(locator: import("@playwright/test").Locator) {
 }
 
 async function openImplications(page: import("@playwright/test").Page) {
-  const desktopTrigger = page.getByRole("button", { name: /^Implications\b/i }).first();
-  const mobileTrigger = page.getByRole("button", { name: /^Development Implications\b/i }).first();
-
-  await expect
-    .poll(
-      async () =>
-        ((await desktopTrigger.isVisible().catch(() => false)) ? 1 : 0) +
-        ((await mobileTrigger.isVisible().catch(() => false)) ? 1 : 0),
-      { timeout: 30_000 },
-    )
-    .toBeGreaterThan(0);
-
-  if (await desktopTrigger.isVisible().catch(() => false)) {
-    await clickDeterministic(desktopTrigger);
-  } else {
-    await clickDeterministic(mobileTrigger);
-  }
+  // Desktop and mobile each render the trigger; only one is visible per breakpoint.
+  const trigger = page
+    .getByRole("button", { name: /^Development implications\b/i })
+    .locator("visible=true")
+    .first();
+  await clickDeterministic(trigger);
 
   const panel = page.getByRole("dialog", { name: "Development Implications" });
   await expect(panel).toBeVisible();

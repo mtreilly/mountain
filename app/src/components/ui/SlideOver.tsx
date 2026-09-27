@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useEffectEvent, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface SlideOverProps {
@@ -9,6 +9,9 @@ interface SlideOverProps {
   children: ReactNode;
   width?: "md" | "lg" | "xl" | "2xl";
 }
+
+// Matches .animate-slide-out-right in index.css
+const EXIT_MS = 200;
 
 const WIDTH_CLASSES = {
   md: "max-w-md",
@@ -28,9 +31,17 @@ export function SlideOver({
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Play a short exit before unmounting; the parent only learns about the close once it ends.
+  const [closing, setClosing] = useState(false);
   const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+    setClosing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!closing) return;
+    const handle = window.setTimeout(onClose, EXIT_MS);
+    return () => window.clearTimeout(handle);
+  }, [closing, onClose]);
 
   const handleDocumentKeyDown = useEffectEvent((e: KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -112,7 +123,10 @@ export function SlideOver({
   return createPortal(
     <>
       {/* Backdrop */}
-      <div className="slide-over-backdrop animate-fade-in" aria-hidden="true" />
+      <div
+        className={`slide-over-backdrop ${closing ? "animate-fade-out" : "animate-fade-in"}`}
+        aria-hidden="true"
+      />
 
       {/* Panel */}
       <div
@@ -120,7 +134,9 @@ export function SlideOver({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`slide-over-panel ${WIDTH_CLASSES[width]} animate-slide-in-right`}
+        className={`slide-over-panel ${WIDTH_CLASSES[width]} ${
+          closing ? "animate-slide-out-right" : "animate-slide-in-right"
+        }`}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-4 border-b border-surface bg-surface-raised">
@@ -132,7 +148,7 @@ export function SlideOver({
             type="button"
             ref={closeButtonRef}
             onClick={handleClose}
-            className="p-2 -mr-2 rounded-lg hover:bg-surface transition-default flex-shrink-0"
+            className="pressable focus-ring p-2 -mr-2 rounded-lg hover:bg-surface flex-shrink-0"
             aria-label={`Close ${title}`}
           >
             <svg

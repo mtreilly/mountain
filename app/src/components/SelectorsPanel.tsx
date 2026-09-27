@@ -3,6 +3,7 @@ import type { Country, Indicator } from "../types";
 import { CountrySelector } from "./CountrySelector";
 import { MetricSelector } from "./MetricSelector";
 import { RegionSelector } from "./RegionSelector";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 export function SelectorsPanel({
   comparisonMode,
@@ -45,34 +46,15 @@ export function SelectorsPanel({
   return (
     <div className="animate-fade-in-up stagger-1 no-print space-y-2">
       <div className="flex items-center justify-between lg:hidden">
-        <div className="inline-flex rounded-lg border border-surface bg-surface overflow-hidden">
-          <button
-            type="button"
-            onClick={() => onComparisonModeChange("countries")}
-            aria-pressed={comparisonMode === "countries"}
-            className={[
-              "px-3 py-1.5 text-xs font-medium transition-default focus-ring",
-              comparisonMode === "countries"
-                ? "bg-surface-raised text-ink shadow-sm"
-                : "text-ink-muted hover:bg-surface-raised/60",
-            ].join(" ")}
-          >
-            {t("mode.countriesLabel")}
-          </button>
-          <button
-            type="button"
-            onClick={() => onComparisonModeChange("regions")}
-            aria-pressed={comparisonMode === "regions"}
-            className={[
-              "px-3 py-1.5 text-xs font-medium transition-default focus-ring",
-              comparisonMode === "regions"
-                ? "bg-surface-raised text-ink shadow-sm"
-                : "text-ink-muted hover:bg-surface-raised/60",
-            ].join(" ")}
-          >
-            {t("mode.regionsLabel")}
-          </button>
-        </div>
+        <SegmentedControl
+          size="md"
+          value={comparisonMode}
+          onChange={onComparisonModeChange}
+          options={[
+            { value: "countries", label: t("mode.countriesLabel") },
+            { value: "regions", label: t("mode.regionsLabel") },
+          ]}
+        />
         {comparisonMode === "regions" && (
           <span className="text-xs text-ink-faint">
             {t("selector.gdpPerCapita")} ({t("selector.usdPppOecdData")})
