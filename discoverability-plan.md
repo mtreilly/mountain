@@ -83,6 +83,8 @@ Phases 1–6 are implemented and covered by `app/scripts/discoverability.test.ts
   scenarios, not forecasts. Responses include `structuredContent` and the `summary` sentence.
 - Server `instructions` carry the guidance a skill would (state growth rates, surface caveats).
 - Rate limit suited to a public endpoint (the in-memory limiter is per isolate).
+- `/.well-known/openai-apps` serves the domain-verification token OpenAI issues for app
+  submission (must be on the same domain as `/mcp`).
 - **Outcome:** an MCP client can list and call all three tools; results match the REST API.
 
 ### 8. Claude skill
@@ -93,8 +95,16 @@ Phases 1–6 are implemented and covered by `app/scripts/discoverability.test.ts
 ### 9. Plugin and distribution
 - Claude Code plugin manifest bundling the skill and an `.mcp.json` for the remote server,
   plus a marketplace manifest in this repo.
-- Later: Claude connector directory (needs a Team/Enterprise org) and a ChatGPT Apps SDK
-  submission, once the MCP server has real usage. Decide who publishes.
+- Test in ChatGPT first: enable developer mode, add the `/mcp` URL as a connector, and check
+  the three tools work. No review is needed for this.
+- Later, once the MCP server has real usage (decide who publishes; both need an org account):
+  - Claude connector directory (needs a Team/Enterprise org).
+  - ChatGPT app directory: verified OpenAI developer account, submission permission,
+    reviewer notes (reportedly 3–7 business days). Confirm that a no-auth server is accepted,
+    since ChatGPT apps are documented around OAuth. An in-chat chart widget is optional.
+- ChatGPT has no skill format, so guidance lives in the MCP `instructions` and tool
+  descriptions. Custom GPTs/Actions are being retired; don't build for them. The OpenAPI file
+  stays for developers and other agents.
 - **Outcome:** one install command gives Claude Code users both skill and connector.
 
 ## Open decisions
