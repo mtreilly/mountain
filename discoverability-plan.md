@@ -30,6 +30,11 @@ as a calculation engine, without rewriting the SPA.
 - **No `Dataset` structured data** (we redistribute third-party data). `WebApplication` only.
 - Deferred: MCP, essay pages (`/catch-up-growth` …) beyond the homepage explainer.
 
+## Status
+
+All six phases are implemented and covered by `app/scripts/discoverability.test.ts`
+(run as part of `pnpm test`). Not yet verified against a deployed Worker.
+
 ## Phases
 
 ### 1. Homepage head and crawlable text
@@ -68,6 +73,13 @@ as a calculation engine, without rewriting the SPA.
   link into the app), JSON-LD, canonical, `Accept: text/markdown` and `.md` variants.
 - Slugs from country names; ISO3 slugs 301 to the name slug.
 - **Outcome:** `/compare/poland/united-kingdom` matches `/api/convergence` for the same inputs.
+
+## Open decisions
+- `robots.txt` leaves training crawlers (GPTBot etc.) on the default allow rule. Add a
+  dedicated `User-agent: GPTBot` block to change that.
+- `/api/convergence` now defaults a missing `growth_rate` to the chaser's trailing 10-year
+  CAGR (was: CAGR over the whole series) and starts from the latest year both countries have data.
+- Routes live in `worker/index.ts`, which is part of the uncommitted Pages → Worker migration.
 
 ## What's next
 - Review Search Console / server logs after two weeks; grow the curated list from real queries.
