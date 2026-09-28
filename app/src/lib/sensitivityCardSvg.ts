@@ -156,7 +156,7 @@ export function generateSensitivityCardSvg(params: SensitivityCardParams): strin
     baseYear,
     theme,
     siteUrl = "mountaintoclimb.com",
-    dataSource = "Penn World Table",
+    dataSource = "World Bank",
   } = params;
 
   const width = 1200;

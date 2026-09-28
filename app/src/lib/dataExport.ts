@@ -10,7 +10,7 @@ import { getDataSourceLicense, WORLD_BANK_INDICATOR_CODES } from "./dataSourceUr
 import type { ShareState } from "./shareState";
 
 type SeriesPoint = { year: number; value: number };
-const DEFAULT_COUNTRY_DATA_SOURCE = "Penn World Table";
+const DEFAULT_COUNTRY_DATA_SOURCE = "World Bank";
 
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;

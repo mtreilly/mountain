@@ -477,7 +477,6 @@ export default function App() {
       const source = indicator.source?.trim();
       if (source) sources.add(source);
     }
-    sources.add("Penn World Table");
     sources.add("OECD");
     return Array.from(sources).sort((a, b) => a.localeCompare(b));
   }, [indicators]);
@@ -841,7 +840,7 @@ export default function App() {
         theme,
         siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
         dataSource:
-          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "Penn World Table"),
+          comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank"),
       };
 
   // Historical data for thread generator
@@ -1326,9 +1325,7 @@ export default function App() {
           <AppFooter
             comparisonMode={comparisonMode}
             dataSourceName={
-              comparisonMode === "regions"
-                ? "OECD"
-                : (selectedIndicator?.source ?? "Penn World Table")
+              comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
             }
             dataSourceNames={allDataSources}
             countriesCount={countries.length}
@@ -1350,9 +1347,7 @@ export default function App() {
               onReset={resetToDefaults}
               comparisonMode={comparisonMode}
               dataSourceName={
-                comparisonMode === "regions"
-                  ? "OECD"
-                  : (selectedIndicator?.source ?? "Penn World Table")
+                comparisonMode === "regions" ? "OECD" : (selectedIndicator?.source ?? "World Bank")
               }
               onDownloadObservedCsv={onDownloadObservedCsv}
               onDownloadProjectionCsv={onDownloadProjectionCsv}

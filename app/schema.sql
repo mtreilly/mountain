@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS growth_rates (
 
 -- Seed core indicators
 INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category) VALUES
-    ('GDP_PCAP_PPP', 'GDP per capita (PPP)', 'constant 2017 US$ (PPP)', 'Penn World Table', 'pwt11.0:rgdpe/pop', 'economic'),
+    ('GDP_PCAP_PPP', 'GDP per capita (PPP)', 'constant 2021 international $', 'World Bank', 'NY.GDP.PCAP.PP.KD', 'economic'),
     ('POPULATION', 'Total population', 'persons', 'World Bank', 'SP.POP.TOTL', 'demographic'),
     ('POPULATION_UN_MEDIUM', 'Population (UN medium scenario)', 'persons', 'UN World Population Prospects', 'WPP2024:Medium:PopTotal', 'demographic'),
     ('POPULATION_UN_LOW', 'Population (UN low scenario)', 'persons', 'UN World Population Prospects', 'WPP2024:Low:PopTotal', 'demographic'),

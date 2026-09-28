@@ -29,6 +29,9 @@ interface WBDataPoint {
 
 // Indicators to fetch
 const INDICATORS: Array<{ code: string; name: string; source?: string }> = [
+  // Headline metric. World Bank covers more countries than Penn World Table and
+  // publishes a year sooner.
+  { code: "NY.GDP.PCAP.PP.KD", name: "GDP_PCAP_PPP" },
   { code: "NY.GDP.PCAP.CD", name: "GDP_PCAP_USD" },
   { code: "SP.POP.TOTL", name: "POPULATION" },
   { code: "SP.DYN.LE00.IN", name: "LIFE_EXPECT" },
@@ -124,6 +127,13 @@ async function main() {
       `INSERT OR REPLACE INTO countries (iso_alpha3, iso_alpha2, name, region, income_group) VALUES ('${country.id}', '${country.iso2Code}', '${name}', '${region}', '${income}');`,
     );
   }
+
+  // Earlier pipelines labelled the headline metric as Penn World Table; keep the
+  // metadata in step with the series this script actually imports.
+  console.log(
+    "\nUPDATE indicators SET source = 'World Bank', source_code = 'NY.GDP.PCAP.PP.KD', " +
+      "unit = 'constant 2021 international $' WHERE code = 'GDP_PCAP_PPP';",
+  );
 
   // Create maps for lookup - API data uses ISO2 codes
   const countryByIso3 = new Map(countries.map((c) => [c.id, c]));

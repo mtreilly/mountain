@@ -34,7 +34,7 @@ export function AppFooter({
     ? "OECD"
     : dataSourceName?.trim()
       ? dataSourceName.trim()
-      : "Penn World Table";
+      : "World Bank";
   const sourceRows = useMemo(() => {
     const seen = new Set<string>();
     const rows: Array<{
@@ -57,7 +57,7 @@ export function AppFooter({
     };
 
     for (const source of dataSourceNames) addSource(source);
-    addSource("Penn World Table");
+    addSource("World Bank");
     addSource("OECD");
     addSource(resolvedSourceName);
 

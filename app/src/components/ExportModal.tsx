@@ -90,7 +90,7 @@ export function ExportModal({
   const isRegionsMode = comparisonMode === "regions";
   const resolvedDataSourceName =
     (dataSourceName?.trim() ? dataSourceName.trim() : null) ??
-    (isRegionsMode ? "OECD" : "Penn World Table");
+    (isRegionsMode ? "OECD" : "World Bank");
 
   const handleClose = useCallback(() => {
     onClose();
