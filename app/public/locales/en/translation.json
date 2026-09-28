@@ -99,7 +99,9 @@
     "exportData": "Export data",
     "projectionData": "Projection Data",
     "year": "Year",
-    "tableTip": "Tip: use \"Projection Data (CSV)\" in More options → Data / Embed for a file download."
+    "tableTip": "Tip: use \"Projection Data (CSV)\" in More options → Data / Embed for a file download.",
+    "constantRate": "constant-rate projection",
+    "constantRateShort": "projection"
   },
   "growth": {
     "title": "Growth Rates",

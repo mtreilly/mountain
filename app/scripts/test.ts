@@ -19,6 +19,7 @@ import {
   getWorldBankUrl,
 } from "../src/lib/dataSourceUrls";
 import { calculateCagr, computeTotals, projectValue } from "../src/lib/implicationsMath";
+import { fitProjectionLabel } from "../src/lib/projectionLabel";
 import {
   calculateSensitivityScenarios,
   generateSensitivityProjection,
@@ -168,6 +169,14 @@ function testTranslationKeysExist() {
     }
   }
   assert.deepEqual(missing, [], `Missing translation keys:\n${missing.join("\n")}`);
+}
+
+function testProjectionLabelFitsRegion() {
+  const labels = { full: "constant-rate projection", short: "projection" };
+  assert.equal(fitProjectionLabel(400, 9, labels), labels.full);
+  assert.equal(fitProjectionLabel(80, 9, labels), labels.short);
+  assert.equal(fitProjectionLabel(20, 9, labels), null);
+  assert.equal(fitProjectionLabel(-5, 9, labels), null);
 }
 
 function testShareStateRoundtrip() {
@@ -1024,6 +1033,7 @@ function testShareCardFilenamePattern() {
 async function run() {
   const tests = [
     ["i18n: every t() key exists in en translations", testTranslationKeysExist],
+    ["projection label fits its region", testProjectionLabelFitsRegion],
     ["shareState roundtrip", testShareStateRoundtrip],
     ["tmode static forces tg=0", testStaticTargetForcesTgZero],
     ["embed mode preserves embed params", testEmbedUrlSyncPreservesEmbedParams],

@@ -1,12 +1,16 @@
 import type { Ref, SVGProps } from "react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { formatMetricValue, type Milestone } from "../lib/convergence";
+import { fitProjectionLabel } from "../lib/projectionLabel";
 
 export const CHART_GEOMETRY = {
   width: 600,
   height: 300,
   padding: { top: 24, right: 80, bottom: 44, left: 70 },
 } as const;
+
+const PROJECTION_LABEL_SIZE = 9;
 
 type ChartPoint = { year: number; chaser: number; target: number };
 const EMPTY_CHART_POINTS: ChartPoint[] = [];
@@ -46,6 +50,7 @@ export function ConvergenceChart({
   targetHasNote,
   milestones,
 }: ConvergenceChartProps) {
+  const { t } = useTranslation();
   const palette =
     theme === "dark"
       ? {
@@ -111,6 +116,13 @@ export function ConvergenceChart({
     projectionStartYear > scales.xMin &&
     projectionStartYear <= scales.xMax;
   const phaseBreakX = showPhaseSplit ? scales.x(projectionStartYear) : null;
+  const projectionLabel =
+    phaseBreakX == null
+      ? null
+      : fitProjectionLabel(width - padding.right - phaseBreakX, PROJECTION_LABEL_SIZE, {
+          full: t("projection.constantRate"),
+          short: t("projection.constantRateShort"),
+        });
 
   const observedChaserPath = useMemo(() => {
     return observed
@@ -298,19 +310,21 @@ export function ConvergenceChart({
                 opacity={0.4}
               />
 
-              {/* Projection assumption label */}
-              <text
-                x={(phaseBreakX + (width - padding.right)) / 2}
-                y={padding.top + 12}
-                textAnchor="middle"
-                fontFamily={fontFamily}
-                fontSize={9}
-                fontStyle="italic"
-                fill={palette.inkFaint}
-                opacity={0.6}
-              >
-                constant-rate projection
-              </text>
+              {/* Projection assumption label, shortened or dropped when the region is narrow */}
+              {projectionLabel && (
+                <text
+                  x={(phaseBreakX + (width - padding.right)) / 2}
+                  y={padding.top + 12}
+                  textAnchor="middle"
+                  fontFamily={fontFamily}
+                  fontSize={PROJECTION_LABEL_SIZE}
+                  fontStyle="italic"
+                  fill={palette.inkFaint}
+                  opacity={0.6}
+                >
+                  {projectionLabel}
+                </text>
+              )}
             </g>
           );
         })()}
