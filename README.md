@@ -68,10 +68,16 @@ The fetch scripts default to last year as the end year. Ember generation needs `
 ## Development
 
 ```bash
-pnpm dev          # Vite dev server (no database)
-pnpm start        # Full stack with D1
-pnpm build        # Production build
+pnpm dev          # Snapshot local D1, then Vite dev server
+pnpm start        # Production build served with Pages Functions
+pnpm build        # Snapshot local D1, then production build
 ```
+
+### How data is served
+
+The site never queries the database while people use it. At build time `scripts/build-static-data.ts` exports D1 once and writes a versioned snapshot to `public/data/<version>/` (countries, indicators, and one file per indicator). The browser loads those files from the CDN and caches them for good; the version changes whenever the data does. The `/api/*` endpoints, share pages and OG images read the same snapshot, so D1 is only touched by imports and builds.
+
+`pnpm build` and `pnpm dev` snapshot the local database. `pnpm pages:deploy` snapshots production (`STATIC_DATA_SOURCE=remote`), so after importing new data, redeploy to publish it.
 
 ## Deployment
 
