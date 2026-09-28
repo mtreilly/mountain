@@ -28,9 +28,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const params = toSearchParams(state);
   const canonicalSearch = params.toString();
   if (url.search !== `?${canonicalSearch}`) {
-    const redirected = Response.redirect(`${url.origin}/share?${canonicalSearch}`, 301);
-    redirected.headers.set("cache-control", "public, max-age=300, s-maxage=3600");
-    return redirected;
+    // Response.redirect() headers are immutable, so build the redirect by hand.
+    return new Response(null, {
+      status: 301,
+      headers: {
+        location: `${url.origin}/share?${canonicalSearch}`,
+        "cache-control": "public, max-age=300, s-maxage=3600",
+      },
+    });
   }
 
   const canonicalPath = `/share?${params.toString()}`;
