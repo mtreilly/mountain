@@ -83,7 +83,16 @@ INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, categor
     ('ENERGY_USE_PCAP', 'Energy use per capita', 'kg of oil equivalent per capita', 'World Bank', 'EG.USE.PCAP.KG.OE', 'energy'),
     ('URBAN_POP_PCT', 'Urban population', 'percent of population', 'World Bank', 'SP.URB.TOTL.IN.ZS', 'demographic'),
     ('INDUSTRY_VA_PCT_GDP', 'Industry value added', 'percent of GDP', 'World Bank', 'NV.IND.TOTL.ZS', 'economic'),
-    ('CAPITAL_FORMATION_PCT_GDP', 'Gross capital formation', 'percent of GDP', 'World Bank', 'NE.GDI.FTOT.ZS', 'economic');
+    ('CAPITAL_FORMATION_PCT_GDP', 'Gross capital formation', 'percent of GDP', 'World Bank', 'NE.GDI.FTOT.ZS', 'economic'),
+    ('GDP_PCAP_USD', 'GDP per capita (current USD)', 'current US$', 'World Bank', 'NY.GDP.PCAP.CD', 'economic'),
+    ('LITERACY', 'Literacy rate (adult)', 'percent', 'World Bank', 'SE.ADT.LITR.ZS', 'education'),
+    ('INTERNET', 'Internet users', 'percent of population', 'World Bank', 'IT.NET.USER.ZS', 'infrastructure'),
+    ('ELECTRICITY_ACCESS_PCT', 'Access to electricity', 'percent of population', 'World Bank', 'EG.ELC.ACCS.ZS', 'energy'),
+    ('ENERGY_INTENSITY', 'Energy intensity (primary)', 'MJ per $2017 PPP GDP', 'World Bank', 'EG.EGY.PRIM.PP.KD', 'energy'),
+    ('AGRICULTURE_VA_PCT_GDP', 'Agriculture value added', 'percent of GDP', 'World Bank', 'NV.AGR.TOTL.ZS', 'economic'),
+    ('MANUFACTURING_VA_PCT_GDP', 'Manufacturing value added', 'percent of GDP', 'World Bank', 'NV.IND.MANF.ZS', 'economic'),
+    ('SERVICES_VA_PCT_GDP', 'Services value added', 'percent of GDP', 'World Bank', 'NV.SRV.TOTL.ZS', 'economic'),
+    ('FERTILITY', 'Fertility rate', 'births per woman', 'World Bank', 'SP.DYN.TFRT.IN', 'demographic');
 
 -- Seed sample countries (full list should be imported from World Bank)
 INSERT OR IGNORE INTO countries (iso_alpha3, iso_alpha2, name, region, income_group) VALUES
