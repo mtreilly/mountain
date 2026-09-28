@@ -22,7 +22,11 @@ const OWID_SOURCE_VINTAGE =
 const OWID_CSV_URL = `https://raw.githubusercontent.com/owid/energy-data/${OWID_ENERGY_REF}/owid-energy-data.csv`;
 
 const START_YEAR = 1990;
-const END_YEAR = 2023;
+// Default to last year; years with no values are simply skipped.
+const END_YEAR = Number.parseInt(
+  process.env.OWID_ENERGY_END_YEAR ?? String(new Date().getFullYear() - 1),
+  10,
+);
 
 type SeriesDef = {
   code: string;

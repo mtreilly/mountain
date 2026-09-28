@@ -12,7 +12,11 @@
 const OWID_CSV_URL = "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv";
 
 const START_YEAR = 1990;
-const END_YEAR = 2023;
+// Default to last year; years with no values are simply skipped.
+const END_YEAR = Number.parseInt(
+  process.env.OWID_CO2_END_YEAR ?? String(new Date().getFullYear() - 1),
+  10,
+);
 
 function escapeSQL(str: string): string {
   return str.replace(/'/g, "''");

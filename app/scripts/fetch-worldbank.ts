@@ -7,6 +7,11 @@
  */
 
 const WORLD_BANK_API = "https://api.worldbank.org/v2";
+// Default to last year; the API omits years that have no values yet.
+const END_YEAR = Number.parseInt(
+  process.env.WORLDBANK_END_YEAR ?? String(new Date().getFullYear() - 1),
+  10,
+);
 
 interface WBCountry {
   id: string;
@@ -72,7 +77,7 @@ async function fetchIndicatorData(
   indicatorCode: string,
   source: string | undefined,
   startYear: number = 1990,
-  endYear: number = 2023,
+  endYear: number = END_YEAR,
 ): Promise<WBDataPoint[]> {
   console.error(`Fetching ${indicatorCode}${source ? ` (source=${source})` : ""} data...`);
 
