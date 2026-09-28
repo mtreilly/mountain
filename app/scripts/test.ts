@@ -1,8 +1,6 @@
 import { strict as assert } from "node:assert";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadPairOutcome } from "../functions/_lib/pairOutcome";
-import { clearStaticDataCache } from "../functions/_lib/staticData";
 import { generateShareCardPng, svgStringToPngBlob } from "../src/lib/chartExport";
 import {
   buildPermalink,
@@ -35,6 +33,8 @@ import {
   toSearchString,
   toSyncedSearchString,
 } from "../src/lib/shareState";
+import { loadPairOutcome } from "../worker/_lib/pairOutcome";
+import { clearStaticDataCache } from "../worker/_lib/staticData";
 
 function createShareCardParams(theme: "light" | "dark" = "light"): ShareCardParams {
   return {
@@ -204,7 +204,7 @@ async function testConvergenceSurfacesAgree() {
   const model = convergenceOutcome({ handoff: handoff!, baseYear, rates });
   assert.equal(model.start.year, 2026, "projection starts the year after the latest data");
 
-  // Share pages and OG images (Functions) read the static snapshot through ASSETS.
+  // Share pages and OG images (Worker) read the static snapshot through ASSETS.
   const files: Record<string, unknown> = {
     "/data-manifest.json": { version: "agree-test" },
     "/data/agree-test/countries.json": {
@@ -298,7 +298,7 @@ async function testConvergenceSurfacesAgree() {
 
 // Convergence maths and the start-year rule live only in src/lib/convergenceModel.ts.
 function testConvergenceMathLivesInOneModule() {
-  const files = [...listSourceFiles("src"), ...listSourceFiles("functions")].filter(
+  const files = [...listSourceFiles("src"), ...listSourceFiles("worker")].filter(
     (f) => !f.endsWith("convergenceModel.ts"),
   );
   const patterns = [

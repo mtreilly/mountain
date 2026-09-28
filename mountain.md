@@ -815,7 +815,7 @@ Exit criterion: all automated checks pass and a manual spot check confirms the p
 - `app/src/components/ThreadGeneratorModal.tsx` — consume the same state/snapshot; remove default-only recomputation.
 - `app/src/lib/threadGenerator.ts` — generate captions from the snapshot/presentation model and correct language.
 - `app/src/lib/implicationsCardSvg.ts` — render snapshot fields and complete sources; fix GDP labeling.
-- `app/functions/api/batch-data.ts` and `app/src/hooks/useBatchData.ts` — only if richer source metadata or projection flags need to be returned consistently.
+- `app/worker/api/batch-data.ts` and `app/src/hooks/useBatchData.ts` — only if richer source metadata or projection flags need to be returned consistently.
 - `app/e2e/support/mockApi.ts` — add deterministic WPP series, observation years, and vintages.
 - `app/e2e/implications.spec.ts` — exact-value and panel/thread-parity assertions.
 - `app/scripts/snapshot.test.ts` and implication/thread snapshots — new DTO and corrected copy.

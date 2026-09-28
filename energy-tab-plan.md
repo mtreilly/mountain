@@ -102,7 +102,7 @@ The electricity-correctness work in `mountain.md` already guarantees that the pa
 
 ### Phase 6: sharing parity (v0.4.1)
 
-- Share card, OG image (`functions/api/og.png.ts`) and embed get an energy variant when `tab=energy`.
+- Share card, OG image (`worker/api/og.png.ts`) and embed get an energy variant when `tab=energy`.
 - The thread generator already has electricity cards. Point them at the same snapshot.
 - Add all new strings to `public/locales/en/translation.json`.
 
