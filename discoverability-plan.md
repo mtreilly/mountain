@@ -28,11 +28,11 @@ as a calculation engine, without rewriting the SPA.
   and indexable; others are `noindex` to avoid thin near-duplicate pages.
 - **Keep `/share?…` as the shareable-state URL.** No second `/c/…` scheme.
 - **No `Dataset` structured data** (we redistribute third-party data). `WebApplication` only.
-- Deferred: MCP, essay pages (`/catch-up-growth` …) beyond the homepage explainer.
+- Deferred: WebMCP, essay pages (`/catch-up-growth` …) beyond the homepage explainer.
 
 ## Status
 
-All six phases are implemented and covered by `app/scripts/discoverability.test.ts`
+Phases 1–6 are implemented and covered by `app/scripts/discoverability.test.ts`
 (run as part of `pnpm test`). Not yet verified against a deployed Worker.
 
 ## Phases
@@ -74,6 +74,29 @@ All six phases are implemented and covered by `app/scripts/discoverability.test.
 - Slugs from country names; ISO3 slugs 301 to the name slug.
 - **Outcome:** `/compare/poland/united-kingdom` matches `/api/convergence` for the same inputs.
 
+### 7. Remote MCP server (`/mcp`)
+- Streamable HTTP, no auth (public, read-only data), built with the official MCP SDK or
+  Cloudflare's agents package rather than a hand-rolled protocol. Check the current spec first:
+  the July 2026 revision changed the handshake.
+- Tools `compare_countries`, `calculate_convergence`, `growth_required_by_deadline` wrap
+  `worker/_lib/scenario.ts`. Descriptions say when to use each and that results are
+  scenarios, not forecasts. Responses include `structuredContent` and the `summary` sentence.
+- Server `instructions` carry the guidance a skill would (state growth rates, surface caveats).
+- Rate limit suited to a public endpoint (the in-memory limiter is per isolate).
+- **Outcome:** an MCP client can list and call all three tools; results match the REST API.
+
+### 8. Claude skill
+- `skills/economic-convergence/SKILL.md`: when to call which tool, always state assumed
+  growth rates, call results scenarios, surface `caveats`, link the compare page.
+- **Outcome:** the skill loads in Claude Code and drives the connector on a sample question.
+
+### 9. Plugin and distribution
+- Claude Code plugin manifest bundling the skill and an `.mcp.json` for the remote server,
+  plus a marketplace manifest in this repo.
+- Later: Claude connector directory (needs a Team/Enterprise org) and a ChatGPT Apps SDK
+  submission, once the MCP server has real usage. Decide who publishes.
+- **Outcome:** one install command gives Claude Code users both skill and connector.
+
 ## Open decisions
 - `robots.txt` leaves training crawlers (GPTBot etc.) on the default allow rule. Add a
   dedicated `User-agent: GPTBot` block to change that.
@@ -84,4 +107,4 @@ All six phases are implemented and covered by `app/scripts/discoverability.test.
 ## What's next
 - Review Search Console / server logs after two weeks; grow the curated list from real queries.
 - Essay pages if the homepage explainer earns traffic.
-- MCP wrapper over the same three operations.
+- WebMCP (`navigator.modelContext`) registration in the SPA, if browser agents adopt it.
