@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
@@ -35,7 +36,7 @@ function dataVersion(): string {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), cloudflare()],
   define: {
     __LOCALES_VERSION__: JSON.stringify(localesVersion()),
     __DATA_VERSION__: JSON.stringify(dataVersion()),
@@ -50,12 +51,6 @@ export default defineConfig({
           return "vendor";
         },
       },
-    },
-  },
-  server: {
-    proxy: {
-      "/api": "http://localhost:8788",
-      "/share": "http://localhost:8788",
     },
   },
 });

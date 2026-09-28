@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "tsx scripts/build-static-data.ts && vite",
-    "dev:full": "pnpm build && concurrently -k -n wrangler,vite -c blue,green \"pnpm pages:dev\" \"pnpm dev\"",
     "prepare": "cd .. && ./app/node_modules/.bin/husky app/.husky",
     "build": "tsc -b && tsx scripts/build-static-data.ts && vite build",
     "lint": "eslint .",
@@ -25,9 +24,8 @@
     "test:all": "pnpm test && pnpm test:components && pnpm test:e2e",
     "test:update-snapshots": "tsx scripts/snapshot.test.ts --update && playwright test --grep @visual --update-snapshots",
     "preview": "vite preview",
-    "start": "pnpm build && wrangler pages dev dist --local --persist-to=.wrangler/state",
-    "pages:dev": "wrangler pages dev dist --local --persist-to=.wrangler/state",
-    "pages:deploy": "STATIC_DATA_SOURCE=remote pnpm build && wrangler pages deploy dist",
+    "start": "pnpm build && cf dev",
+    "deploy:prod": "tsc -b && STATIC_DATA_SOURCE=remote tsx scripts/build-static-data.ts && cf deploy",
     "db:init": "wrangler d1 execute convergence-db --local --file=./schema.sql",
     "db:import": "wrangler d1 execute convergence-db --local --file=./data-import-fixed.sql",
     "data:refresh": "pnpm data:fetch && pnpm db:import",
@@ -49,6 +47,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@biomejs/biome": "^2.3.14",
+    "@cloudflare/vite-plugin": "^1.61.0",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.58.2",
     "@stryker-mutator/core": "^9.5.1",
@@ -60,6 +59,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "cf": "1.0.0-beta.2",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -75,6 +75,6 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.3.3",
     "vitest": "^4.0.18",
-    "wrangler": "^4.67.0"
+    "wrangler": "^4.142.0"
   }
 }

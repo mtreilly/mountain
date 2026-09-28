@@ -1,6 +1,8 @@
+# Local D1 tooling only (db:init, db:import, static-data export). The beta `cf d1`
+# commands have no local equivalent, and Wrangler cannot read cloudflare.config.ts.
+# App config (assets, entrypoint, bindings) lives in cloudflare.config.ts.
 name = "convergence-explorer"
 compatibility_date = "2026-09-14"
-pages_build_output_dir = "./dist"
 
 [[d1_databases]]
 binding = "DB"

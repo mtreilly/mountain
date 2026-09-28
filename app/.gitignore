@@ -17,8 +17,9 @@ dist-ssr
 .wrangler/state/**/miniflare-D1DatabaseObject/*.sqlite-wal
 .wrangler/state/**/miniflare-D1DatabaseObject/*.sqlite-shm
 
-# Cloudflare Wrangler local state
+# Cloudflare local state and build output
 .wrangler
+.cloudflare
 
 # Playwright
 test-results
