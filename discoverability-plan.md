@@ -33,7 +33,13 @@ as a calculation engine, without rewriting the SPA.
 ## Status
 
 Phases 1–6 are implemented and covered by `app/scripts/discoverability.test.ts`
-(run as part of `pnpm test`). Not yet verified against a deployed Worker.
+(run as part of `pnpm test`). They were verified against the deployed Worker on
+28 September 2026. See `discoverability-audit-2026-09-28.md` for the live audit.
+
+The sitemap now lists only canonical HTML pages. Production deployment captures the
+published canonical pages before and after deploy and sends new, materially changed,
+or removed URLs to IndexNow. The key file is hosted at the site root. Client-side
+calculator states and query strings are not submitted.
 
 ## Phases
 

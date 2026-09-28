@@ -13,8 +13,6 @@ export const onRequestGet: PagesFunction<StaticDataEnv> = async (context) => {
   const paths = [
     "/",
     "/methodology",
-    "/llms.txt",
-    "/openapi.json",
     ...CURATED_PAIRS.flatMap(([a, b]) => {
       const [sa, sb] = [slug(a), slug(b)];
       return sa && sb ? [`/compare/${sa}/${sb}`] : [];

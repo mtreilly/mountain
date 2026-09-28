@@ -176,6 +176,12 @@ async function testDiscoveryFilesResolve() {
     CURATED_PAIRS.length,
     "all curated pairs",
   );
+  assert.ok(!locs.some((l) => l.endsWith("/llms.txt") || l.endsWith("/openapi.json")));
+  assert.equal((await get("/index.html")).status, 301);
+  assert.equal((await get("/unknown-page")).status, 404);
+  const insecure = await worker.fetch(new Request("http://mountaintoclimb.com/"), env as never);
+  assert.equal(insecure.status, 301);
+  assert.equal(insecure.headers.get("location"), `${ORIGIN}/`);
 
   const llms = readFileSync("public/llms.txt", "utf8");
   const links = [...llms.matchAll(/\]\((https:\/\/mountaintoclimb\.com[^)]*)\)/g)].map((m) => m[1]);

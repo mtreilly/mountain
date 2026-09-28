@@ -1,3 +1,4 @@
+import { notFoundPage } from "./_lib/pageShell";
 import type { StaticDataEnv } from "./_lib/staticData";
 import { onRequest as canonicalHost } from "./_middleware";
 import { onRequestGet as batchData } from "./api/batch-data";
@@ -52,9 +53,17 @@ function resolve(pathname: string): { handler: Handler; params: Record<string, s
 export default {
   async fetch(request: Request, env: StaticDataEnv): Promise<Response> {
     const next = async () => {
-      const route = resolve(new URL(request.url).pathname);
+      const pathname = new URL(request.url).pathname;
+      const route = resolve(pathname);
       if (!route || (request.method !== "GET" && request.method !== "HEAD")) {
-        return env.ASSETS.fetch(request);
+        if (pathname === "/index.html") {
+          return Response.redirect(new URL("/", request.url), 301);
+        }
+        const response = await env.ASSETS.fetch(request);
+        if (pathname !== "/" && response.headers.get("content-type")?.includes("text/html")) {
+          return notFoundPage("That page does not exist.");
+        }
+        return response;
       }
       return route.handler({ request, env, params: route.params });
     };

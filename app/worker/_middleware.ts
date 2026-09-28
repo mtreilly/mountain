@@ -5,9 +5,10 @@ export const onRequest: PagesFunction = async (context) => {
   const url = new URL(context.request.url);
   const isLocalHost = LOCAL_HOSTS.has(url.hostname);
 
-  // Redirect www and *.pages.dev to the canonical domain
-  if (!isLocalHost && url.hostname !== CANONICAL_HOST) {
+  // Keep every public page on its HTTPS canonical origin.
+  if (!isLocalHost && (url.hostname !== CANONICAL_HOST || url.protocol !== "https:")) {
     url.hostname = CANONICAL_HOST;
+    url.protocol = "https:";
     // Strip wildcard artefacts from the path (e.g. trailing "/*" or bare "*")
     url.pathname = url.pathname.replace(/\/?\*+$/, "") || "/";
     return Response.redirect(url.toString(), 301);

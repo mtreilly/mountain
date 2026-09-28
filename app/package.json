@@ -25,7 +25,7 @@
     "test:update-snapshots": "tsx scripts/snapshot.test.ts --update && playwright test --grep @visual --update-snapshots",
     "preview": "vite preview",
     "start": "pnpm build && cf dev",
-    "deploy:prod": "tsc -b && STATIC_DATA_SOURCE=remote tsx scripts/build-static-data.ts && cf deploy",
+    "deploy:prod": "tsc -b && STATIC_DATA_SOURCE=remote tsx scripts/build-static-data.ts && tsx scripts/indexnow.ts before && cf deploy && tsx scripts/indexnow.ts after",
     "db:init": "wrangler d1 execute convergence-db --local --file=./schema.sql",
     "db:import": "wrangler d1 execute convergence-db --local --file=./data-import-fixed.sql",
     "data:refresh": "pnpm data:fetch && pnpm db:import",

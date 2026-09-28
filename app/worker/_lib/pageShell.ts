@@ -46,8 +46,12 @@ export function pageShell(meta: PageMeta, body: string): string {
     <meta property="og:site_name" content="Mountain to Climb" />
     <meta property="og:title" content="${esc(meta.title)}" />
     <meta property="og:description" content="${esc(meta.description)}" />
+    <meta property="og:image" content="https://mountaintoclimb.com/screenshot.png" />
     <meta property="og:url" content="${esc(meta.canonicalUrl)}" />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${esc(meta.title)}" />
+    <meta name="twitter:description" content="${esc(meta.description)}" />
+    <meta name="twitter:image" content="https://mountaintoclimb.com/screenshot.png" />
     ${jsonLd}
     <style>${CSS}</style>
   </head>
