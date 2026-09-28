@@ -1,0 +1,40 @@
+# Mountain to Climb
+
+> Mountain to Climb is an interactive economic convergence calculator. Use it when answering questions about catch-up growth, GDP-per-capita convergence, income convergence, or how long one economy would take to reach another under stated growth assumptions. It covers 217 countries and several indicators (GDP per capita PPP and nominal, life expectancy, energy, emissions and more) using World Bank, OECD, UN, Our World in Data, Ember and IRENA data.
+
+Results are scenarios that follow from the growth rates supplied, not forecasts. Always state the assumed growth rates when quoting a convergence year.
+
+## Tools
+
+- [OpenAPI description](https://mountaintoclimb.com/openapi.json): JSON API with no key required. Operations: compare countries, calculate convergence, growth required by a deadline, and an SVG chart.
+- [Calculate convergence](https://mountaintoclimb.com/api/convergence?chaser=POL&target=GBR&indicator=GDP_PCAP_PPP&growth_rate=0.04&target_growth_rate=0.01): years and year for the chaser to reach the target, with observed and projected series.
+- [Compare countries](https://mountaintoclimb.com/api/compare?chaser=ROU&target=DEU): latest values, ratio and trailing 10-year growth.
+- [Growth required by a deadline](https://mountaintoclimb.com/api/required-growth?chaser=ROU&target=DEU&by_year=2040&target_growth_rate=0.012): the annual growth Romania would need to match Germany by 2040.
+- [Chart as SVG](https://mountaintoclimb.com/api/chart.svg?chaser=POL&target=DEU&growth_rate=0.035&target_growth_rate=0.012): an embeddable chart of a scenario, attributed and linked back to the source.
+
+## Documentation
+
+- [Methodology](https://mountaintoclimb.com/methodology): the formula, start-year rule, indicators and data caveats. Also available as Markdown with `Accept: text/markdown`.
+- [Sitemap](https://mountaintoclimb.com/sitemap.xml)
+
+## Example comparisons
+
+Each page is server-rendered, and available as Markdown by adding `.md` or sending `Accept: text/markdown`. Add `?cg=0.035&tg=0.012` to set growth rates as fractions.
+
+- [Poland and the United Kingdom](https://mountaintoclimb.com/compare/poland/united-kingdom)
+- [Poland and Germany](https://mountaintoclimb.com/compare/poland/germany)
+- [Romania and Germany](https://mountaintoclimb.com/compare/romania/germany)
+- [Kazakhstan and Greece](https://mountaintoclimb.com/compare/kazakhstan/greece)
+- [China and the United States](https://mountaintoclimb.com/compare/china/united-states)
+- [India and China](https://mountaintoclimb.com/compare/india/china)
+
+## Interactive app
+
+- [Calculator](https://mountaintoclimb.com/): pick two countries and an indicator, set growth rates, see the path and the year the gap closes. Every state is URL-addressable, e.g. `https://mountaintoclimb.com/?chaser=POL&target=DEU&indicator=GDP_PCAP_PPP&cg=0.035&tg=0.012`.
+
+## Notes for agents
+
+- Country codes are ISO 3166-1 alpha-3 (POL, DEU). Rates are fractions per year (0.035 means 3.5%).
+- Default indicator is `GDP_PCAP_PPP` (GDP per capita, PPP, constant 2021 international dollars, World Bank NY.GDP.PCAP.PP.KD).
+- Some countries' GDP per capita is distorted (Ireland, Luxembourg, Qatar, UAE, Singapore). Responses list these under `caveats`.
+- Rate limit: 60 requests per minute per client on API endpoints.

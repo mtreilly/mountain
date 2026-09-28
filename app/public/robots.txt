@@ -1,0 +1,10 @@
+# Everything here is public. Crawlers, including OAI-SearchBot (ChatGPT search), are welcome.
+# Training crawlers such as GPTBot are governed by the default rule below; add a
+# dedicated User-agent block to change that.
+User-agent: *
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+Sitemap: https://mountaintoclimb.com/sitemap.xml
