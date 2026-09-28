@@ -12,8 +12,10 @@ interface UseImplicationsDataOptions {
 export function useImplicationsData({ chaserIso, template, enabled }: UseImplicationsDataOptions) {
   const templateDef = TEMPLATE_PATHS.find((t) => t.id === template) ?? TEMPLATE_PATHS[0];
 
+  // Every path's countries, not just the selected one, so the panel can say which
+  // paths fit this country. Series files hold all countries, so this costs no requests.
   const countries = useMemo(() => {
-    const list = [chaserIso, ...templateDef.iso3];
+    const list = [chaserIso, ...TEMPLATE_PATHS.flatMap((t) => t.iso3)];
     const out: string[] = [];
     const seen = new Set<string>();
     for (const iso of list) {
@@ -24,7 +26,7 @@ export function useImplicationsData({ chaserIso, template, enabled }: UseImplica
       out.push(cleaned);
     }
     return out;
-  }, [chaserIso, templateDef]);
+  }, [chaserIso]);
 
   const indicators = useMemo(
     () => [

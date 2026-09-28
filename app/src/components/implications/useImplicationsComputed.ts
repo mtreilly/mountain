@@ -12,6 +12,7 @@ import {
   buildTemplateMapping,
   estimateFromTemplate,
   IMPLICATION_METRICS,
+  TEMPLATE_PATHS,
   type TemplateId,
 } from "../../lib/templatePaths";
 import type { Indicator } from "../../types";
@@ -216,13 +217,12 @@ export function useImplicationsComputed({
         noteParts.push("Scenario adjustment applied.");
       }
       if (mapping.gdpMin != null && mapping.gdpMax != null) {
-        const outOfRange =
-          gdpCurrent < mapping.gdpMin ||
-          gdpCurrent > mapping.gdpMax ||
-          gdpFuture < mapping.gdpMin ||
-          gdpFuture > mapping.gdpMax;
-        if (outOfRange) {
-          noteParts.push("Outside template GDP range; estimate is capped to endpoints.");
+        if (mapping.isOutsideRange(gdpCurrent) || mapping.isOutsideRange(gdpFuture)) {
+          noteParts.push(
+            metric.transform === "loglog"
+              ? "Beyond the template's observed incomes; extended along its trend near that end."
+              : "Beyond the template's observed incomes; held at its end value.",
+          );
         }
       } else {
         noteParts.push("Not enough template data for this metric.");
@@ -255,6 +255,35 @@ export function useImplicationsComputed({
     scenario,
     templateDef.iso3,
   ]);
+
+  // How well each development path fits this country, for the electricity estimate:
+  // whether it has seen incomes this high, and how electricity use per person moved
+  // with income near its richest years.
+  const pathFit = useMemo(() => {
+    const metricByIso = data["ELECTRICITY_USE_PCAP"] || {};
+    const byTemplate = TEMPLATE_PATHS.map((t) => {
+      const mapping = buildTemplateMapping({
+        gdpByIso,
+        metricByIso,
+        iso3: t.iso3,
+        metricTransform: "loglog",
+      });
+      return {
+        id: t.id,
+        label: t.label,
+        gdpMin: mapping.gdpMin,
+        gdpMax: mapping.gdpMax,
+        elasticity: mapping.elasticityHigh,
+        coversCurrent: mapping.gdpMin != null && !mapping.isOutsideRange(gdpCurrent),
+        coversFuture: mapping.gdpMin != null && !mapping.isOutsideRange(gdpFuture),
+      };
+    });
+    const selected = byTemplate.find((t) => t.id === templateDef.id) ?? null;
+    return {
+      selected,
+      alternatives: byTemplate.filter((t) => t.id !== templateDef.id && t.coversCurrent),
+    };
+  }, [data, gdpByIso, gdpCurrent, gdpFuture, templateDef.id]);
 
   const hasAny = rows.some((r) => r.implied != null);
   const popLabel = `Population: UN ${populationVariant} scenario`;
@@ -842,6 +871,7 @@ export function useImplicationsComputed({
     macro,
     baselineMultipliers,
     mixBuildout,
+    pathFit,
     snapshot,
     snapshotUnavailable,
   };

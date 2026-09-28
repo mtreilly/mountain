@@ -126,6 +126,57 @@ function logLerpPositive(a: number, b: number, t: number) {
   return Math.exp(lerp(Math.log(a), Math.log(b), t));
 }
 
+// How far a path is carried on past the incomes it has actually seen. Elasticity is
+// the % change in the metric per 1% change in income.
+const EDGE_SHARE = 1 / 3; // trend measured over the outer third of the path's log-income range
+const ELASTICITY_MIN = 0; // never extrapolate declines indefinitely
+const ELASTICITY_MAX = 1.5;
+
+/** Least-squares slope of log(y) on log(gdp). */
+function logLogSlope(pairs: Array<{ gdp: number; y: number }>): number | null {
+  if (pairs.length < 3) return null;
+  const xs = pairs.map((p) => Math.log(p.gdp));
+  const ys = pairs.map((p) => Math.log(p.y));
+  const mx = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const my = ys.reduce((a, b) => a + b, 0) / ys.length;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < xs.length; i++) {
+    num += (xs[i] - mx) * (ys[i] - my);
+    den += (xs[i] - mx) ** 2;
+  }
+  return den > 0 ? num / den : null;
+}
+
+/**
+ * Income elasticity near one end of a path, measured within each template country
+ * (pooling countries would mix up their different levels) and averaged by points.
+ */
+function edgeElasticity(
+  perIso: Array<Array<{ gdp: number; y: number }>>,
+  edge: "low" | "high",
+  logMin: number,
+  logMax: number,
+): number {
+  const cutoff =
+    edge === "high"
+      ? logMax - (logMax - logMin) * EDGE_SHARE
+      : logMin + (logMax - logMin) * EDGE_SHARE;
+  let weighted = 0;
+  let weight = 0;
+  for (const pairs of perIso) {
+    const inEdge = pairs.filter((p) =>
+      edge === "high" ? Math.log(p.gdp) >= cutoff : Math.log(p.gdp) <= cutoff,
+    );
+    const slope = logLogSlope(inEdge);
+    if (slope == null) continue;
+    weighted += slope * inEdge.length;
+    weight += inEdge.length;
+  }
+  const slope = weight > 0 ? weighted / weight : 0;
+  return clamp(slope, ELASTICITY_MIN, ELASTICITY_MAX);
+}
+
 export function buildTemplateMapping(params: {
   gdpByIso: Record<string, SeriesPoint[]>;
   metricByIso: Record<string, SeriesPoint[]>;
@@ -135,26 +186,46 @@ export function buildTemplateMapping(params: {
   const { gdpByIso, metricByIso, iso3, metricTransform } = params;
   const requirePositiveY = metricTransform === "loglog";
 
-  const pooledPairs: Array<{ gdp: number; y: number }> = [];
-  for (const iso of iso3) {
-    const g = gdpByIso[iso] || [];
-    const m = metricByIso[iso] || [];
-    pooledPairs.push(...makePairs({ gdpSeries: g, metricSeries: m, requirePositiveY }));
-  }
+  const perIso = iso3.map((iso) =>
+    makePairs({
+      gdpSeries: gdpByIso[iso] || [],
+      metricSeries: metricByIso[iso] || [],
+      requirePositiveY,
+    }),
+  );
+  const pooledPairs = perIso.flat();
 
   pooledPairs.sort((a, b) => a.gdp - b.gdp);
   const points = dedupeByGdp(pooledPairs);
   const gdpMin = points.length ? points[0].gdp : null;
   const gdpMax = points.length ? points[points.length - 1].gdp : null;
 
+  // Past the observed incomes, per-person metrics (loglog) follow the path's trend
+  // near that end; shares (logx) stay at the end value because they saturate.
+  const extendsTrend = metricTransform === "loglog" && points.length >= 2;
+  const logMin = gdpMin != null ? Math.log(gdpMin) : 0;
+  const logMax = gdpMax != null ? Math.log(gdpMax) : 0;
+  const elasticityLow = extendsTrend ? edgeElasticity(perIso, "low", logMin, logMax) : 0;
+  const elasticityHigh = extendsTrend ? edgeElasticity(perIso, "high", logMin, logMax) : 0;
+
   const predict = (gdp: number) => {
     if (metricTransform === "loglog") {
+      if (extendsTrend && gdpMax != null && gdp > gdpMax) {
+        return points[points.length - 1].y * (gdp / gdpMax) ** elasticityHigh;
+      }
+      if (extendsTrend && gdpMin != null && gdp > 0 && gdp < gdpMin) {
+        return points[0].y * (gdp / gdpMin) ** elasticityLow;
+      }
       return interpolateInLogX(points, gdp, logLerpPositive);
     }
     return interpolateInLogX(points, gdp, lerp);
   };
 
-  return { points, predict, gdpMin, gdpMax };
+  /** Whether an income is outside what the path's countries have actually seen. */
+  const isOutsideRange = (gdp: number) =>
+    gdpMin == null || gdpMax == null || gdp < gdpMin || gdp > gdpMax;
+
+  return { points, predict, gdpMin, gdpMax, elasticityLow, elasticityHigh, isOutsideRange };
 }
 
 export function estimateFromTemplate(params: {

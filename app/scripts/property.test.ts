@@ -719,11 +719,36 @@ function testBuildTemplateMappingPointsSortedUnique() {
       if (mapping.points.length >= 2 && mapping.gdpMin != null && mapping.gdpMax != null) {
         assert.equal(mapping.predict(mapping.gdpMin), mapping.points[0].y);
         assert.equal(mapping.predict(mapping.gdpMax), mapping.points[mapping.points.length - 1].y);
-        assert.equal(mapping.predict(mapping.gdpMin / 10), mapping.points[0].y);
-        assert.equal(
-          mapping.predict(mapping.gdpMax * 10),
-          mapping.points[mapping.points.length - 1].y,
-        );
+        const yMin = mapping.points[0].y;
+        const yMax = mapping.points[mapping.points.length - 1].y;
+        if (transform === "loglog") {
+          // Past the observed range, per-person metrics follow the edge trend (0..1.5).
+          for (const e of [mapping.elasticityLow, mapping.elasticityHigh]) {
+            assert.ok(e >= 0 && e <= 1.5);
+          }
+          assert.ok(
+            approxEqual(
+              mapping.predict(mapping.gdpMax * 10) as number,
+              yMax * 10 ** mapping.elasticityHigh,
+              1e-9,
+              1e-9,
+            ),
+          );
+          assert.ok(
+            approxEqual(
+              mapping.predict(mapping.gdpMin / 10) as number,
+              yMin * 0.1 ** mapping.elasticityLow,
+              1e-9,
+              1e-9,
+            ),
+          );
+          assert.ok((mapping.predict(mapping.gdpMax * 10) as number) >= yMax);
+          assert.ok(mapping.isOutsideRange(mapping.gdpMax * 10));
+        } else {
+          // Shares saturate, so they stay at the end values.
+          assert.equal(mapping.predict(mapping.gdpMin / 10), yMin);
+          assert.equal(mapping.predict(mapping.gdpMax * 10), yMax);
+        }
       } else {
         assert.equal(mapping.predict(10_000), null);
       }
