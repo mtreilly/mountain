@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx scripts/build-static-data.ts && vite",
     "dev:full": "pnpm build && concurrently -k -n wrangler,vite -c blue,green \"pnpm pages:dev\" \"pnpm dev\"",
     "prepare": "cd .. && ./app/node_modules/.bin/husky app/.husky",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsx scripts/build-static-data.ts && vite build",
     "lint": "eslint .",
     "lint:biome": "biome check .",
     "lint:biome:fix": "biome check . --write",
@@ -27,11 +27,12 @@
     "preview": "vite preview",
     "start": "pnpm build && wrangler pages dev dist --local --persist-to=.wrangler/state",
     "pages:dev": "wrangler pages dev dist --local --persist-to=.wrangler/state",
-    "pages:deploy": "pnpm build && wrangler pages deploy dist",
+    "pages:deploy": "STATIC_DATA_SOURCE=remote pnpm build && wrangler pages deploy dist",
     "db:init": "wrangler d1 execute convergence-db --local --file=./schema.sql",
     "db:import": "wrangler d1 execute convergence-db --local --file=./data-import-fixed.sql",
     "data:refresh": "pnpm data:fetch && pnpm db:import",
-    "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && tsx scripts/fetch-un-wpp.ts >> data-import.sql && tsx scripts/fetch-owid-co2.ts >> data-import.sql && tsx scripts/fetch-owid-energy.ts >> data-import.sql && tsx scripts/fetch-irena-capacity.ts >> data-import.sql && tsx scripts/fetch-ember-generation.ts >> data-import.sql && tsx scripts/fetch-ember-capacity.ts >> data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql"
+    "data:fetch": "tsx scripts/fetch-worldbank.ts > data-import.sql && tsx scripts/fetch-un-wpp.ts >> data-import.sql && tsx scripts/fetch-owid-co2.ts >> data-import.sql && tsx scripts/fetch-owid-energy.ts >> data-import.sql && tsx scripts/fetch-irena-capacity.ts >> data-import.sql && tsx scripts/fetch-ember-generation.ts >> data-import.sql && tsx scripts/fetch-ember-capacity.ts >> data-import.sql && echo 'DELETE FROM data_points;' | cat - data-import.sql > data-import-fixed.sql",
+    "data:static": "tsx scripts/build-static-data.ts"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2",

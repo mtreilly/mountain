@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { loadSeries } from "../lib/staticData";
+import { seriesForCountries } from "../lib/staticDataFormat";
 
 interface DataPoint {
   year: number;
@@ -20,21 +22,15 @@ interface UseCountryDataParams {
   invalidIndicator?: boolean;
 }
 
-async function fetchCountryData(params: {
-  countriesKey: string;
-  indicator: string;
-  signal?: AbortSignal;
-}) {
-  const qs = new URLSearchParams({
-    countries: params.countriesKey,
-    start_year: "1990",
-  });
-
-  const res = await fetch(`/api/data/${params.indicator}?${qs}`, { signal: params.signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as {
-    data?: Record<string, DataPoint[]>;
-    indicator?: IndicatorInfo | null;
+async function fetchCountryData(params: { countries: string[]; indicator: string }) {
+  const series = await loadSeries(params.indicator);
+  if (!series) throw new Error("HTTP 404");
+  return {
+    data: seriesForCountries(series, params.countries, { startYear: 1990 }) as Record<
+      string,
+      DataPoint[]
+    >,
+    indicator: series.indicator as IndicatorInfo,
   };
 }
 
@@ -49,7 +45,8 @@ export function useCountryData({
 
   const query = useQuery({
     queryKey: ["country-data", countriesKey, indicator],
-    queryFn: ({ signal }) => fetchCountryData({ countriesKey, indicator, signal }),
+    queryFn: () => fetchCountryData({ countries, indicator }),
+    staleTime: Number.POSITIVE_INFINITY,
     enabled: queryEnabled,
   });
 

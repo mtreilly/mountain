@@ -1,8 +1,8 @@
+import { type SeriesPoint, seriesForCountries } from "../../src/lib/staticDataFormat";
 import { enforceRateLimit } from "../_lib/requestGuards";
+import { loadSeries, STATIC_DATA_CACHE_CONTROL, type StaticDataEnv } from "../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
+type Env = StaticDataEnv;
 
 const ISO3_RE = /^[A-Z]{3}$/;
 const INDICATOR_RE = /^[A-Z0-9_]{2,64}$/;
@@ -38,7 +38,6 @@ function parseYear(value: string | null, fallback: number) {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { DB } = context.env;
   const limited = enforceRateLimit(context.request, {
     keyPrefix: "api:batch-data",
     limit: 90,
@@ -115,79 +114,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const countryPlaceholders = countries.map(() => "?").join(",");
-    const indicatorPlaceholders = indicators.map(() => "?").join(",");
-
-    const indicatorRows = await DB.prepare(
-      `SELECT code, name, description, unit, source, source_code, category
-       FROM indicators
-       WHERE code IN (${indicatorPlaceholders})`,
-    )
-      .bind(...indicators)
-      .all<{
-        code: string;
-        name: string;
-        description: string | null;
-        unit: string | null;
-        source: string | null;
-        source_code: string | null;
-        category: string | null;
-      }>();
-
-    const indicatorByCode: Record<
-      string,
-      {
-        code: string;
-        name: string;
-        description: string | null;
-        unit: string | null;
-        source: string | null;
-        source_code: string | null;
-        category: string | null;
-      }
-    > = {};
-    for (const row of indicatorRows.results || []) indicatorByCode[row.code] = row;
-
-    const points = await DB.prepare(
-      `SELECT i.code AS indicator, c.iso_alpha3 AS iso, d.year AS year, d.value AS value${
-        includeSourceVintage ? ", d.source_vintage AS source_vintage" : ""
-      }
-       FROM data_points d
-       JOIN countries c ON d.country_id = c.id
-       JOIN indicators i ON d.indicator_id = i.id
-       WHERE i.code IN (${indicatorPlaceholders})
-         AND c.iso_alpha3 IN (${countryPlaceholders})
-         AND d.year BETWEEN ? AND ?
-       ORDER BY i.code, c.iso_alpha3, d.year`,
-    )
-      .bind(...indicators, ...countries, startYear, endYear)
-      .all<{
-        indicator: string;
-        iso: string;
-        year: number;
-        value: number;
-        source_vintage?: string | null;
-      }>();
-
-    const data: Record<
-      string,
-      Record<string, Array<{ year: number; value: number; source_vintage?: string | null }>>
-    > = {};
-    for (const row of points.results || []) {
-      if (!data[row.indicator]) data[row.indicator] = {};
-      if (!data[row.indicator][row.iso]) data[row.indicator][row.iso] = [];
-      data[row.indicator][row.iso].push(
-        includeSourceVintage
-          ? { year: row.year, value: row.value, source_vintage: row.source_vintage ?? null }
-          : { year: row.year, value: row.value },
-      );
-    }
+    const loaded = await Promise.all(
+      indicators.map((code) => loadSeries(context.env, context.request.url, code)),
+    );
+    const indicatorByCode: Record<string, unknown> = {};
+    const data: Record<string, Record<string, SeriesPoint[]>> = {};
+    loaded.forEach((series, i) => {
+      if (!series) return;
+      const code = indicators[i]!;
+      indicatorByCode[code] = series.indicator;
+      const byCountry = seriesForCountries(series, countries, {
+        startYear,
+        endYear,
+        includeSourceVintage,
+      });
+      if (Object.keys(byCountry).length > 0) data[code] = byCountry;
+    });
 
     return Response.json(
       { indicators: indicatorByCode, data },
       {
         headers: {
-          "cache-control": "public, max-age=120, s-maxage=600, stale-while-revalidate=3600",
+          "cache-control": STATIC_DATA_CACHE_CONTROL,
         },
       },
     );

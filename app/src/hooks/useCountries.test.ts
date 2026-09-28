@@ -1,12 +1,16 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearStaticDataCache } from "../lib/staticData";
 import { createQueryWrapper } from "../test/queryClient";
 import { useCountries } from "./useCountries";
 
 describe("useCountries", () => {
+  beforeEach(() => clearStaticDataCache());
+
   it("loads countries on success", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      headers: new Headers({ "content-type": "application/json" }),
       json: async () => ({
         data: [
           {
@@ -27,17 +31,14 @@ describe("useCountries", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/countries",
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("/data/missing/countries.json");
     expect(result.current.error).toBeNull();
     expect(result.current.countries).toHaveLength(1);
     expect(result.current.countries[0].iso_alpha3).toBe("NGA");
   });
 
   it("sets error on request failure", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500, headers: new Headers() });
     vi.stubGlobal("fetch", fetchMock);
 
     const { result } = renderHook(() => useCountries(), { wrapper: createQueryWrapper() });

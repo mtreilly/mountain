@@ -1,32 +1,36 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearStaticDataCache } from "../lib/staticData";
 import { createQueryWrapper } from "../test/queryClient";
 import { useBatchData } from "./useBatchData";
 
 describe("useBatchData", () => {
-  it("fetches batch endpoint and exposes latest value", async () => {
+  beforeEach(() => clearStaticDataCache());
+
+  it("loads the indicator's static series and exposes latest value", async () => {
     const countries = ["NGA"];
     const indicators = ["GDP_PCAP_PPP"];
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      headers: new Headers({ "content-type": "application/json" }),
       json: async () => ({
-        data: {
-          GDP_PCAP_PPP: {
-            NGA: [
-              { year: 2022, value: 5250 },
-              { year: 2023, value: 5400 },
-            ],
-          },
+        indicator: {
+          code: "GDP_PCAP_PPP",
+          name: "GDP per capita (PPP)",
+          description: null,
+          unit: "int$",
+          source: "World Bank",
+          source_code: null,
+          category: "economic",
         },
-        indicators: {
-          GDP_PCAP_PPP: {
-            code: "GDP_PCAP_PPP",
-            name: "GDP per capita (PPP)",
-            description: null,
-            unit: "int$",
-            source: "World Bank",
-            category: "economic",
-          },
+        vintages: [],
+        data: {
+          NGA: [
+            [1995, 3000],
+            [2022, 5250],
+            [2023, 5400],
+          ],
+          USA: [[2023, 68000]],
         },
       }),
     });
@@ -42,9 +46,14 @@ describe("useBatchData", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain("/api/batch-data?");
-    expect(fetchMock.mock.calls[0][0]).toContain("countries=NGA");
-    expect(fetchMock.mock.calls[0][0]).toContain("indicators=GDP_PCAP_PPP");
+    expect(fetchMock).toHaveBeenCalledWith("/data/missing/series/GDP_PCAP_PPP.json");
+    // Filtered to the requested countries and years
+    expect(result.current.data.GDP_PCAP_PPP).toEqual({
+      NGA: [
+        { year: 2022, value: 5250 },
+        { year: 2023, value: 5400 },
+      ],
+    });
 
     expect(result.current.error).toBeNull();
     expect(result.current.indicatorByCode.GDP_PCAP_PPP?.name).toBe("GDP per capita (PPP)");

@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { loadSeries } from "../lib/staticData";
+import { seriesForCountries } from "../lib/staticDataFormat";
 import type { Indicator } from "../types";
 
 interface BatchSeriesPoint {
@@ -10,27 +12,26 @@ interface BatchSeriesPoint {
 type BatchSeries = Record<string, Record<string, BatchSeriesPoint[]>>; // indicator -> iso -> points
 
 async function fetchBatchData(params: {
-  countriesKey: string;
-  indicatorsKey: string;
+  countries: string[];
+  indicators: string[];
   startYear: number;
   endYear?: number;
   includeSourceVintage: boolean;
-  signal?: AbortSignal;
 }) {
-  const qs = new URLSearchParams({
-    countries: params.countriesKey,
-    indicators: params.indicatorsKey,
-    start_year: String(params.startYear),
+  const loaded = await Promise.all(params.indicators.map((code) => loadSeries(code)));
+  const data: BatchSeries = {};
+  const indicators: Record<string, Indicator> = {};
+  loaded.forEach((series, i) => {
+    if (!series) return;
+    const code = params.indicators[i]!;
+    indicators[code] = series.indicator as Indicator;
+    data[code] = seriesForCountries(series, params.countries, {
+      startYear: params.startYear,
+      endYear: params.endYear,
+      includeSourceVintage: params.includeSourceVintage,
+    });
   });
-  if (params.endYear != null) qs.set("end_year", String(params.endYear));
-  if (params.includeSourceVintage) qs.set("include_source_vintage", "1");
-
-  const res = await fetch(`/api/batch-data?${qs}`, { signal: params.signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as {
-    data?: BatchSeries;
-    indicators?: Record<string, Indicator>;
-  };
+  return { data, indicators };
 }
 
 export function useBatchData(params: {
@@ -56,15 +57,9 @@ export function useBatchData(params: {
 
   const query = useQuery({
     queryKey: ["batch-data", countriesKey, indicatorsKey, startYear, endYear, includeSourceVintage],
-    queryFn: ({ signal }) =>
-      fetchBatchData({
-        countriesKey,
-        indicatorsKey,
-        startYear,
-        endYear,
-        includeSourceVintage,
-        signal,
-      }),
+    queryFn: () =>
+      fetchBatchData({ countries, indicators, startYear, endYear, includeSourceVintage }),
+    staleTime: Number.POSITIVE_INFINITY,
     enabled: queryEnabled,
   });
 

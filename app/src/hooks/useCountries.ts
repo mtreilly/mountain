@@ -1,17 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { loadCountries } from "../lib/staticData";
 import type { Country } from "../types";
-
-async function fetchCountries({ signal }: { signal?: AbortSignal }) {
-  const res = await fetch("/api/countries", { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.data || []) as Country[];
-}
 
 export function useCountries() {
   const query = useQuery({
     queryKey: ["countries"],
-    queryFn: ({ signal }) => fetchCountries({ signal }),
+    queryFn: async () => (await loadCountries()) as Country[],
+    // Static snapshot: it can't change until the next deploy.
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   return {

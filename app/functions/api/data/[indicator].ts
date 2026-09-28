@@ -1,8 +1,8 @@
+import { seriesForCountries } from "../../../src/lib/staticDataFormat";
 import { enforceRateLimit } from "../../_lib/requestGuards";
+import { loadSeries, STATIC_DATA_CACHE_CONTROL, type StaticDataEnv } from "../../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
+type Env = StaticDataEnv;
 
 const ISO3_RE = /^[A-Z]{3}$/;
 const INDICATOR_RE = /^[A-Z0-9_]{2,64}$/;
@@ -28,7 +28,6 @@ function parseYear(value: string | null, fallback: number) {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { DB } = context.env;
   const limited = enforceRateLimit(context.request, {
     keyPrefix: "api:data",
     limit: 120,
@@ -83,54 +82,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    // Get indicator info
-    const indicator = await DB.prepare(
-      `SELECT code, name, unit, source, source_code FROM indicators WHERE code = ?`,
-    )
-      .bind(indicatorCode)
-      .first();
-
-    if (!indicator) {
+    const series = await loadSeries(context.env, context.request.url, indicatorCode);
+    if (!series) {
       return Response.json(
         { error: { code: "INDICATOR_NOT_FOUND", message: `Indicator ${indicatorCode} not found` } },
         { status: 404, headers: { "cache-control": "no-store" } },
       );
     }
 
-    // Build placeholders for countries
-    const placeholders = countries.map(() => "?").join(",");
-
-    const result = await DB.prepare(
-      `SELECT c.iso_alpha3, d.year, d.value
-       FROM data_points d
-       JOIN countries c ON d.country_id = c.id
-       JOIN indicators i ON d.indicator_id = i.id
-       WHERE i.code = ?
-         AND c.iso_alpha3 IN (${placeholders})
-         AND d.year BETWEEN ? AND ?
-       ORDER BY c.iso_alpha3, d.year`,
-    )
-      .bind(indicatorCode, ...countries, startYear, endYear)
-      .all();
-
-    // Group by country
-    const data: Record<string, Array<{ year: number; value: number }>> = {};
-    for (const row of result.results as Array<{
-      iso_alpha3: string;
-      year: number;
-      value: number;
-    }>) {
-      if (!data[row.iso_alpha3]) {
-        data[row.iso_alpha3] = [];
-      }
-      data[row.iso_alpha3].push({ year: row.year, value: row.value });
-    }
+    const { code, name, unit, source, source_code } = series.indicator;
+    const indicator = { code, name, unit, source, source_code };
+    const data = seriesForCountries(series, countries, { startYear, endYear });
 
     return Response.json(
       { indicator, data },
       {
         headers: {
-          "cache-control": "public, max-age=120, s-maxage=600, stale-while-revalidate=3600",
+          "cache-control": STATIC_DATA_CACHE_CONTROL,
         },
       },
     );

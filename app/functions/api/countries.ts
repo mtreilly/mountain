@@ -1,11 +1,9 @@
 import { enforceRateLimit } from "../_lib/requestGuards";
+import { loadCountries, STATIC_DATA_CACHE_CONTROL, type StaticDataEnv } from "../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
+type Env = StaticDataEnv;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { DB } = context.env;
   const limited = enforceRateLimit(context.request, {
     keyPrefix: "api:countries",
     limit: 180,
@@ -14,17 +12,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (limited) return limited;
 
   try {
-    const result = await DB.prepare(
-      `SELECT iso_alpha3, iso_alpha2, name, region, income_group
-       FROM countries
-       ORDER BY name`,
-    ).all();
+    const data = await loadCountries(context.env, context.request.url);
 
     return Response.json(
-      { data: result.results },
+      { data },
       {
         headers: {
-          "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+          "cache-control": STATIC_DATA_CACHE_CONTROL,
         },
       },
     );

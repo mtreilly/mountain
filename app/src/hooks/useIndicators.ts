@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { loadIndicators } from "../lib/staticData";
 import type { Indicator } from "../types";
 
 const VISIBLE_METRIC_CODES = [
@@ -14,11 +15,8 @@ const METRIC_ORDER: Record<string, number> = Object.fromEntries(
   VISIBLE_METRIC_CODES.map((code, index) => [code, index]),
 );
 
-async function fetchIndicators({ signal }: { signal?: AbortSignal }) {
-  const res = await fetch("/api/indicators", { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const all: Indicator[] = data.data || [];
+async function fetchIndicators() {
+  const all = (await loadIndicators()) as Indicator[];
   return all
     .filter((ind) => VISIBLE_METRIC_SET.has(ind.code))
     .toSorted((a, b) => (METRIC_ORDER[a.code] ?? 99) - (METRIC_ORDER[b.code] ?? 99));
@@ -27,7 +25,8 @@ async function fetchIndicators({ signal }: { signal?: AbortSignal }) {
 export function useIndicators() {
   const query = useQuery({
     queryKey: ["indicators"],
-    queryFn: ({ signal }) => fetchIndicators({ signal }),
+    queryFn: fetchIndicators,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   return {

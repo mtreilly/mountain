@@ -1,11 +1,9 @@
 import { enforceRateLimit } from "../_lib/requestGuards";
+import { loadIndicators, STATIC_DATA_CACHE_CONTROL, type StaticDataEnv } from "../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
+type Env = StaticDataEnv;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { DB } = context.env;
   const limited = enforceRateLimit(context.request, {
     keyPrefix: "api:indicators",
     limit: 180,
@@ -14,17 +12,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (limited) return limited;
 
   try {
-    const result = await DB.prepare(
-      `SELECT code, name, description, unit, source, source_code, category
-       FROM indicators
-       ORDER BY category, name`,
-    ).all();
+    const data = await loadIndicators(context.env, context.request.url);
 
     return Response.json(
-      { data: result.results },
+      { data },
       {
         headers: {
-          "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+          "cache-control": STATIC_DATA_CACHE_CONTROL,
         },
       },
     );

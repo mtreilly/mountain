@@ -1,4 +1,5 @@
 import type { Page, Route } from "@playwright/test";
+import { TEMPLATE_PATHS } from "../../src/lib/templatePaths";
 
 const countries = [
   {
@@ -160,78 +161,51 @@ function json(route: Route, data: unknown, status = 200) {
   });
 }
 
-function parseParamList(value: string | null) {
-  return (value || "").split(",").flatMap((item) => {
-    const normalized = item.trim().toUpperCase();
-    return normalized ? [normalized] : [];
-  });
+function mockIndicator(code: string) {
+  return (
+    indicators.find((indicator) => indicator.code === code) ||
+    ({
+      code,
+      name: code,
+      description: null,
+      unit: code.startsWith("POPULATION_UN_") ? "persons" : null,
+      source: code.startsWith("POPULATION_UN_") ? "UN World Population Prospects" : "World Bank",
+      source_code: code.startsWith("POPULATION_UN_") ? `WPP2024:${code}` : null,
+      category: "other",
+    } as const)
+  );
+}
+
+// Static data snapshot (/data/<version>/...), in the format scripts/build-static-data.ts writes.
+function staticDataResponse(path: string): unknown | null {
+  if (path === "countries.json") return { data: countries };
+  if (path === "indicators.json") return { data: indicators };
+  const match = /^series\/([A-Z0-9_]+)\.json$/.exec(path);
+  if (!match) return null;
+  const code = match[1]!;
+  // Static files hold every country, so include the implications template countries too.
+  const isoCodes = new Set([
+    ...countries.map((c) => c.iso_alpha3),
+    ...TEMPLATE_PATHS.flatMap((t) => t.iso3),
+  ]);
+  const data: Record<string, Array<[number, number]>> = {};
+  for (const iso of isoCodes) {
+    const points = seriesByIndicatorAndIso[code]?.[iso] || syntheticSeries(code, iso);
+    data[iso] = points.map((p) => [p.year, p.value]);
+  }
+  return {
+    indicator: mockIndicator(code),
+    projectedFrom: code.startsWith("POPULATION_UN_") ? 2024 : null,
+    vintages: [],
+    data,
+  };
 }
 
 export async function installApiMocks(page: Page) {
-  await page.route("**/api/**", async (route) => {
-    const url = new URL(route.request().url());
-    const pathname = url.pathname;
-
-    if (pathname === "/api/countries") {
-      return json(route, { data: countries });
-    }
-
-    if (pathname === "/api/indicators") {
-      return json(route, { data: indicators });
-    }
-
-    if (pathname.startsWith("/api/data/")) {
-      const indicator = pathname.replace("/api/data/", "").toUpperCase();
-      const requested = parseParamList(url.searchParams.get("countries"));
-
-      const data: Record<string, Array<{ year: number; value: number }>> = {};
-      for (const iso of requested) {
-        data[iso] = seriesByIndicatorAndIso[indicator]?.[iso] || syntheticSeries(indicator, iso);
-      }
-
-      const indicatorInfo =
-        indicators.find((i) => i.code === indicator) ||
-        ({ code: indicator, name: indicator, unit: null, source: "World Bank" } as const);
-
-      return json(route, {
-        indicator: indicatorInfo,
-        data,
-      });
-    }
-
-    if (pathname === "/api/batch-data") {
-      const requestedCountries = parseParamList(url.searchParams.get("countries"));
-      const requestedIndicators = parseParamList(url.searchParams.get("indicators"));
-
-      const data: Record<string, Record<string, Array<{ year: number; value: number }>>> = {};
-      for (const code of requestedIndicators) {
-        data[code] = {};
-        for (const iso of requestedCountries) {
-          data[code][iso] = seriesByIndicatorAndIso[code]?.[iso] || syntheticSeries(code, iso);
-        }
-      }
-
-      const indicatorsByCode = new Map(indicators.map((indicator) => [indicator.code, indicator]));
-      const indicatorByCode: Record<string, unknown> = {};
-      for (const code of requestedIndicators) {
-        indicatorByCode[code] =
-          indicatorsByCode.get(code) ||
-          ({
-            code,
-            name: code,
-            description: null,
-            unit: code.startsWith("POPULATION_UN_") ? "persons" : null,
-            source: code.startsWith("POPULATION_UN_")
-              ? "UN World Population Prospects"
-              : "World Bank",
-            source_code: code.startsWith("POPULATION_UN_") ? `WPP2024:${code}` : null,
-            category: "other",
-          } as const);
-      }
-
-      return json(route, { data, indicators: indicatorByCode });
-    }
-
-    return json(route, { error: "Not found" }, 404);
+  await page.route("**/data/**", async (route) => {
+    const { pathname } = new URL(route.request().url());
+    const path = pathname.replace(/^\/data\/[^/]+\//, "");
+    const body = staticDataResponse(path);
+    return body ? json(route, body) : json(route, { error: "Not found" }, 404);
   });
 }

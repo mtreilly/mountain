@@ -2,12 +2,9 @@ import { formatMetricValue, formatPercent, formatYears } from "../../src/lib/con
 import { getLatestRegionData, getRegionByCode } from "../../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../../src/lib/shareState";
 import { enforceRateLimit } from "../_lib/requestGuards";
+import { loadPairSnapshot, type StaticDataEnv } from "../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
-
-type IndicatorRow = { code: string; name: string; unit: string | null; source: string | null };
+type Env = StaticDataEnv;
 
 function escapeXml(s: string) {
   return s
@@ -119,6 +116,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   let metricName: string;
   let metricUnit: string | null;
   let source: string;
+  // Like the app, project from the latest year both series have data when it's past the base year.
+  let startYear = state.baseYear;
 
   if (isRegionalMode) {
     // Regional mode - use static OECD data
@@ -138,53 +137,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     metricUnit = "USD PPP";
     source = "OECD";
   } else {
-    // Country mode - query database
-    const { DB } = context.env;
+    // Country mode - read the build-time data snapshot
+    const snapshot = await loadPairSnapshot(context.env, context.request.url, {
+      indicator: state.indicator,
+      chaser: state.chaser,
+      target: state.target,
+    });
+    const indicator = snapshot.indicator;
 
-    const indicator = await DB.prepare(
-      `SELECT code, name, unit, source
-       FROM indicators
-       WHERE code = ?`,
-    )
-      .bind(state.indicator)
-      .first<IndicatorRow>();
-
-    const countries = await DB.prepare(
-      `SELECT iso_alpha3, name
-       FROM countries
-       WHERE iso_alpha3 IN (?, ?)`,
-    )
-      .bind(state.chaser, state.target)
-      .all<{ iso_alpha3: string; name: string }>();
-
-    const countryName = (iso3: string) =>
-      (countries.results || []).find((c) => c.iso_alpha3 === iso3)?.name || iso3;
-
-    chaserName = countryName(state.chaser);
-    targetName = countryName(state.target);
-
-    const latest = await DB.prepare(
-      `SELECT c.iso_alpha3 AS iso, d.year AS year, d.value AS value
-       FROM data_points d
-       JOIN countries c ON d.country_id = c.id
-       JOIN indicators i ON d.indicator_id = i.id
-       WHERE i.code = ?
-         AND c.iso_alpha3 IN (?, ?)
-         AND d.year = (
-           SELECT MAX(year)
-           FROM data_points
-           WHERE country_id = d.country_id
-             AND indicator_id = d.indicator_id
-         )`,
-    )
-      .bind(state.indicator, state.chaser, state.target)
-      .all<{ iso: string; year: number; value: number }>();
-
-    const byIso: Record<string, { year: number; value: number }> = {};
-    for (const row of latest.results || []) byIso[row.iso] = { year: row.year, value: row.value };
-
-    chaserValue = byIso[state.chaser]?.value ?? null;
-    targetValue = byIso[state.target]?.value ?? null;
+    chaserName = snapshot.chaserName;
+    targetName = snapshot.targetName;
+    chaserValue = snapshot.chaserLatest?.value ?? null;
+    targetValue = snapshot.targetLatest?.value ?? null;
+    if (snapshot.chaserLatest && snapshot.targetLatest) {
+      const dataYear = Math.min(snapshot.chaserLatest.year, snapshot.targetLatest.year);
+      startYear = Math.max(state.baseYear, dataYear);
+    }
     metricName = indicator?.name || state.indicator;
     metricUnit = indicator?.unit || null;
     source = indicator?.source || "World Bank";
@@ -203,7 +171,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const ratio = targetValue / chaserValue;
     const growthRatio = (1 + state.cg) / (1 + tg);
     const years = Math.log(ratio) / Math.log(growthRatio);
-    const year = Math.round(state.baseYear + years);
+    const year = Math.round(startYear + years);
     return { headline: formatYears(years), years, year };
   })();
 
@@ -213,7 +181,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const projection =
     chaserValue != null && targetValue != null
       ? buildProjection({
-          baseYear: state.baseYear,
+          baseYear: startYear,
           chaserValue,
           targetValue,
           chaserRate: state.cg,

@@ -1,8 +1,13 @@
+import { latestObserved, seriesPoints } from "../../src/lib/staticDataFormat";
 import { enforceRateLimit } from "../_lib/requestGuards";
+import {
+  loadCountries,
+  loadSeries,
+  STATIC_DATA_CACHE_CONTROL,
+  type StaticDataEnv,
+} from "../_lib/staticData";
 
-interface Env {
-  DB: D1Database;
-}
+type Env = StaticDataEnv;
 
 interface LatestValue {
   name: string;
@@ -14,7 +19,6 @@ const ISO3_RE = /^[A-Z]{3}$/;
 const INDICATOR_RE = /^[A-Z0-9_]{2,64}$/;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { DB } = context.env;
   const limited = enforceRateLimit(context.request, {
     keyPrefix: "api:convergence",
     limit: 60,
@@ -78,27 +82,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    // Get latest values for both countries
-    const getLatestValue = async (countryCode: string): Promise<LatestValue | null> => {
-      const result = await DB.prepare(
-        `SELECT c.name, d.value, d.year
-         FROM data_points d
-         JOIN countries c ON d.country_id = c.id
-         JOIN indicators i ON d.indicator_id = i.id
-         WHERE c.iso_alpha3 = ? AND i.code = ? AND d.is_projection = 0
-         ORDER BY d.year DESC
-         LIMIT 1`,
-      )
-        .bind(countryCode, indicator)
-        .first();
+    const [countries, series] = await Promise.all([
+      loadCountries(context.env, context.request.url),
+      loadSeries(context.env, context.request.url, indicator),
+    ]);
 
-      return result as LatestValue | null;
+    // Latest observed value for a country, with its name
+    const getLatestValue = (countryCode: string): LatestValue | null => {
+      const name = countries.find((c) => c.iso_alpha3 === countryCode)?.name;
+      const latest = series ? latestObserved(series, countryCode) : null;
+      return name && latest ? { name, value: latest.value, year: latest.year } : null;
     };
 
-    const [chaserData, targetData] = await Promise.all([
-      getLatestValue(chaser),
-      getLatestValue(target),
-    ]);
+    const chaserData = getLatestValue(chaser);
+    const targetData = getLatestValue(target);
 
     if (!chaserData || !targetData) {
       return Response.json(
@@ -117,18 +114,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     if (growthRate == null) {
       // Calculate CAGR from available data
-      const historicalData = await DB.prepare(
-        `SELECT d.year, d.value
-         FROM data_points d
-         JOIN countries c ON d.country_id = c.id
-         JOIN indicators i ON d.indicator_id = i.id
-         WHERE c.iso_alpha3 = ? AND i.code = ? AND d.is_projection = 0
-         ORDER BY d.year ASC`,
-      )
-        .bind(chaser, indicator)
-        .all();
-
-      const rows = historicalData.results as Array<{ year: number; value: number }>;
+      const rows = series
+        ? seriesPoints(series, chaser, {
+            endYear: series.projectedFrom == null ? undefined : series.projectedFrom - 1,
+          })
+        : [];
       if (rows.length >= 2) {
         const first = rows[0];
         const last = rows[rows.length - 1];
@@ -199,7 +189,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       },
       {
         headers: {
-          "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+          "cache-control": STATIC_DATA_CACHE_CONTROL,
         },
       },
     );
