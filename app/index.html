@@ -3,21 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Convergence Explorer - The Mountain to Climb</title>
-    <meta name="description" content="Interactive visualization tool for exploring economic convergence between countries. How long would it take Nigeria to match Ireland's GDP per capita?" />
+    <title>Economic Convergence Calculator — Mountain to Climb</title>
+    <meta name="description" content="Economic convergence calculator: how long would a poorer economy take to catch a richer one? Explore catch-up growth and GDP per capita convergence across 217 countries, with a free API." />
+    <link rel="canonical" href="https://mountaintoclimb.com/" />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Convergence Explorer" />
-    <meta property="og:description" content="Interactive visualization for exploring economic convergence between countries." />
-    <meta property="og:image" content="https://convergence-explorer.pages.dev/screenshot.png" />
-    <meta property="og:url" content="https://convergence-explorer.pages.dev" />
+    <meta property="og:site_name" content="Mountain to Climb" />
+    <meta property="og:title" content="Economic Convergence Calculator — Mountain to Climb" />
+    <meta property="og:description" content="How long would a poorer economy take to catch a richer one? Explore catch-up growth and GDP per capita convergence." />
+    <meta property="og:image" content="https://mountaintoclimb.com/screenshot.png" />
+    <meta property="og:url" content="https://mountaintoclimb.com/" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Convergence Explorer" />
-    <meta name="twitter:description" content="Interactive visualization for exploring economic convergence between countries." />
-    <meta name="twitter:image" content="https://convergence-explorer.pages.dev/screenshot.png" />
+    <meta name="twitter:title" content="Economic Convergence Calculator — Mountain to Climb" />
+    <meta name="twitter:description" content="How long would a poorer economy take to catch a richer one? Explore catch-up growth and GDP per capita convergence." />
+    <meta name="twitter:image" content="https://mountaintoclimb.com/screenshot.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Mountain to Climb",
+        "alternateName": "Economic Convergence Calculator",
+        "url": "https://mountaintoclimb.com/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Interactive economic convergence calculator. Shows how long one economy would take to catch another under stated growth assumptions, using World Bank, OECD and UN data.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "featureList": [
+          "GDP per capita convergence between any two of 217 countries",
+          "Editable growth-rate scenarios for both economies",
+          "Growth required to catch up by a chosen year",
+          "JSON API and embeddable SVG charts"
+        ]
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,7 +55,54 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Crawlable summary. React replaces everything inside #root when the app mounts. -->
+      <main>
+        <h1>Economic Convergence Calculator</h1>
+        <p>
+          Mountain to Climb shows how long a poorer economy would take to catch up with a richer
+          one. Pick two countries, choose an indicator such as GDP per capita (PPP), set a growth
+          rate for each, and the calculator plots the path and the year the gap closes. It covers
+          217 countries and several indicators, using World Bank, OECD and UN data.
+        </p>
+        <h2>What is economic convergence?</h2>
+        <p>
+          Economic convergence is the idea that poorer economies tend to grow faster than richer
+          ones and so narrow the gap in income per person. Catch-up growth is the faster growth a
+          follower achieves by adopting technology and practices the leaders already use, and by
+          investing in capital that is scarce at low incomes. Whether a particular country
+          actually converges depends on its institutions, investment, education and policy.
+        </p>
+        <h2>How is the catch-up time calculated?</h2>
+        <p>
+          If the chaser grows at rate <em>g</em> and the target at rate <em>h</em>, the gap closes
+          when (1 + g)<sup>t</sup> &times; chaser = (1 + h)<sup>t</sup> &times; target. Solving for
+          t gives t = ln(target / chaser) / ln((1 + g) / (1 + h)). The result depends only on the
+          starting ratio and the growth differential. If the chaser does not grow faster than the
+          target, it never catches up.
+        </p>
+        <p>
+          For example, Poland reached about 87% of UK GDP per capita (PPP) in the latest data. At
+          4% growth against 1%, that gap closes in a few years. Results are scenarios that follow
+          from the growth rates you choose, not forecasts.
+        </p>
+        <h2>GDP per capita: PPP or nominal?</h2>
+        <p>
+          PPP (purchasing power parity) adjusts for local price levels and is better for comparing
+          living standards. Nominal US-dollar GDP per capita uses market exchange rates and moves
+          with currencies. Some countries, such as Ireland and Luxembourg, have GDP figures
+          inflated by multinationals or cross-border commuting; the calculator flags these.
+        </p>
+        <h2>For developers and AI agents</h2>
+        <p>
+          The same calculation is available as a JSON API and as embeddable SVG charts. See
+          <a href="/llms.txt">llms.txt</a>, the <a href="/openapi.json">OpenAPI description</a>
+          and example pages such as
+          <a href="/compare/poland/united-kingdom">Poland and the United Kingdom</a>.
+        </p>
+        <noscript><p>The interactive calculator needs JavaScript.</p></noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
