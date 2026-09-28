@@ -1,3 +1,4 @@
+import { yearsToConverge } from "../../src/lib/convergenceModel";
 import { latestObserved, seriesPoints } from "../../src/lib/staticDataFormat";
 import { enforceRateLimit } from "../_lib/requestGuards";
 import {
@@ -136,9 +137,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     // Calculate years to convergence
     // Formula: years = ln(target/chaser) / ln(1 + growth_rate)
     const ratio = targetData.value / chaserData.value;
+    // This endpoint's model holds the target constant.
     const yearsToConvergenceRaw =
-      growthRate > 0 && Number.isFinite(ratio) && ratio > 0
-        ? Math.log(ratio) / Math.log(1 + growthRate)
+      Number.isFinite(ratio) && ratio > 0
+        ? yearsToConverge(chaserData.value, targetData.value, {
+            chaserRate: growthRate,
+            targetRate: 0,
+          })
         : Infinity;
 
     const yearsToConvergence = Number.isFinite(yearsToConvergenceRaw)

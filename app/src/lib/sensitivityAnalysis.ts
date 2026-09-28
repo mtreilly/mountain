@@ -1,7 +1,10 @@
 /**
  * Sensitivity analysis for convergence scenarios.
  * Calculates how ±1% changes in growth rates affect convergence timelines.
+ * `baseYear` must be the resolved projection start (convergenceModel.projectionStart).
  */
+
+import { convergenceYearFrom, yearsToConverge } from "./convergenceModel";
 
 interface SensitivityScenario {
   label: string;
@@ -17,26 +20,15 @@ export interface SensitivityResult {
   pessimistic: SensitivityScenario;
 }
 
-/**
- * Calculate years needed for chaser to reach target value.
- * Formula: years = ln(targetValue/chaserValue) / ln((1 + chaserGrowth) / (1 + targetGrowth))
- */
-function calculateYearsToConverge(
+/** Years to converge for one scenario, or null when it never converges. */
+function scenarioYears(
   chaserValue: number,
   targetValue: number,
-  chaserGrowthRate: number,
-  targetGrowthRate: number,
+  chaserRate: number,
+  targetRate: number,
 ): number | null {
-  if (chaserValue >= targetValue) return 0;
-  if (chaserGrowthRate <= targetGrowthRate) return null; // Never converges
-
-  const ratio = targetValue / chaserValue;
-  const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);
-
-  if (growthRatio <= 1) return null;
-
-  const years = Math.log(ratio) / Math.log(growthRatio);
-  return Number.isFinite(years) && years > 0 ? years : null;
+  const years = yearsToConverge(chaserValue, targetValue, { chaserRate, targetRate });
+  return Number.isFinite(years) ? years : null;
 }
 
 /**
@@ -59,15 +51,10 @@ export function calculateSensitivityScenarios(params: {
     delta = 0.01,
   } = params;
 
-  const baselineYears = calculateYearsToConverge(
-    chaserValue,
-    targetValue,
-    chaserGrowthRate,
-    targetGrowthRate,
-  );
+  const baselineYears = scenarioYears(chaserValue, targetValue, chaserGrowthRate, targetGrowthRate);
 
   const optimisticGrowth = chaserGrowthRate + delta;
-  const optimisticYears = calculateYearsToConverge(
+  const optimisticYears = scenarioYears(
     chaserValue,
     targetValue,
     optimisticGrowth,
@@ -75,7 +62,7 @@ export function calculateSensitivityScenarios(params: {
   );
 
   const pessimisticGrowth = Math.max(0, chaserGrowthRate - delta);
-  const pessimisticYears = calculateYearsToConverge(
+  const pessimisticYears = scenarioYears(
     chaserValue,
     targetValue,
     pessimisticGrowth,
@@ -88,21 +75,21 @@ export function calculateSensitivityScenarios(params: {
       chaserGrowth: chaserGrowthRate,
       targetGrowth: targetGrowthRate,
       yearsToConvergence: baselineYears,
-      convergenceYear: baselineYears != null ? Math.round(baseYear + baselineYears) : null,
+      convergenceYear: convergenceYearFrom(baseYear, baselineYears ?? Number.NaN),
     },
     optimistic: {
       label: `+${(delta * 100).toFixed(0)}% growth`,
       chaserGrowth: optimisticGrowth,
       targetGrowth: targetGrowthRate,
       yearsToConvergence: optimisticYears,
-      convergenceYear: optimisticYears != null ? Math.round(baseYear + optimisticYears) : null,
+      convergenceYear: convergenceYearFrom(baseYear, optimisticYears ?? Number.NaN),
     },
     pessimistic: {
       label: `-${(delta * 100).toFixed(0)}% growth`,
       chaserGrowth: pessimisticGrowth,
       targetGrowth: targetGrowthRate,
       yearsToConvergence: pessimisticYears,
-      convergenceYear: pessimisticYears != null ? Math.round(baseYear + pessimisticYears) : null,
+      convergenceYear: convergenceYearFrom(baseYear, pessimisticYears ?? Number.NaN),
     },
   };
 }

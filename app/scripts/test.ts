@@ -1,6 +1,8 @@
 import { strict as assert } from "node:assert";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { loadPairOutcome } from "../functions/_lib/pairOutcome";
+import { clearStaticDataCache } from "../functions/_lib/staticData";
 import { generateShareCardPng, svgStringToPngBlob } from "../src/lib/chartExport";
 import {
   buildPermalink,
@@ -11,6 +13,8 @@ import {
   generateToolCitation,
   getAllCitationFormats,
 } from "../src/lib/citations";
+import { convergenceOutcome, latestCommonPoint } from "../src/lib/convergenceModel";
+import { adjustmentFactor } from "../src/lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv } from "../src/lib/dataExport";
 import {
   getDataSourceBaseUrl,
@@ -177,6 +181,139 @@ function testProjectionLabelFitsRegion() {
   assert.equal(fitProjectionLabel(80, 9, labels), labels.short);
   assert.equal(fitProjectionLabel(20, 9, labels), null);
   assert.equal(fitProjectionLabel(-5, 9, labels), null);
+}
+
+// Every surface must answer "when do they converge?" the same way. This feeds one
+// dataset (ending 2025, base year 2023) through each path and compares the result.
+async function testConvergenceSurfacesAgree() {
+  const chaser = [
+    { year: 2023, value: 40000 },
+    { year: 2024, value: 42000 },
+    { year: 2025, value: 44000 },
+  ];
+  const target = [
+    { year: 2023, value: 52000 },
+    { year: 2024, value: 52500 },
+    { year: 2025, value: 53000 },
+  ];
+  const rates = { chaserRate: 0.04, targetRate: 0.01 };
+  const baseYear = 2023;
+
+  const handoff = latestCommonPoint(chaser, target);
+  assert.deepEqual(handoff, { year: 2025, chaser: 44000, target: 53000 });
+  const model = convergenceOutcome({ handoff: handoff!, baseYear, rates });
+  assert.equal(model.start.year, 2026, "projection starts the year after the latest data");
+
+  // Share pages and OG images (Functions) read the static snapshot through ASSETS.
+  const files: Record<string, unknown> = {
+    "/data-manifest.json": { version: "agree-test" },
+    "/data/agree-test/countries.json": {
+      data: [
+        { iso_alpha3: "POL", iso_alpha2: "PL", name: "Poland", region: null, income_group: null },
+        {
+          iso_alpha3: "GBR",
+          iso_alpha2: "GB",
+          name: "United Kingdom",
+          region: null,
+          income_group: null,
+        },
+      ],
+    },
+    "/data/agree-test/series/GDP_PCAP_PPP.json": {
+      indicator: {
+        code: "GDP_PCAP_PPP",
+        name: "GDP per capita (PPP)",
+        unit: null,
+        source: "World Bank",
+      },
+      projectedFrom: null,
+      vintages: [],
+      data: {
+        POL: chaser.map((p) => [p.year, p.value]),
+        GBR: target.map((p) => [p.year, p.value]),
+      },
+    },
+  };
+  const env = {
+    ASSETS: {
+      fetch: async (input: URL | string) => {
+        const body = files[new URL(String(input)).pathname];
+        return body
+          ? Response.json(body)
+          : new Response("<!doctype html>", { headers: { "content-type": "text/html" } });
+      },
+    } as unknown as Fetcher,
+  };
+  const state = parseShareStateFromSearch(
+    `?chaser=POL&target=GBR&indicator=GDP_PCAP_PPP&cg=0.040&tmode=growing&tg=0.010&baseYear=${baseYear}`,
+  );
+  const shared = await loadPairOutcome(env, "https://example.com/share", state);
+  assert.equal(shared.outcome?.start.year, model.start.year, "share/OG start year");
+  assert.equal(shared.outcome?.convergenceYear, model.convergenceYear, "share/OG convergence year");
+
+  // Thread sensitivity cards get the resolved start year and start values from the app.
+  const sensitivity = calculateSensitivityScenarios({
+    chaserValue: model.start.chaser,
+    targetValue: model.start.target,
+    chaserGrowthRate: rates.chaserRate,
+    targetGrowthRate: rates.targetRate,
+    baseYear: model.start.year,
+  });
+  assert.equal(sensitivity.baseline.convergenceYear, model.convergenceYear, "thread baseline");
+
+  // Country adjustments saved in the link (adjT) apply to share/OG exactly as in the app.
+  const irlFactor = adjustmentFactor("IRL", "GDP_PCAP_PPP", true);
+  assert.notEqual(irlFactor, 1, "fixture expects Ireland to have a GDP adjustment");
+  files["/data/agree-test/countries.json"] = {
+    data: [
+      { iso_alpha3: "POL", iso_alpha2: "PL", name: "Poland", region: null, income_group: null },
+      { iso_alpha3: "IRL", iso_alpha2: "IE", name: "Ireland", region: null, income_group: null },
+    ],
+  };
+  const series = files["/data/agree-test/series/GDP_PCAP_PPP.json"] as {
+    data: Record<string, Array<[number, number]>>;
+  };
+  series.data.IRL = target.map((p) => [p.year, p.value * 2]);
+  clearStaticDataCache();
+  for (const adjT of [true, false]) {
+    const irl = target.map((p) => ({
+      year: p.year,
+      value: p.value * 2 * adjustmentFactor("IRL", "GDP_PCAP_PPP", adjT),
+    }));
+    const expected = convergenceOutcome({
+      handoff: latestCommonPoint(chaser, irl)!,
+      baseYear,
+      rates,
+    });
+    const got = await loadPairOutcome(
+      env,
+      "https://example.com/share",
+      parseShareStateFromSearch(
+        `?chaser=POL&target=IRL&indicator=GDP_PCAP_PPP&cg=0.040&tmode=growing&tg=0.010${adjT ? "" : "&adjT=0"}`,
+      ),
+    );
+    assert.equal(got.outcome?.convergenceYear, expected.convergenceYear, `adjT=${adjT}`);
+  }
+}
+
+// Convergence maths and the start-year rule live only in src/lib/convergenceModel.ts.
+function testConvergenceMathLivesInOneModule() {
+  const files = [...listSourceFiles("src"), ...listSourceFiles("functions")].filter(
+    (f) => !f.endsWith("convergenceModel.ts"),
+  );
+  const patterns = [
+    /Math\.log\([^)]*\)\s*\/\s*Math\.log\(/, // years = ln(ratio) / ln(growth)
+    /Math\.max\(\s*(state\.)?baseYear\b/, // projection start rule
+  ];
+  const offenders = files.filter((f) => {
+    const source = readFileSync(f, "utf8");
+    return patterns.some((re) => re.test(source));
+  });
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use src/lib/convergenceModel.ts instead:\n${offenders.join("\n")}`,
+  );
 }
 
 function testShareStateRoundtrip() {
@@ -1033,6 +1170,8 @@ function testShareCardFilenamePattern() {
 async function run() {
   const tests = [
     ["i18n: every t() key exists in en translations", testTranslationKeysExist],
+    ["convergence: app, share/OG and thread agree", testConvergenceSurfacesAgree],
+    ["convergence: maths lives in one module", testConvergenceMathLivesInOneModule],
     ["projection label fits its region", testProjectionLabelFitsRegion],
     ["shareState roundtrip", testShareStateRoundtrip],
     ["tmode static forces tg=0", testStaticTargetForcesTgZero],

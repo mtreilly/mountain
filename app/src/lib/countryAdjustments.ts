@@ -78,6 +78,15 @@ export function getAdjustment(iso: string, indicatorCode: string): CountryAdjust
 /**
  * Apply adjustment factor to a value if adjustment is enabled
  */
+/**
+ * Multiplier for a country's series: its adjustment factor when one exists and is
+ * switched on, otherwise 1. The app, share pages and OG images all use this.
+ */
+export function adjustmentFactor(iso: string, indicatorCode: string, useAdjusted: boolean): number {
+  const adjustment = getAdjustment(iso, indicatorCode);
+  return adjustment && useAdjusted ? adjustment.adjustmentFactor : 1;
+}
+
 export function applyAdjustment(
   value: number,
   adjustment: CountryAdjustment | null,

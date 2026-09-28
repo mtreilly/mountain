@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Milestone } from "../lib/convergence";
 import { calculateMilestones } from "../lib/convergence";
+import { convergenceOutcome, latestCommonPoint } from "../lib/convergenceModel";
 import {
   ALL_TL2_REGIONS,
   COUNTRIES_WITH_REGIONS,
@@ -46,7 +47,7 @@ interface UseRegionalConvergenceParams {
   targetCode: string;
   chaserGrowthRate: number;
   targetGrowthRate: number;
-  baseYear?: number;
+  baseYear: number;
 }
 
 interface ProjectionPoint {
@@ -86,7 +87,7 @@ export function useRegionalConvergence({
   targetCode,
   chaserGrowthRate,
   targetGrowthRate,
-  baseYear = 2023,
+  baseYear,
 }: UseRegionalConvergenceParams): UseRegionalConvergenceResult {
   return useMemo(() => {
     const chaserRegion = getRegionByCode(chaserCode);
@@ -109,14 +110,12 @@ export function useRegionalConvergence({
       };
     }
 
-    const chaserByYear = new Map(chaserSeries.map((point) => [point.year, point.gdpPerCapita]));
-    const targetByYear = new Map(targetSeries.map((point) => [point.year, point.gdpPerCapita]));
-    const overlapYears = Array.from(chaserByYear.keys())
-      .filter((year) => targetByYear.has(year))
-      .sort((a, b) => a - b);
-    const handoffYear = overlapYears[overlapYears.length - 1];
+    const handoff = latestCommonPoint(
+      chaserSeries.map((p) => ({ year: p.year, value: p.gdpPerCapita })),
+      targetSeries.map((p) => ({ year: p.year, value: p.gdpPerCapita })),
+    );
 
-    if (!Number.isFinite(handoffYear)) {
+    if (!handoff) {
       return {
         chaserRegion,
         targetRegion,
@@ -131,29 +130,16 @@ export function useRegionalConvergence({
       };
     }
 
-    const chaserHandoffValue = chaserByYear.get(handoffYear)!;
-    const targetHandoffValue = targetByYear.get(handoffYear)!;
-    const projectionStartYear = Math.max(baseYear, handoffYear + 1);
-    const yearsForward = projectionStartYear - handoffYear;
-    const chaserValue = chaserHandoffValue * Math.pow(1 + chaserGrowthRate, yearsForward);
-    const targetValue = targetHandoffValue * Math.pow(1 + targetGrowthRate, yearsForward);
+    const outcome = convergenceOutcome({
+      handoff,
+      baseYear,
+      rates: { chaserRate: chaserGrowthRate, targetRate: targetGrowthRate },
+    });
+    const projectionStartYear = outcome.start.year;
+    const chaserValue = outcome.start.chaser;
+    const targetValue = outcome.start.target;
     const gap = targetValue / chaserValue;
-
-    // Calculate convergence
-    let yearsToConvergence = Infinity;
-    let convergenceYear: number | null = null;
-
-    if (chaserValue >= targetValue) {
-      yearsToConvergence = 0;
-      convergenceYear = projectionStartYear;
-    } else if (chaserGrowthRate > targetGrowthRate) {
-      const ratio = targetValue / chaserValue;
-      const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);
-      if (growthRatio > 1) {
-        yearsToConvergence = Math.log(ratio) / Math.log(growthRatio);
-        convergenceYear = Math.round(projectionStartYear + yearsToConvergence);
-      }
-    }
+    const { yearsToConvergence, convergenceYear } = outcome;
 
     // Generate projection
     const maxYears = Math.min(

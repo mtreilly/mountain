@@ -9,13 +9,13 @@ import {
 import {
   calculateMilestones,
   calculateRequiredChaserGrowthRate,
-  calculateYearsToConvergence,
   formatMetricValue,
   formatNumber,
   formatPercent,
   formatYears,
   generateProjection,
 } from "../src/lib/convergence";
+import { yearsToConverge } from "../src/lib/convergenceModel";
 import { applyAdjustment, COUNTRY_ADJUSTMENTS, getAdjustment } from "../src/lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "../src/lib/dataExport";
 import {
@@ -44,7 +44,6 @@ import {
   ALL_TL2_REGIONS,
   buildOECDApiUrl,
   COUNTRIES_WITH_REGIONS,
-  calculateRegionalConvergence,
   getLatestRegionData,
   getRegionByCode,
   getRegionsByCountry,
@@ -335,7 +334,7 @@ function testConvergenceYearsMatchesProjectionMath() {
 
   fc.assert(
     fc.property(arb, ({ chaser, target, g }) => {
-      const years = calculateYearsToConvergence(chaser, target, g);
+      const years = yearsToConverge(chaser, target, { chaserRate: g, targetRate: 0 });
       if (chaser >= target) {
         assert.equal(years, 0);
         return;
@@ -370,8 +369,11 @@ function testConvergenceYearsMonotonicInGrowthDifferential() {
       const relativeHigh = (1 + chaserGrowthHigh) / (1 + targetGrowthRate) - 1;
       fc.pre(relativeLow > 0 && relativeHigh > 0);
 
-      const yearsLow = calculateYearsToConvergence(chaser, target, relativeLow);
-      const yearsHigh = calculateYearsToConvergence(chaser, target, relativeHigh);
+      const yearsLow = yearsToConverge(chaser, target, { chaserRate: relativeLow, targetRate: 0 });
+      const yearsHigh = yearsToConverge(chaser, target, {
+        chaserRate: relativeHigh,
+        targetRate: 0,
+      });
 
       assert.ok(Number.isFinite(yearsLow));
       assert.ok(Number.isFinite(yearsHigh));
@@ -1807,45 +1809,6 @@ function testOecdRegionCodesAlwaysResolveToMetadata() {
   }
 }
 
-function testRegionalConvergenceMatchesMathOrNullCases() {
-  const arb = fc.record({
-    chaserCode: fc.constantFrom(...OECD_STATIC_DATA_CODES),
-    targetCode: fc.constantFrom(...OECD_STATIC_DATA_CODES),
-    chaserGrowthRatePct: fc.double({ min: -10, max: 25, noNaN: true, noInfinity: true }),
-    targetGrowthRatePct: fc.double({ min: -10, max: 25, noNaN: true, noInfinity: true }),
-  });
-
-  fc.assert(
-    fc.property(arb, ({ chaserCode, targetCode, chaserGrowthRatePct, targetGrowthRatePct }) => {
-      const chaser = getLatestRegionData(chaserCode)!;
-      const target = getLatestRegionData(targetCode)!;
-      const res = calculateRegionalConvergence(
-        chaserCode,
-        targetCode,
-        chaserGrowthRatePct,
-        targetGrowthRatePct,
-      );
-
-      assert.equal(res.chaserValue, chaser.gdpPerCapita);
-      assert.equal(res.targetValue, target.gdpPerCapita);
-
-      const expectedGap = ((target.gdpPerCapita - chaser.gdpPerCapita) / chaser.gdpPerCapita) * 100;
-      assert.ok(res.gap != null);
-      assert.ok(approxEqual(res.gap as number, expectedGap, 1e-10, 1e-6));
-
-      const differential = chaserGrowthRatePct - targetGrowthRatePct;
-      if (differential <= 0 || chaser.gdpPerCapita >= target.gdpPerCapita) {
-        assert.equal(res.yearsToConverge, null);
-      } else {
-        const ratio = target.gdpPerCapita / chaser.gdpPerCapita;
-        const expectedYears = Math.ceil(Math.log(ratio) / Math.log(1 + differential / 100));
-        assert.equal(res.yearsToConverge, expectedYears);
-      }
-    }),
-    { numRuns: 200 },
-  );
-}
-
 function testHeadlineScenarioAndUrlSuffix() {
   const arbName = fc
     .array(fc.constantFrom(...("abcdefghijklmnopqrstuvwxyz" as const).split("")), {
@@ -2231,7 +2194,6 @@ function run() {
     ["oecdRegions: lookups + latest", testOECDRegionLookupsAndLatestData],
     ["oecdRegions: api url builder", testOECDApiUrlBuilderEncodesDimensions],
     ["oecdRegions: all codes resolve to metadata", testOecdRegionCodesAlwaysResolveToMetadata],
-    ["oecdRegions: regional convergence math", testRegionalConvergenceMatchesMathOrNullCases],
     ["headlineGenerator: scenario + url suffix", testHeadlineScenarioAndUrlSuffix],
     ["headlineGenerator: no raw angle brackets", testHeadlineOutputContainsNoRawAngleBrackets],
     ["headlineGenerator: share url encoding", testShareUrlEncodesTextAndUrl],

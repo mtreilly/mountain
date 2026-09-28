@@ -1,19 +1,3 @@
-/**
- * Calculate years needed for chaser to reach target value at given growth rate.
- * Formula: years = ln(target/chaser) / ln(1 + growth_rate)
- */
-export function calculateYearsToConvergence(
-  chaserValue: number,
-  targetValue: number,
-  growthRate: number,
-): number {
-  if (growthRate <= 0) return Infinity;
-  if (chaserValue >= targetValue) return 0;
-
-  const ratio = targetValue / chaserValue;
-  return Math.log(ratio) / Math.log(1 + growthRate);
-}
-
 export function calculateRequiredChaserGrowthRate(params: {
   chaserValue: number;
   targetValue: number;

@@ -1,9 +1,4 @@
-import {
-  latestObserved,
-  type StaticCountry,
-  type StaticIndicator,
-  type StaticSeries,
-} from "../../src/lib/staticDataFormat";
+import type { StaticCountry, StaticIndicator, StaticSeries } from "../../src/lib/staticDataFormat";
 
 // Functions read the build-time data snapshot through the ASSETS binding instead of
 // querying D1, so no request touches the database. Parsed files are kept per
@@ -61,22 +56,7 @@ export function loadSeries(
 // The data only changes on deploy, so let browsers and the edge keep responses for a day.
 export const STATIC_DATA_CACHE_CONTROL = "public, max-age=3600, s-maxage=86400";
 
-/** Names and latest observed values for a chaser/target pair, as used by share pages and OG images. */
-export async function loadPairSnapshot(
-  env: StaticDataEnv,
-  requestUrl: string,
-  params: { indicator: string; chaser: string; target: string },
-) {
-  const [countries, series] = await Promise.all([
-    loadCountries(env, requestUrl),
-    loadSeries(env, requestUrl, params.indicator),
-  ]);
-  const name = (iso: string) => countries.find((c) => c.iso_alpha3 === iso)?.name || iso;
-  return {
-    indicator: series?.indicator ?? null,
-    chaserName: name(params.chaser),
-    targetName: name(params.target),
-    chaserLatest: series ? latestObserved(series, params.chaser) : null,
-    targetLatest: series ? latestObserved(series, params.target) : null,
-  };
+/** Test hook: forget cached files between tests. */
+export function clearStaticDataCache() {
+  cache.clear();
 }

@@ -29,7 +29,8 @@ import { useCountryData } from "./hooks/useCountryData";
 import { useIndicators } from "./hooks/useIndicators";
 import { useRegionalConvergence } from "./hooks/useOECDRegions";
 import { useTheme } from "./hooks/useTheme";
-import { applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
+import { projectionStart } from "./lib/convergenceModel";
+import { adjustmentFactor, applyAdjustment, getAdjustment } from "./lib/countryAdjustments";
 import { toObservedCsv, toProjectionCsv, toReportJson } from "./lib/dataExport";
 import { downloadText } from "./lib/download";
 import type { HeadlineData } from "./lib/headlineGenerator";
@@ -488,10 +489,8 @@ export default function App() {
 
   const chaserAdjustment = getAdjustment(chaserIso, indicatorCode);
   const targetAdjustment = getAdjustment(targetIso, indicatorCode);
-  const chaserObservedFactor =
-    chaserAdjustment != null && useChaserAdjusted ? chaserAdjustment.adjustmentFactor : 1;
-  const targetObservedFactor =
-    targetAdjustment != null && useTargetAdjusted ? targetAdjustment.adjustmentFactor : 1;
+  const chaserObservedFactor = adjustmentFactor(chaserIso, indicatorCode, useChaserAdjusted);
+  const targetObservedFactor = adjustmentFactor(targetIso, indicatorCode, useTargetAdjusted);
 
   const chaserValue =
     chaserValueRaw != null
@@ -502,16 +501,20 @@ export default function App() {
       ? applyAdjustment(targetValueRaw, targetAdjustment, useTargetAdjusted)
       : 2;
 
-  const countryOverlapSeries = (() => {
-    const chaserSeries = data[chaserIso] || [];
-    const targetSeries = data[targetIso] || [];
+  // The chaser/target series as displayed: country adjustments applied once, here.
+  // Everything shown (chart, projection, share/thread cards) reads these; exports keep raw data.
+  const displayedSeries = useMemo(() => {
+    const scale = (points: Array<{ year: number; value: number }> | undefined, factor: number) =>
+      (points ?? []).map((p) => ({ year: p.year, value: p.value * factor }));
+    return {
+      chaser: scale(data[chaserIso], chaserObservedFactor),
+      target: scale(data[targetIso], targetObservedFactor),
+    };
+  }, [data, chaserIso, targetIso, chaserObservedFactor, targetObservedFactor]);
 
-    const chaserByYear = new Map(
-      chaserSeries.map((point) => [point.year, point.value * chaserObservedFactor]),
-    );
-    const targetByYear = new Map(
-      targetSeries.map((point) => [point.year, point.value * targetObservedFactor]),
-    );
+  const countryOverlapSeries = (() => {
+    const chaserByYear = new Map(displayedSeries.chaser.map((point) => [point.year, point.value]));
+    const targetByYear = new Map(displayedSeries.target.map((point) => [point.year, point.value]));
 
     const years = Array.from(chaserByYear.keys())
       .filter((year) => targetByYear.has(year))
@@ -528,14 +531,15 @@ export default function App() {
     const handoff = countryOverlapSeries[countryOverlapSeries.length - 1];
     if (!handoff) return null;
 
-    const projectionStartYear = Math.max(baseYear, handoff.year + 1);
-    const yearsForward = projectionStartYear - handoff.year;
-
+    const start = projectionStart(handoff, baseYear, {
+      chaserRate: chaserGrowthRate,
+      targetRate: targetGrowthRate,
+    });
     return {
       handoffYear: handoff.year,
-      projectionStartYear,
-      chaserProjectionStart: handoff.chaser * Math.pow(1 + chaserGrowthRate, yearsForward),
-      targetProjectionStart: handoff.target * Math.pow(1 + targetGrowthRate, yearsForward),
+      projectionStartYear: start.year,
+      chaserProjectionStart: start.chaser,
+      targetProjectionStart: start.target,
     };
   })();
 
@@ -845,10 +849,10 @@ export default function App() {
 
   // Historical data for thread generator
   const historicalData = useMemo(() => {
-    if (comparisonMode !== "countries" || !data) return null;
+    if (comparisonMode !== "countries") return null;
 
-    const chaserSeries = data[chaserIso] || [];
-    const targetSeries = data[targetIso] || [];
+    const chaserSeries = displayedSeries.chaser;
+    const targetSeries = displayedSeries.target;
 
     const getEarliest = (series: Array<{ year: number; value: number }>) => {
       if (!series.length) return null;
@@ -870,7 +874,7 @@ export default function App() {
       targetStart: getEarliest(targetSeries),
       targetCurrent: getLatest(targetSeries),
     };
-  }, [comparisonMode, data, chaserIso, targetIso]);
+  }, [comparisonMode, displayedSeries]);
 
   const countriesByIso3 = useMemo(() => {
     const map: Record<string, { name: string }> = {};
@@ -1386,7 +1390,8 @@ export default function App() {
               shareCardParams={shareCardParams}
               historicalData={historicalData}
               indicatorCode={indicatorCode}
-              baseYear={baseYear}
+              // Resolved projection start, so thread cards match the chart and share card
+              baseYear={projectionStartYearForChart ?? baseYear}
               implicationsSnapshot={implicationsComputed.snapshot}
               appUrl={appUrl}
             />

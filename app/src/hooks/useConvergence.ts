@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Milestone } from "../lib/convergence";
 import { calculateMilestones } from "../lib/convergence";
+import { convergenceYearFrom, yearsToConverge } from "../lib/convergenceModel";
 
 interface UseConvergenceParams {
   chaserValue: number;
@@ -30,25 +31,20 @@ export function useConvergence({
     );
   }, [unit]);
 
-  // Calculate years to convergence with both growth rates
-  // Formula: chaserValue * (1 + chaserRate)^n = targetValue * (1 + targetRate)^n
-  // Solving: n = ln(targetValue/chaserValue) / ln((1+chaserRate)/(1+targetRate))
-  const yearsToConvergence = useMemo(() => {
-    if (chaserValue >= targetValue) return 0;
-    if (chaserGrowthRate <= targetGrowthRate) return Infinity; // Will never catch up
+  // `baseYear` here is the resolved projection start (see convergenceModel.projectionStart).
+  const yearsToConvergence = useMemo(
+    () =>
+      yearsToConverge(chaserValue, targetValue, {
+        chaserRate: chaserGrowthRate,
+        targetRate: targetGrowthRate,
+      }),
+    [chaserValue, targetValue, chaserGrowthRate, targetGrowthRate],
+  );
 
-    const ratio = targetValue / chaserValue;
-    const growthRatio = (1 + chaserGrowthRate) / (1 + targetGrowthRate);
-
-    if (growthRatio <= 1) return Infinity;
-
-    return Math.log(ratio) / Math.log(growthRatio);
-  }, [chaserValue, targetValue, chaserGrowthRate, targetGrowthRate]);
-
-  const convergenceYear = useMemo(() => {
-    if (!isFinite(yearsToConvergence)) return null;
-    return Math.round(baseYear + yearsToConvergence);
-  }, [baseYear, yearsToConvergence]);
+  const convergenceYear = useMemo(
+    () => convergenceYearFrom(baseYear, yearsToConvergence),
+    [baseYear, yearsToConvergence],
+  );
 
   const { projection, milestones } = useMemo(() => {
     const normalizeProjectionValue = (value: number) => {

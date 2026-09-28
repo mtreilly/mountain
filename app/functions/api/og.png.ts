@@ -1,8 +1,8 @@
 import { formatMetricValue, formatPercent, formatYears } from "../../src/lib/convergence";
-import { getLatestRegionData, getRegionByCode } from "../../src/lib/oecdRegions";
 import { parseShareStateFromSearch, toSearchParams } from "../../src/lib/shareState";
+import { loadPairOutcome } from "../_lib/pairOutcome";
 import { enforceRateLimit } from "../_lib/requestGuards";
-import { loadPairSnapshot, type StaticDataEnv } from "../_lib/staticData";
+import type { StaticDataEnv } from "../_lib/staticData";
 
 type Env = StaticDataEnv;
 
@@ -106,89 +106,43 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const canonical = `${url.origin}/share?${toSearchParams(state).toString()}`;
 
-  // Determine mode and get data
+  // Determine mode and get data (same model and start-year rule as the app)
   const isRegionalMode = state.mode === "regions";
-
-  let chaserName: string;
-  let targetName: string;
-  let chaserValue: number | null;
-  let targetValue: number | null;
-  let metricName: string;
-  let metricUnit: string | null;
-  let source: string;
-  // Like the app, project from the latest year both series have data when it's past the base year.
-  let startYear = state.baseYear;
-
-  if (isRegionalMode) {
-    // Regional mode - use static OECD data
-    const chaserCode = state.cr ?? "UKC";
-    const targetCode = state.tr ?? "UKI";
-
-    const chaserRegion = getRegionByCode(chaserCode);
-    const targetRegion = getRegionByCode(targetCode);
-    const chaserData = getLatestRegionData(chaserCode);
-    const targetData = getLatestRegionData(targetCode);
-
-    chaserName = chaserRegion?.name ?? chaserCode;
-    targetName = targetRegion?.name ?? targetCode;
-    chaserValue = chaserData?.gdpPerCapita ?? null;
-    targetValue = targetData?.gdpPerCapita ?? null;
-    metricName = "GDP per capita";
-    metricUnit = "USD PPP";
-    source = "OECD";
-  } else {
-    // Country mode - read the build-time data snapshot
-    const snapshot = await loadPairSnapshot(context.env, context.request.url, {
-      indicator: state.indicator,
-      chaser: state.chaser,
-      target: state.target,
-    });
-    const indicator = snapshot.indicator;
-
-    chaserName = snapshot.chaserName;
-    targetName = snapshot.targetName;
-    chaserValue = snapshot.chaserLatest?.value ?? null;
-    targetValue = snapshot.targetLatest?.value ?? null;
-    if (snapshot.chaserLatest && snapshot.targetLatest) {
-      const dataYear = Math.min(snapshot.chaserLatest.year, snapshot.targetLatest.year);
-      startYear = Math.max(state.baseYear, dataYear);
-    }
-    metricName = indicator?.name || state.indicator;
-    metricUnit = indicator?.unit || null;
-    source = indicator?.source || "World Bank";
-  }
+  const pair = await loadPairOutcome(context.env, context.request.url, state);
+  const { chaserName, targetName, metricUnit, source } = pair;
+  // The unit is shown separately on the card, so regions drop it from the name.
+  const metricName = isRegionalMode ? "GDP per capita" : pair.metricName;
 
   const title = `${truncateName(chaserName, 18)} → ${truncateName(targetName, 18)}`;
 
-  // Calculate convergence
   const outcome = (() => {
-    if (chaserValue == null || targetValue == null)
-      return { headline: "Data unavailable", years: null, year: null };
-    if (chaserValue >= targetValue) return { headline: "Already ahead", years: null, year: null };
-    const tg = state.tmode === "static" ? 0 : state.tg;
-    if (state.cg <= tg) return { headline: "No convergence", years: null, year: null };
-
-    const ratio = targetValue / chaserValue;
-    const growthRatio = (1 + state.cg) / (1 + tg);
-    const years = Math.log(ratio) / Math.log(growthRatio);
-    const year = Math.round(startYear + years);
-    return { headline: formatYears(years), years, year };
+    const result = pair.outcome;
+    if (!result) return { headline: "Data unavailable", years: null, year: null };
+    if (result.yearsToConvergence === 0)
+      return { headline: "Already ahead", years: null, year: null };
+    if (result.convergenceYear == null)
+      return { headline: "No convergence", years: null, year: null };
+    return {
+      headline: formatYears(result.yearsToConvergence),
+      years: result.yearsToConvergence,
+      year: result.convergenceYear,
+    };
   })();
 
-  const gap = chaserValue && targetValue && chaserValue > 0 ? targetValue / chaserValue : null;
+  const start = pair.outcome?.start ?? null;
+  const gap = start && start.chaser > 0 ? start.target / start.chaser : null;
 
-  // Build projection
-  const projection =
-    chaserValue != null && targetValue != null
-      ? buildProjection({
-          baseYear: startYear,
-          chaserValue,
-          targetValue,
-          chaserRate: state.cg,
-          targetRate: state.tmode === "static" ? 0 : state.tg,
-          maxYears: 60,
-        })
-      : [];
+  // Build projection from the resolved start
+  const projection = start
+    ? buildProjection({
+        baseYear: start.year,
+        chaserValue: start.chaser,
+        targetValue: start.target,
+        chaserRate: state.cg,
+        targetRate: state.tmode === "static" ? 0 : state.tg,
+        maxYears: 60,
+      })
+    : [];
 
   // Chart layout - hero chart in center
   const chartArea = {
