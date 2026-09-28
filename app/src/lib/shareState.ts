@@ -118,6 +118,9 @@ export const DEFAULT_SHARE_STATE: ShareState = {
   cg: 0.04,
   tg: 0.01,
   tmode: "growing",
+  // A floor, not the data year: projections start after the latest data or at this
+  // year, whichever is later (convergenceModel.projectionStart). Kept at 2023 so
+  // existing share URLs stay canonical; it never needs bumping when data updates.
   baseYear: 2023,
   view: "chart",
   adjC: true,

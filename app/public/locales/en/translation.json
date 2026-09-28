@@ -159,8 +159,8 @@
     "citationDesc": "Generate properly formatted citations for academic papers, blog posts, and publications.",
     "openCitationPanel": "Open Citation Panel",
     "settings": "Settings",
-    "baseYear": "Base year",
-    "baseYearHelp": "Affects the projection start year and convergence calculations",
+    "baseYear": "Earliest start year",
+    "baseYearHelp": "Projections start the year after the latest data. Set a later year to start them later.",
     "resetToDefaults": "Reset to defaults",
     "printPage": "Print page"
   },
