@@ -5,10 +5,13 @@
  * Source: https://pxweb.irena.org/pxweb/en/IRENASTAT/
  *
  * Dataset used (default):
- * - Power Capacity and Generation / Country_ELECSTAT_2025_H2_PX.px
+ * - Power Capacity and Generation / newest Country_ELECSTAT_*.px table
  *   "Electricity statistics by Country/area, Technology, Data Type, Grid connection and Year"
  *
  * Notes:
+ * - IRENA renames the table each release and has renumbered its value codes
+ *   between releases (e.g. Technology "1" moved from Solar PV to Total Renewable),
+ *   so the table is discovered and every code is resolved from its label.
  * - IRENA capacity is in MW; we store GW.
  * - Wind is derived as onshore + offshore.
  */
@@ -19,12 +22,23 @@ loadDotEnv();
 
 const BASE = "https://pxweb.irena.org/api/v1/en/IRENASTAT";
 const FOLDER = "Power Capacity and Generation";
-const DEFAULT_TABLE = "Country_ELECSTAT_2025_H2_PX.px";
-const TABLE = process.env.IRENA_ELECSTAT_TABLE || DEFAULT_TABLE;
+const TABLE_PATTERN = /^Country_ELECSTAT_.+\.px$/;
 const START_YEAR = Number.parseInt(process.env.IRENA_CAPACITY_START_YEAR || "2000", 10);
-const END_YEAR = Number.parseInt(process.env.IRENA_CAPACITY_END_YEAR || "2024", 10);
+const END_YEAR = Number.parseInt(
+  process.env.IRENA_CAPACITY_END_YEAR || String(new Date().getFullYear() - 1),
+  10,
+);
 
-const DEFAULT_VINTAGE_PREFIX = `irena-pxweb:${TABLE}`;
+const TECH_SOLAR = "Solar photovoltaic";
+const TECH_WIND = ["Onshore wind energy", "Offshore wind energy"];
+const DATA_TYPE_CAPACITY = /installed capacity/i;
+const GRID_ALL = "All";
+
+interface PxVariable {
+  code: string;
+  values: string[];
+  valueTexts: string[];
+}
 
 function escapeSQL(str: string): string {
   return str.replace(/'/g, "''");
@@ -46,34 +60,66 @@ function isYearInRange(year: number) {
   return true;
 }
 
-async function resolveUpdatedTimestamp(): Promise<string | null> {
-  try {
-    const folderUrl = `${BASE}/${encodeURIComponent(FOLDER)}`;
-    const list = await fetchJSON<Array<{ id: string; updated?: string }>>(folderUrl);
-    const hit = list.find((x) => x.id === TABLE);
-    const updated = hit?.updated;
-    if (!updated || typeof updated !== "string") return null;
-    return updated.slice(0, 10);
-  } catch {
-    return null;
+async function resolveTable(): Promise<{ table: string; updated: string | null }> {
+  const folderUrl = `${BASE}/${encodeURIComponent(FOLDER)}`;
+  const list = await fetchJSON<Array<{ id: string; updated?: string }>>(folderUrl);
+  const pinned = process.env.IRENA_ELECSTAT_TABLE;
+  const candidates = list
+    .filter((x) => (pinned ? x.id === pinned : TABLE_PATTERN.test(x.id)))
+    .sort((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""));
+  const hit = candidates[0];
+  if (!hit) {
+    throw new Error(
+      `No IRENA table matching ${pinned ?? TABLE_PATTERN} in ${FOLDER}. Available: ${list
+        .map((x) => x.id)
+        .join(", ")}`,
+    );
   }
+  return { table: hit.id, updated: hit.updated?.slice(0, 10) ?? null };
+}
+
+function codesFor(variable: PxVariable, match: (label: string) => boolean): string[] {
+  return variable.values.filter((_, i) => match(variable.valueTexts[i] ?? ""));
 }
 
 async function main() {
-  const updated = await resolveUpdatedTimestamp();
-  const vintage =
-    process.env.IRENA_CAPACITY_VINTAGE ||
-    (updated ? `${DEFAULT_VINTAGE_PREFIX}@${updated}` : `${DEFAULT_VINTAGE_PREFIX}@unknown`);
+  const { table, updated } = await resolveTable();
+  const vintagePrefix = `irena-pxweb:${table}`;
+  const vintage = process.env.IRENA_CAPACITY_VINTAGE || `${vintagePrefix}@${updated ?? "unknown"}`;
 
-  const endpoint = `${BASE}/${encodeURIComponent(FOLDER)}/${encodeURIComponent(TABLE)}`;
+  const endpoint = `${BASE}/${encodeURIComponent(FOLDER)}/${encodeURIComponent(table)}`;
+  console.error(`Using IRENA table ${table} (updated ${updated ?? "unknown"})`);
+
+  const meta = await fetchJSON<{ variables: PxVariable[] }>(endpoint);
+  const variable = (code: string) => {
+    const hit = meta.variables.find((v) => v.code === code);
+    if (!hit) throw new Error(`IRENA table ${table} has no "${code}" variable`);
+    return hit;
+  };
+  const requireCodes = (label: string, codes: string[]) => {
+    if (codes.length === 0) throw new Error(`IRENA table ${table}: no value matching ${label}`);
+    return codes;
+  };
+  const techCodes = requireCodes(
+    "solar/wind technologies",
+    codesFor(variable("Technology"), (l) => l === TECH_SOLAR || TECH_WIND.includes(l)),
+  );
+  const dataTypeCodes = requireCodes(
+    "installed capacity",
+    codesFor(variable("Data Type"), (l) => DATA_TYPE_CAPACITY.test(l)),
+  );
+  const gridCodes = requireCodes(
+    "all grid connections",
+    codesFor(variable("Grid connection"), (l) => l === GRID_ALL),
+  );
 
   console.error(`Fetching IRENA capacity (solar/wind) JSON-stat2…`);
   const payload = {
     query: [
       { code: "Country/area", selection: { filter: "all", values: ["*"] } },
-      { code: "Technology", selection: { filter: "item", values: ["1", "3", "4"] } }, // solar PV + wind on/offshore
-      { code: "Data Type", selection: { filter: "item", values: ["0"] } }, // installed capacity (MW)
-      { code: "Grid connection", selection: { filter: "item", values: ["0"] } }, // all
+      { code: "Technology", selection: { filter: "item", values: techCodes } },
+      { code: "Data Type", selection: { filter: "item", values: dataTypeCodes.slice(0, 1) } },
+      { code: "Grid connection", selection: { filter: "item", values: gridCodes.slice(0, 1) } },
       { code: "Year", selection: { filter: "all", values: ["*"] } },
     ],
     response: { format: "JSON-stat2" },
@@ -101,12 +147,12 @@ async function main() {
   console.log(
     `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
       `VALUES ('INSTALLED_CAPACITY_SOLAR_GW', 'Installed capacity (solar)', 'GW', 'IRENA', ` +
-      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`,
+      `'${escapeSQL(vintagePrefix)}', 'energy');`,
   );
   console.log(
     `INSERT OR IGNORE INTO indicators (code, name, unit, source, source_code, category)\n` +
       `VALUES ('INSTALLED_CAPACITY_WIND_GW', 'Installed capacity (wind)', 'GW', 'IRENA', ` +
-      `'irena-pxweb:${escapeSQL(TABLE)}', 'energy');`,
+      `'${escapeSQL(vintagePrefix)}', 'energy');`,
   );
 
   const solarByIsoYear = new Map<string, number>();
@@ -150,8 +196,8 @@ async function main() {
   };
 
   const countries = orderedCodes("Country/area");
-  const techs = orderedCodes("Technology"); // expects ["1","3","4"]
-  const years = orderedCodes("Year"); // expects ["0".."24"] where labels are actual YYYY
+  const techs = orderedCodes("Technology");
+  const years = orderedCodes("Year"); // codes are not in year order; labels are YYYY
 
   const yearLabels = json.dimension?.Year?.category?.label || {};
   const techLabels = json.dimension?.Technology?.category?.label || {};
@@ -192,15 +238,10 @@ async function main() {
 
         const gw = mw / 1000;
         const key = `${iso}__${year}`;
-        if (techLabel === "Solar photovoltaic" || techCode === "1") {
+        if (techLabel === TECH_SOLAR) {
           const prev = solarByIsoYear.get(key);
           if (prev == null || gw > prev) solarByIsoYear.set(key, gw);
-        } else if (
-          techLabel === "Onshore wind energy" ||
-          techLabel === "Offshore wind energy" ||
-          techCode === "3" ||
-          techCode === "4"
-        ) {
+        } else if (TECH_WIND.includes(techLabel)) {
           windByIsoYear.set(key, (windByIsoYear.get(key) || 0) + gw);
         }
       }
