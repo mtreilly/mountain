@@ -35,17 +35,28 @@ Open http://localhost:8788
 
 ## Data
 
-The database contains **217 countries** with data from 1990-2023:
+The database covers **217 countries** from 1990 to the latest published year (2025 for most economic series):
 
-- GDP per capita (PPP, constant 2021 international $)
-- Total population
-- Life expectancy at birth
-- Internet users (% of population)
-- Fertility rate
-- Electricity generation by source (solar, wind, nuclear, coal)
-- CO2 emissions
+| Data | Source | Latest year |
+| --- | --- | --- |
+| GDP per capita (PPP, constant 2021 international $) | [World Bank](https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.KD) | 2025 |
+| Population, urbanisation, GDP (current US$), sector shares of GDP, investment | [World Bank](https://data.worldbank.org/) | 2025 |
+| Life expectancy, fertility, internet use, electricity access, energy use, literacy | [World Bank](https://data.worldbank.org/) | 2024 |
+| Population projections (low / medium / high) | [UN World Population Prospects 2024](https://population.un.org/wpp/) | projections to 2100 |
+| Electricity generation by source (coal, nuclear, solar, wind, total) | [Our World in Data](https://github.com/owid/energy-data), [Ember](https://ember-energy.org/) | 2025 (partial) |
+| CO2 emissions per capita | [Our World in Data](https://github.com/owid/co2-data) | 2024 |
+| Installed solar and wind capacity | [IRENA](https://pxweb.irena.org/pxweb/en/IRENASTAT/) | 2025 |
+| Regional GDP per capita | [OECD](https://www.oecd.org/) | varies by region |
 
-Sources: [World Bank Open Data](https://data.worldbank.org/), [Our World in Data](https://ourworldindata.org/)
+### Refreshing the data
+
+```bash
+cd app
+pnpm data:fetch   # writes data-import-fixed.sql
+pnpm db:import    # loads it into the local D1 database
+```
+
+The fetch scripts default to last year as the end year. Ember generation needs `EMBER_API_KEY` in `app/.env`; without it that step is skipped. To import into production, back up first with `wrangler d1 export convergence-db --remote --output=backup.sql`, then run `wrangler d1 execute convergence-db --remote --file=./data-import-fixed.sql`.
 
 ## Tech Stack
 
