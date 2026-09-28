@@ -1,0 +1,679 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mountain to Climb economic convergence API",
+    "version": "1.0.0",
+    "description": "Calculate how long one economy takes to catch another under stated growth assumptions. Results are scenarios, not forecasts. Growth rates are fractions per year (0.035 = 3.5%). No API key required; 60 requests per minute per client. Methodology: https://mountaintoclimb.com/methodology",
+    "license": {
+      "name": "Data licences vary by source; see the source field of each response"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://mountaintoclimb.com"
+    }
+  ],
+  "paths": {
+    "/api/compare": {
+      "get": {
+        "operationId": "compare_countries",
+        "summary": "Compare two countries on an indicator",
+        "description": "Latest shared values, the chaser's share of the target, and each country's trailing 10-year growth with the convergence that implies.",
+        "parameters": [
+          {
+            "name": "chaser",
+            "in": "query",
+            "required": true,
+            "description": "ISO 3166-1 alpha-3 code of the economy catching up (the chaser).",
+            "example": "POL",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": true,
+            "description": "ISO3 code of the economy being caught (the target).",
+            "example": "GBR",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "required": false,
+            "description": "Indicator code from /api/indicators. Defaults to GDP per capita, PPP.",
+            "example": "GDP_PCAP_PPP",
+            "schema": {
+              "type": "string",
+              "default": "GDP_PCAP_PPP"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "required": false,
+            "description": "Apply the app's adjustment factors for countries with distorted GDP (Ireland, Luxembourg, Qatar, UAE, Singapore). Off by default so figures match the published source.",
+            "example": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comparison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scenario"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/convergence": {
+      "get": {
+        "operationId": "calculate_convergence",
+        "summary": "Calculate when the chaser catches the target",
+        "description": "Years and calendar year until the chaser matches the target, with observed history and projected series. If growth_rate is omitted the chaser's trailing 10-year growth is used; if target_growth_rate is omitted the target is held constant.",
+        "parameters": [
+          {
+            "name": "chaser",
+            "in": "query",
+            "required": true,
+            "description": "ISO 3166-1 alpha-3 code of the economy catching up (the chaser).",
+            "example": "POL",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": true,
+            "description": "ISO3 code of the economy being caught (the target).",
+            "example": "GBR",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "required": false,
+            "description": "Indicator code from /api/indicators. Defaults to GDP per capita, PPP.",
+            "example": "GDP_PCAP_PPP",
+            "schema": {
+              "type": "string",
+              "default": "GDP_PCAP_PPP"
+            }
+          },
+          {
+            "name": "growth_rate",
+            "in": "query",
+            "required": false,
+            "description": "Annual growth of the chaser as a fraction.",
+            "example": 0.04,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": -0.99,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "target_growth_rate",
+            "in": "query",
+            "required": false,
+            "description": "Annual growth of the target as a fraction.",
+            "example": 0.01,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": -0.99,
+              "maximum": 1,
+              "default": 0
+            }
+          },
+          {
+            "name": "base_year",
+            "in": "query",
+            "required": false,
+            "description": "Earliest year projections may start; the actual start is the later of this and the year after the latest shared data.",
+            "example": 2023,
+            "schema": {
+              "type": "integer",
+              "minimum": 1950,
+              "maximum": 2100,
+              "default": 2023
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "required": false,
+            "description": "Apply the app's adjustment factors for countries with distorted GDP (Ireland, Luxembourg, Qatar, UAE, Singapore). Off by default so figures match the published source.",
+            "example": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scenario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scenario"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/required-growth": {
+      "get": {
+        "operationId": "growth_required_by_deadline",
+        "summary": "Growth the chaser needs to match the target by a year",
+        "parameters": [
+          {
+            "name": "chaser",
+            "in": "query",
+            "required": true,
+            "description": "ISO 3166-1 alpha-3 code of the economy catching up (the chaser).",
+            "example": "POL",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": true,
+            "description": "ISO3 code of the economy being caught (the target).",
+            "example": "GBR",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "required": false,
+            "description": "Indicator code from /api/indicators. Defaults to GDP per capita, PPP.",
+            "example": "GDP_PCAP_PPP",
+            "schema": {
+              "type": "string",
+              "default": "GDP_PCAP_PPP"
+            }
+          },
+          {
+            "name": "by_year",
+            "in": "query",
+            "required": true,
+            "description": "Year by which the chaser should match the target.",
+            "example": 2040,
+            "schema": {
+              "type": "integer",
+              "minimum": 1951,
+              "maximum": 2200
+            }
+          },
+          {
+            "name": "target_growth_rate",
+            "in": "query",
+            "required": false,
+            "description": "Annual growth of the target as a fraction.",
+            "example": 0.012,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": -0.99,
+              "maximum": 1,
+              "default": 0
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "required": false,
+            "description": "Apply the app's adjustment factors for countries with distorted GDP (Ireland, Luxembourg, Qatar, UAE, Singapore). Off by default so figures match the published source.",
+            "example": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Required growth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequiredGrowth"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chart.svg": {
+      "get": {
+        "operationId": "chart_scenario_svg",
+        "summary": "Embeddable SVG chart of a scenario",
+        "description": "Same parameters as calculate_convergence; missing rates default to each country's trailing 10-year growth. The SVG carries attribution and a canonical link.",
+        "parameters": [
+          {
+            "name": "chaser",
+            "in": "query",
+            "required": true,
+            "description": "ISO 3166-1 alpha-3 code of the economy catching up (the chaser).",
+            "example": "POL",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": true,
+            "description": "ISO3 code of the economy being caught (the target).",
+            "example": "GBR",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{3}$"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "required": false,
+            "description": "Indicator code from /api/indicators. Defaults to GDP per capita, PPP.",
+            "example": "GDP_PCAP_PPP",
+            "schema": {
+              "type": "string",
+              "default": "GDP_PCAP_PPP"
+            }
+          },
+          {
+            "name": "growth_rate",
+            "in": "query",
+            "required": false,
+            "description": "Annual growth of the chaser as a fraction.",
+            "example": 0.035,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": -0.99,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "target_growth_rate",
+            "in": "query",
+            "required": false,
+            "description": "Annual growth of the target as a fraction.",
+            "example": 0.012,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": -0.99,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "base_year",
+            "in": "query",
+            "required": false,
+            "description": "Earliest projection start year.",
+            "example": 2023,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "required": false,
+            "description": "Apply the app's adjustment factors for countries with distorted GDP (Ireland, Luxembourg, Qatar, UAE, Singapore). Off by default so figures match the published source.",
+            "example": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG image",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/countries": {
+      "get": {
+        "operationId": "list_countries",
+        "summary": "List countries and ISO3 codes",
+        "responses": {
+          "200": {
+            "description": "Countries"
+          }
+        }
+      }
+    },
+    "/api/indicators": {
+      "get": {
+        "operationId": "list_indicators",
+        "summary": "List indicators",
+        "responses": {
+          "200": {
+            "description": "Indicators"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Row": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "chaser": {
+            "type": "number"
+          },
+          "target": {
+            "type": "number"
+          }
+        }
+      },
+      "Scenario": {
+        "type": "object",
+        "description": "A convergence scenario. It follows from the stated growth rates and is not a forecast.",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "chaser": {
+            "type": "object"
+          },
+          "target": {
+            "type": "object"
+          },
+          "indicator": {
+            "type": "string",
+            "description": "Indicator code."
+          },
+          "indicator_detail": {
+            "type": "object"
+          },
+          "scenario": {
+            "type": "object",
+            "properties": {
+              "note": {
+                "type": "string"
+              },
+              "chaser_annual_growth": {
+                "type": "number"
+              },
+              "target_annual_growth": {
+                "type": "number"
+              },
+              "chaser_growth_basis": {
+                "enum": ["given", "trailing_10y_cagr", "fallback"]
+              },
+              "target_growth_basis": {
+                "enum": ["given", "trailing_10y_cagr", "fallback"]
+              },
+              "base_year": {
+                "type": "integer"
+              },
+              "projection_start_year": {
+                "type": "integer"
+              },
+              "adjusted": {
+                "type": "boolean"
+              }
+            }
+          },
+          "latest": {
+            "type": "object",
+            "properties": {
+              "year": {
+                "type": "integer"
+              },
+              "chaser_value": {
+                "type": "number"
+              },
+              "target_value": {
+                "type": "number"
+              },
+              "chaser_share_of_target": {
+                "type": "number"
+              }
+            }
+          },
+          "convergence": {
+            "type": "object",
+            "properties": {
+              "already_ahead": {
+                "type": "boolean"
+              },
+              "years": {
+                "type": ["number", "null"]
+              },
+              "year": {
+                "type": ["integer", "null"]
+              }
+            }
+          },
+          "series": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Row"
+                }
+              },
+              "projection": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Row"
+                }
+              }
+            }
+          },
+          "caveats": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "links": {
+            "type": "object",
+            "description": "Absolute URLs: app, chart_svg, compare_page, methodology, openapi."
+          }
+        }
+      },
+      "RequiredGrowth": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "by_year": {
+            "type": "integer"
+          },
+          "from_year": {
+            "type": "integer"
+          },
+          "target_annual_growth": {
+            "type": "number"
+          },
+          "required_chaser_annual_growth": {
+            "type": ["number", "null"]
+          }
+        }
+      }
+    }
+  }
+}
