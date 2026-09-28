@@ -29,22 +29,24 @@ test("Implications panel opens and renders finite values", async ({ page }) => {
   await openImplications(page);
 
   const panel = page.getByRole("dialog", { name: "Development Implications" });
-  await expect(panel.getByRole("heading", { name: "Economic Output" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "Electricity" })).toBeVisible();
-  await expect(panel.getByText("GDP/capita (2023)")).toBeVisible();
-  await expect(panel.getByText("End-use demand", { exact: true })).toBeVisible();
-  await expect(panel.getByText("Gross supply required", { exact: true })).toBeVisible();
-  await expect(panel.getByText("Domestic generation required", { exact: true })).toBeVisible();
-  await expect(panel.getByText("Observed domestic generation", { exact: true })).toBeVisible();
-  await expect(panel.getByText("New domestic generation", { exact: true })).toBeVisible();
-  await expect(panel.getByText("376 TWh (2023) → 482 TWh (2048)")).toBeVisible();
-  await expect(panel.getByText("536 TWh", { exact: true }).first()).toBeVisible();
-  await expect(panel.getByText("40 TWh", { exact: true })).toBeVisible();
-  await expect(panel.getByText("496 TWh", { exact: true }).first()).toBeVisible();
+  await expect(panel.getByRole("heading", { name: /^The picture in \d{4}$/ })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "Power to build" })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "What this assumes" })).toBeVisible();
+  await expect(panel.getByText("Income per person")).toBeVisible();
+  await expect(panel.getByText("Electricity use", { exact: true })).toBeVisible();
+  // Either a signed amount to build or an explicit "none needed", never a bare 0.0
+  await expect(panel.getByText(/a year more than today|No extra generation needed/)).toBeVisible();
+  await expect(panel).not.toContainText("0.0 TWh a year more");
+
+  // Path explanation and the UN population caveat with its source link
+  await expect(panel.getByText(/As incomes rose in /)).toBeVisible();
+  await expect(
+    panel.getByRole("link", { name: "Jesús Fernández-Villaverde on why" }),
+  ).toHaveAttribute("href", /youtube\.com/);
 
   await expect(panel).not.toContainText("NaN");
   await expect(panel).not.toContainText("undefined");
-  await expect(panel).toContainText("Illustrative scenario, not a forecast");
+  await expect(panel).toContainText("An illustration, not a forecast");
 });
 
 test("selected assumptions persist into the thread with exact numeric parity", async ({ page }) => {
@@ -52,11 +54,12 @@ test("selected assumptions persist into the thread with exact numeric parity", a
   await openImplications(page);
 
   const panel = page.getByRole("dialog", { name: "Development Implications" });
-  await clickDeterministic(panel.getByRole("button", { name: "UN low" }));
+  await clickDeterministic(panel.getByRole("button", { name: "Low", exact: true }));
+  await clickDeterministic(panel.getByText("Fine-tune the assumptions"));
   await panel.getByRole("spinbutton", { name: "Grid losses %" }).fill("7");
   await panel.getByRole("spinbutton", { name: "Net imports (gross supply share) %" }).fill("12");
-  const buildoutText = await panel.getByText(/Shared buildout used for every row:/).textContent();
-  const buildout = buildoutText?.match(/([\d.]+) TWh/)?.[1];
+  const headline = await panel.getByText(/a year more than today/).textContent();
+  const buildout = headline?.match(/([\d.]+) TWh/)?.[1];
   expect(buildout).toBeTruthy();
 
   await clickDeterministic(panel.getByRole("button", { name: "Close Development Implications" }));
@@ -76,19 +79,22 @@ test("selected assumptions persist into the thread with exact numeric parity", a
   expect(assumptionsCaption.length).toBeLessThanOrEqual(280);
 });
 
-test("Implications controls update template and scenario context", async ({ page }) => {
+test("Implications controls update path and scenario context", async ({ page }) => {
   await page.goto("/");
   await openImplications(page);
 
   const panel = page.getByRole("dialog", { name: "Development Implications" });
 
-  const usTemplateButton = panel.getByRole("button", { name: /US-like/i }).first();
-  await clickDeterministic(usTemplateButton);
-  await expect(usTemplateButton).toHaveClass(/text-white/);
+  const usPath = panel.getByRole("button", { name: "US", exact: true });
+  await clickDeterministic(usPath);
+  await expect(usPath).toHaveAttribute("aria-pressed", "true");
+  await expect(panel.getByText(/As incomes rose in the US/)).toBeVisible();
 
-  const efficientGrowthButton = panel
-    .getByRole("button", { name: "Efficient growth", exact: true })
-    .first();
+  await clickDeterministic(panel.getByText("Fine-tune the assumptions"));
+  const efficientGrowthButton = panel.getByRole("button", {
+    name: "Efficient growth",
+    exact: true,
+  });
   await clickDeterministic(efficientGrowthButton);
   await expect(
     panel.getByText("Less energy/electricity per unit of GDP than the template path.").first(),

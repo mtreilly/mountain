@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { formatMetricValue, formatNumber } from "../../lib/convergence";
 import { IMPLICATION_SCENARIOS, type ScenarioId } from "../../lib/implicationsScenarios";
 import type {
@@ -38,11 +39,6 @@ interface ImplicationsSlideOverProps {
 function formatTWh(value: number | null) {
   if (value == null || !Number.isFinite(value)) return "—";
   return value >= 10 ? `${value.toFixed(0)} TWh` : `${value.toFixed(1)} TWh`;
-}
-
-function formatGW(value: number | null) {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return value >= 10 ? `${value.toFixed(0)} GW` : `${value.toFixed(1)} GW`;
 }
 
 function formatDollars(t: { unit: string; value: number } | null) {
@@ -112,51 +108,247 @@ function AssumptionInput(props: {
 
 type ComputedImplications = ReturnType<typeof useImplicationsComputed>;
 
-function ElectricityWaterfall(props: {
-  snapshot: ImplicationsSnapshot;
-  macro: ComputedImplications["macro"];
+const FERNANDEZ_VILLAVERDE_LECTURE = "https://www.youtube.com/watch?v=QziqIoKS-uA";
+const FERNANDEZ_VILLAVERDE_RESEARCH = "https://www.sas.upenn.edu/~jesusfv/research.html";
+
+const PATH_LABEL_KEYS: Record<TemplateId, string> = {
+  china: "implications.pathChina",
+  us: "implications.pathUs",
+  eu: "implications.pathEu",
+};
+
+// Mid-sentence names ("in the US")
+const PATH_SENTENCE_KEYS: Record<TemplateId, string> = {
+  china: "implications.pathChinaInSentence",
+  us: "implications.pathUsInSentence",
+  eu: "implications.pathEuInSentence",
+};
+
+function Segmented<T extends string>(props: {
+  label: string;
+  value: T;
+  options: ReadonlyArray<{ value: T; label: string }>;
+  onChange: (value: T) => void;
 }) {
-  const { snapshot, macro } = props;
-  const { assumptions } = snapshot.assumptions;
-  const rows = [
-    {
-      label: "End-use demand",
-      value: `${formatTWh(macro.electricity.demandCurrentTWh)} (${snapshot.electricity.endUseDemandCurrentTWh?.year ?? "—"}) → ${formatTWh(macro.electricity.demandFutureTWh)} (${snapshot.horizon.targetYear})`,
-      note: "Electricity consumed after system losses",
-    },
-    {
-      label: "Gross supply required",
-      value: formatTWh(macro.electricity.grossSupplyRequiredFutureTWh),
-      note: `${assumptions.gridLossPct}% grid-loss assumption`,
-    },
-    {
-      label: "Assumed net imports",
-      value: formatTWh(macro.electricity.importsFutureTWh),
-      note: `${assumptions.netImportsPct}% of gross supply`,
-    },
-    {
-      label: "Domestic generation required",
-      value: formatTWh(macro.electricity.requiredDomesticGenerationFutureTWh),
-      note: `Scenario for ${snapshot.horizon.targetYear}`,
-    },
-    {
-      label: "Observed domestic generation",
-      value: formatTWh(snapshot.electricity.domesticGenerationObservedCurrentTWh?.value ?? null),
-      note: `${snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "year unavailable"}`,
-    },
-  ];
+  const { label, value, options, onChange } = props;
   return (
-    <div className="rounded-lg border border-surface bg-surface overflow-hidden">
-      {rows.map((item) => (
-        <div
-          key={item.label}
-          className="flex items-center justify-between gap-4 px-3 py-2 border-b border-surface-sunken last:border-b-0"
-        >
+    <fieldset className="space-y-1.5">
+      <legend className="text-xs text-ink-muted">{label}</legend>
+      <div className="flex flex-wrap gap-1">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            aria-pressed={option.value === value}
+            className={[
+              "pressable focus-ring rounded-lg px-3 py-1.5 text-sm font-medium",
+              option.value === value
+                ? "bg-[var(--color-accent)] text-white"
+                : "bg-surface text-ink-muted hover:text-ink",
+            ].join(" ")}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function Stat(props: { label: string; from: string; to: string; note?: string | null }) {
+  return (
+    <div className="rounded-lg bg-surface px-3 py-2.5">
+      <div className="text-xs text-ink-muted">{props.label}</div>
+      <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+        <span className="text-sm text-ink-muted tabular-nums">{props.from}</span>
+        <span className="text-ink-faint" aria-hidden="true">
+          →
+        </span>
+        <span className="text-lg font-display font-bold text-ink tabular-nums">{props.to}</span>
+      </div>
+      {props.note && <div className="text-[11px] text-ink-faint mt-0.5">{props.note}</div>}
+    </div>
+  );
+}
+
+function PowerToBuild(props: {
+  snapshot: ImplicationsSnapshot;
+  chaserName: string;
+  coalShare: number | null;
+}) {
+  const { t } = useTranslation();
+  const { snapshot, chaserName, coalShare } = props;
+  const e = snapshot.electricity;
+  const today = e.domesticGenerationObservedCurrentTWh;
+  const future = e.domesticGenerationRequiredFutureTWh?.value ?? null;
+  const gap = e.domesticGenerationGapTWh?.value ?? null;
+  const year = snapshot.horizon.targetYear;
+  const a = snapshot.assumptions.assumptions;
+  const eq = e.annualEnergyEquivalents;
+
+  if (gap == null || today == null || future == null) return null;
+
+  const rows = eq
+    ? ([
+        ["nuclear", eq.nuclear.referenceUnits, `${a.nuclearPlantGw} GW`, a.nuclearCf],
+        ["wind", eq.wind.referenceUnits, `${a.windTurbineMw} MW`, a.windCf],
+        ["solar", eq.solar.referenceUnits, `${a.panelWatts} W`, a.solarCf],
+        ["coal", eq.coal.referenceUnits, `${a.coalPlantGw} GW`, a.coalCf],
+      ] as const)
+    : [];
+
+  return (
+    <section className="card p-4 space-y-3" aria-labelledby="power-heading">
+      <h3 id="power-heading" className="text-sm font-semibold text-ink">
+        {t("implications.powerHeading")}
+      </h3>
+      {gap > 0 ? (
+        <>
           <div>
-            <div className="text-xs font-medium text-ink">{item.label}</div>
-            <div className="text-[11px] text-ink-faint">{item.note}</div>
+            <p className="text-2xl font-display font-bold text-ink tabular-nums">
+              {t("implications.needsMore", { amount: formatTWh(gap) })}
+            </p>
+            <p className="text-xs text-ink-muted mt-1">
+              {t("implications.needsMoreDetail", {
+                country: chaserName,
+                today: formatTWh(today.value),
+                todayYear: today.year,
+                year,
+                future: formatTWh(future),
+              })}
+            </p>
           </div>
-          <div className="text-sm font-semibold text-ink text-right">{item.value}</div>
+          {rows.length > 0 && (
+            <div>
+              <p className="text-xs text-ink-muted mb-1.5">{t("implications.equivalentsIntro")}</p>
+              <ul className="grid grid-cols-2 gap-2">
+                {rows.map(([key, count, size, cf]) => (
+                  <li key={key} className="rounded-lg bg-surface px-3 py-2">
+                    <div className="text-base font-semibold text-ink tabular-nums">
+                      {formatCountCompact(count)}{" "}
+                      <span className="text-sm font-normal text-ink-muted">
+                        {t(`implications.${key}`)}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-ink-faint">
+                      {t("implications.unitNote", { size, cf: Math.round(cf * 100) })}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <p className="text-lg font-semibold text-ink">{t("implications.noNewPower")}</p>
+          <p className="text-xs text-ink-muted mt-1">
+            {t("implications.noNewPowerDetail", {
+              year,
+              future: formatTWh(future),
+              amount: formatTWh(-gap),
+              country: chaserName,
+              today: formatTWh(today.value),
+            })}
+          </p>
+        </div>
+      )}
+      {coalShare != null && coalShare >= 5 && (
+        <p className="text-[11px] text-ink-faint border-t border-surface pt-2">
+          {t("implications.replacementNote", { coal: Math.round(coalShare) })}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function PathExplainer(props: {
+  pathFit: ComputedImplications["pathFit"];
+  chaserName: string;
+  year: number;
+  onTemplateChange: (id: TemplateId) => void;
+}) {
+  const { t } = useTranslation();
+  const { pathFit, chaserName, year, onTemplateChange } = props;
+  const selected = pathFit.selected;
+  if (!selected || selected.gdpMax == null) return null;
+  const path = t(PATH_SENTENCE_KEYS[selected.id]);
+  const trendKey =
+    selected.elasticity < 0.15
+      ? "implications.pathFlat"
+      : selected.elasticity < 0.6
+        ? "implications.pathSlower"
+        : "implications.pathMatch";
+  const max = formatMetricValue(selected.gdpMax, "int$");
+  return (
+    <div className="space-y-1.5 text-xs text-ink-muted">
+      <p>{t(trendKey, { path })}</p>
+      {!selected.coversCurrent ? (
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-amber-800 dark:text-amber-200">
+          {t("implications.pathBeyondNow", { country: chaserName, pathSubject: path, max })}{" "}
+          {pathFit.alternatives.map((alt, i) => (
+            <span key={alt.id}>
+              {i > 0 && " · "}
+              <button
+                type="button"
+                onClick={() => onTemplateChange(alt.id)}
+                className="focus-ring rounded-sm font-semibold underline underline-offset-2"
+              >
+                {t(PATH_LABEL_KEYS[alt.id])}
+              </button>
+            </span>
+          ))}
+        </p>
+      ) : !selected.coversFuture ? (
+        <p>
+          {t("implications.pathBeyondLater", { country: chaserName, pathSubject: path, max, year })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ElectricityWaterfall(props: { snapshot: ImplicationsSnapshot }) {
+  const { snapshot } = props;
+  const e = snapshot.electricity;
+  const a = snapshot.assumptions.assumptions;
+  const rows = [
+    [
+      "End-use demand",
+      `${formatTWh(e.endUseDemandCurrentTWh?.value ?? null)} (${e.endUseDemandCurrentTWh?.year ?? "—"}) → ${formatTWh(e.endUseDemandFutureTWh?.value ?? null)} (${snapshot.horizon.targetYear})`,
+      "Electricity consumed after system losses",
+    ],
+    [
+      "Gross supply required",
+      formatTWh(e.grossSupplyRequiredFutureTWh?.value ?? null),
+      `${a.gridLossPct}% grid losses`,
+    ],
+    [
+      "Assumed net imports",
+      formatTWh(e.importsFutureTWh?.value ?? null),
+      `${a.netImportsPct}% of gross supply`,
+    ],
+    [
+      "Domestic generation required",
+      formatTWh(e.domesticGenerationRequiredFutureTWh?.value ?? null),
+      `${snapshot.horizon.targetYear}`,
+    ],
+    [
+      "Observed domestic generation",
+      formatTWh(e.domesticGenerationObservedCurrentTWh?.value ?? null),
+      `${e.domesticGenerationObservedCurrentTWh?.year ?? "year unavailable"}`,
+    ],
+  ] as const;
+  return (
+    <div className="rounded-lg bg-surface divide-y divide-[var(--color-border)]">
+      {rows.map(([label, value, note]) => (
+        <div key={label} className="flex items-center justify-between gap-4 px-3 py-2">
+          <div>
+            <div className="text-xs font-medium text-ink">{label}</div>
+            <div className="text-[11px] text-ink-faint">{note}</div>
+          </div>
+          <div className="text-sm font-semibold text-ink text-right tabular-nums">{value}</div>
         </div>
       ))}
     </div>
@@ -190,15 +382,11 @@ function ElectricityAssumptionsEditor(props: {
     ["Coal capacity factor", "coalCf", assumptions.coalCf * 100, "%", 5, 95, 1, 0.01],
   ] as const;
   return (
-    <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-ink">Equivalent assumptions</span>
-        <span className="text-[11px] text-ink-faint">Editable</span>
-      </div>
-      <div className="text-[11px] text-ink-faint">
-        Capacity factor is average annual output as a share of rated output. Positive net imports
-        reduce domestic generation; negative values represent net exports.
-      </div>
+    <div className="space-y-2">
+      <p className="text-[11px] text-ink-faint">
+        Capacity factor is average output as a share of full output. Positive net imports reduce
+        domestic generation; negative values mean net exports.
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {fields.map(([label, key, value, unit, min, max, step, scale]) => (
           <AssumptionInput
@@ -213,128 +401,7 @@ function ElectricityAssumptionsEditor(props: {
           />
         ))}
       </div>
-      <div className="text-[11px] text-ink-faint border-t border-surface-sunken pt-2">
-        All technology comparisons use the same annual buildout value.
-      </div>
     </div>
-  );
-}
-
-function AnnualEnergyEquivalents({ snapshot }: { snapshot: ImplicationsSnapshot }) {
-  const buildout = snapshot.electricity.newDomesticGenerationTWh?.value ?? null;
-  const equivalents = snapshot.electricity.annualEnergyEquivalents;
-  const technologies = ["solar", "wind", "nuclear", "coal"] as const;
-  return (
-    <div className="rounded-lg border border-surface bg-surface px-3 py-2 space-y-2">
-      <div className="text-xs font-medium text-ink">
-        Annual-energy equivalents for the same buildout
-      </div>
-      <div className="text-[11px] text-ink-faint">
-        Each row produces the same {formatTWh(buildout)} of additional annual domestic generation.
-        These are comparisons, not a system plan.
-      </div>
-      <div className="text-[11px] text-ink-muted">
-        Shared buildout used for every row: {formatTWh(buildout)}
-      </div>
-      {buildout === 0 || !equivalents ? (
-        <div className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 text-[11px] text-ink-muted">
-          No additional annual generation is required in this scenario.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {technologies.map((technology) => {
-            const equivalent = equivalents[technology];
-            return (
-              <div
-                key={technology}
-                className="rounded-md border border-surface-sunken bg-surface-raised px-3 py-2 flex items-center justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-ink capitalize">
-                    {technology} annual-energy equivalent
-                  </div>
-                  <div className="text-[11px] text-ink-faint">
-                    {equivalent.referenceUnitLabel} at{" "}
-                    {(equivalent.capacityFactor * 100).toFixed(0)}% capacity factor
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-[11px] text-ink-faint">
-                    {formatGW(equivalent.installedGW)} installed
-                  </div>
-                  <div className="text-sm font-semibold text-ink">
-                    {formatCountCompact(equivalent.referenceUnits)} reference units
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ElectricitySection(props: {
-  snapshot: ImplicationsSnapshot;
-  macro: ComputedImplications["macro"];
-  observedElectricity: ComputedImplications["observedElectricity"];
-  onAssumptionsChange: (assumptions: ImplicationAssumptions) => void;
-}) {
-  const { snapshot, macro, observedElectricity, onAssumptionsChange } = props;
-  const buildout = snapshot.electricity.newDomesticGenerationTWh?.value ?? null;
-  return (
-    <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
-        <h3 className="font-semibold text-ink">Electricity</h3>
-        <span className="text-xs text-ink-muted">Annual energy at projected income</span>
-      </div>
-      <div className="p-4 space-y-3">
-        <ElectricityWaterfall snapshot={snapshot} macro={macro} />
-        {buildout != null && (
-          <div className="p-3 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-between">
-            <div>
-              <div className="text-xs text-ink-muted">New domestic generation</div>
-              <div className="text-xl font-bold text-ink">{formatTWh(buildout)}</div>
-              <div className="text-[11px] text-ink-faint">
-                Above observed{" "}
-                {snapshot.electricity.domesticGenerationObservedCurrentTWh?.year ?? "baseline"}{" "}
-                generation
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-ink-muted">Average output</div>
-              <div className="font-semibold text-ink">
-                {formatGW(snapshot.electricity.newDomesticGenerationAverageGW?.value ?? null)}{" "}
-                average
-              </div>
-            </div>
-          </div>
-        )}
-        <ElectricityAssumptionsEditor
-          assumptions={snapshot.assumptions.assumptions}
-          onChange={onAssumptionsChange}
-        />
-        <AnnualEnergyEquivalents snapshot={snapshot} />
-        {observedElectricity && (
-          <div className="flex items-center gap-3 pt-2 border-t border-surface">
-            <span className="text-xs text-ink-muted">
-              Observed mix ({observedElectricity.year})
-            </span>
-            <div className="flex gap-2 flex-wrap">
-              {(["solar", "wind", "nuclear", "coal"] as const).map((source) => {
-                const share = observedElectricity.shares[source];
-                return share != null && share >= 1 ? (
-                  <span key={source} className="px-2 py-0.5 rounded bg-surface text-xs">
-                    <span className="capitalize">{source}</span> {share.toFixed(0)}%
-                  </span>
-                ) : null;
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
   );
 }
 
@@ -355,6 +422,7 @@ export function ImplicationsSlideOver({
   error,
   templateLabel,
 }: ImplicationsSlideOverProps) {
+  const { t } = useTranslation();
   const { assumptions, populationVariant, scenario } = controls;
   const updateAssumptions = (next: ImplicationAssumptions) =>
     onControlsChange({ ...controls, customized: true, assumptions: next });
@@ -368,6 +436,7 @@ export function ImplicationsSlideOver({
     hasAny,
     observedElectricity,
     macro,
+    pathFit,
     snapshot,
     snapshotUnavailable,
   } = computed;
@@ -390,225 +459,248 @@ export function ImplicationsSlideOver({
     });
   };
 
-  const templateFlags: Record<TemplateId, string> = {
-    china: "🇨🇳",
-    us: "🇺🇸",
-    eu: "🇪🇺",
-  };
+  const baseYear = year - horizonYears;
+  const maxHorizon = Math.max(1, 2100 - baseYear);
+  const demandNow = macro.electricity.demandCurrentTWh;
+  const demandThen = macro.electricity.demandFutureTWh;
 
   return (
     <SlideOver
       isOpen={isOpen}
       onClose={onClose}
-      title="Development Implications"
-      subtitle={`What ${chaserName} might need at higher income levels`}
-      width="2xl"
+      title={t("implications.title")}
+      subtitle={t("implications.subtitle", { country: chaserName })}
+      width="xl"
     >
-      <div className="flex-1 overflow-y-auto">
-        {/* Controls Section */}
-        <div className="px-5 py-3 border-b border-surface bg-surface-sunken/50 space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Horizon */}
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={1}
-                max={Math.max(1, 2100 - (year - horizonYears))}
-                value={horizonYears}
-                onChange={(e) => {
-                  const next = Number(e.target.value);
-                  if (Number.isFinite(next)) {
-                    onHorizonYearsChange(
-                      Math.max(1, Math.min(2100 - (year - horizonYears), Math.round(next))),
-                    );
-                  }
-                }}
-                className="w-16 px-2 py-1.5 rounded-lg bg-surface border border-surface text-ink font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-              />
-              <span className="text-sm text-ink-muted">years → {year}</span>
-              <span className="text-[11px] text-ink-faint">UN projections through 2100</span>
-            </div>
+      <div className="p-4 space-y-3">
+        {/* The question, in one sentence */}
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-ink">
+          <span>
+            {t("implications.intro", {
+              country: chaserName,
+              rate: `${(chaserGrowthRate * 100).toFixed(1)}%`,
+            })}
+          </span>
+          <input
+            type="number"
+            min={1}
+            max={maxHorizon}
+            value={horizonYears}
+            aria-label={t("implications.horizonLabel")}
+            onChange={(e) => {
+              const next = Number(e.target.value);
+              if (Number.isFinite(next)) {
+                onHorizonYearsChange(Math.max(1, Math.min(maxHorizon, Math.round(next))));
+              }
+            }}
+            className="no-spinner w-14 rounded-md bg-surface px-2 py-1 text-center font-semibold text-ink tabular-nums shadow-[inset_0_0_0_1px_var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          />
+          <span>
+            {t("implications.introYears")} {t("implications.introUntil", { year })}
+          </span>
+        </p>
 
-            <div className="w-px h-6 bg-surface" />
-
-            {/* Template flags with labels */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-muted">Baseline:</span>
-              <div className="flex gap-1">
-                {TEMPLATE_PATHS.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => onTemplateChange(t.id)}
-                    title={`Model development path on ${t.label}`}
-                    className={[
-                      "px-2.5 py-1.5 rounded-lg text-sm transition-default flex items-center gap-1.5",
-                      template === t.id
-                        ? "bg-[var(--color-accent)] text-white"
-                        : "bg-surface hover:bg-surface-raised text-ink-muted hover:text-ink",
-                    ].join(" ")}
-                  >
-                    <span className="text-base">{templateFlags[t.id]}</span>
-                    <span className="text-xs">
-                      {t.id === "china" ? "China" : t.id === "us" ? "US" : "EU"}-like
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="w-px h-6 bg-surface" />
-
-            {/* Scenario pills */}
-            <div className="flex gap-1">
-              {IMPLICATION_SCENARIOS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleScenarioChange(s.id)}
-                  title={s.blurb}
-                  className={[
-                    "px-2.5 py-1 rounded-full text-xs font-medium transition-default",
-                    scenario === s.id
-                      ? "bg-ink text-surface"
-                      : "bg-surface text-ink-muted hover:text-ink",
-                  ].join(" ")}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-xs text-ink-muted rounded-lg border border-surface bg-surface px-3 py-2">
-            Uses growth from the main calculator (
-            <span className="font-medium text-ink">{(chaserGrowthRate * 100).toFixed(1)}%/yr</span>
-            ), plus the selected baseline path and population assumption.
-          </div>
-
-          {/* Population row - always visible */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-ink-muted">Population:</span>
-            <div className="flex gap-1">
-              {(["medium", "low", "high"] as PopulationVariant[]).map((variant) => (
-                <button
-                  key={variant}
-                  type="button"
-                  onClick={() => onControlsChange({ ...controls, populationVariant: variant })}
-                  className={[
-                    "px-2 py-0.5 rounded text-xs capitalize transition-default",
-                    populationVariant === variant
-                      ? "bg-surface-raised text-ink font-medium"
-                      : "text-ink-muted hover:text-ink",
-                  ].join(" ")}
-                >
-                  UN {variant}
-                </button>
-              ))}
-            </div>
-            <span className="text-[11px] text-ink-faint">
-              WPP 2024 · low/high are scenarios, not confidence bounds
-            </span>
-            {scenario !== "baseline" && (
-              <>
-                <span className="text-ink-faint">·</span>
-                <span className="text-xs text-ink-muted">{scenarioDef.blurb}</span>
-              </>
-            )}
-            {controls.customized && (
-              <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-muted">
-                Custom assumptions
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex items-center gap-3 text-ink-muted">
-              <div className="size-5 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              <span>Loading data…</span>
-            </div>
+          <div className="flex items-center justify-center gap-3 py-16 text-ink-muted">
+            <div className="size-5 rounded-full border-2 border-t-current border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+            <span>{t("implications.loading")}</span>
           </div>
         )}
 
-        {/* Error state */}
         {error && (
-          <div className="m-5 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <p className="text-sm text-red-700 dark:text-red-300">Could not load data: {error}</p>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && !error && (!hasAny || !snapshot) && (
-          <div className="m-5 p-6 rounded-xl bg-surface border border-surface text-center">
-            <p className="text-ink-muted">
-              {snapshotUnavailable?.message ?? "Not enough data available for these projections."}
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              {t("implications.loadError", { error })}
             </p>
           </div>
         )}
 
-        {/* Cards */}
+        {!loading && !error && (!hasAny || !snapshot) && (
+          <div className="p-6 rounded-xl bg-surface text-center">
+            <p className="text-ink-muted">
+              {snapshotUnavailable?.message ?? t("implications.noData")}
+            </p>
+          </div>
+        )}
+
         {!loading && !error && hasAny && snapshot && (
-          <div className="p-4 space-y-3">
-            {/* Economic Output Card */}
-            <section className="rounded-lg border border-surface bg-surface-raised overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-surface bg-surface/50 flex items-center justify-between">
-                <h3 className="font-semibold text-ink">Economic Output</h3>
-                <span className="text-xs text-ink-muted">GDP per capita × population</span>
-              </div>
-              <div className="p-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-xs text-ink-muted mb-0.5">
-                      GDP/capita ({snapshot.gdp.perCapitaCurrent.year})
-                    </div>
-                    <div className="font-semibold text-ink">
-                      {formatMetricValue(gdpCurrent, "int$")}
-                    </div>
-                    <div className="text-xs text-ink-faint mt-1">Projected ({year})</div>
-                    <div className="text-lg font-bold text-[var(--color-accent)]">
-                      {formatMetricValue(gdpFuture, "int$")}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-ink-muted mb-0.5">
-                      Total GDP ({snapshot.gdp.totalCurrent.year})
-                    </div>
-                    <div className="font-semibold text-ink">
-                      {formatDollars(macro.gdpTotalCurrent)}
-                    </div>
-                    <div className="text-xs text-ink-faint mt-1">Projected ({year})</div>
-                    <div className="text-lg font-bold text-[var(--color-accent)]">
-                      {formatDollars(macro.gdpTotalFuture)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-ink-muted mb-0.5">
-                      Population ({snapshot.population.current.year})
-                    </div>
-                    <div className="font-semibold text-ink">{formatPeople(popCurrent)}</div>
-                    <div className="text-xs text-ink-faint mt-1">
-                      UN {populationVariant} ({year})
-                    </div>
-                    <div className="text-lg font-bold text-ink">{formatPeople(popFuture)}</div>
-                  </div>
-                </div>
+          <div className="stagger-children space-y-3">
+            {/* 1. The picture at the horizon */}
+            <section className="card p-4 space-y-3" aria-labelledby="picture-heading">
+              <h3 id="picture-heading" className="text-sm font-semibold text-ink">
+                {t("implications.pictureHeading", { year })}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Stat
+                  label={t("implications.income")}
+                  from={formatMetricValue(gdpCurrent, "int$")}
+                  to={formatMetricValue(gdpFuture, "int$")}
+                  note={t("implications.timesRicher", {
+                    factor: (gdpFuture / gdpCurrent).toFixed(1),
+                  })}
+                />
+                <Stat
+                  label={t("implications.people")}
+                  from={formatPeople(popCurrent)}
+                  to={formatPeople(popFuture)}
+                  note={`UN ${populationVariant}`}
+                />
+                <Stat
+                  label={t("implications.electricity")}
+                  from={formatTWh(demandNow)}
+                  to={formatTWh(demandThen)}
+                  note={t("implications.perYear")}
+                />
               </div>
             </section>
 
-            <ElectricitySection
+            {/* 2. What has to be built */}
+            <PowerToBuild
               snapshot={snapshot}
-              macro={macro}
-              observedElectricity={observedElectricity}
-              onAssumptionsChange={updateAssumptions}
+              chaserName={chaserName}
+              coalShare={observedElectricity?.shares.coal ?? null}
             />
-            <details className="rounded-lg border border-surface bg-surface-raised px-4 py-3">
-              <summary className="cursor-pointer text-xs font-semibold text-ink">
-                Sources and assumptions
+
+            {/* 3. The two assumptions that move the answer most */}
+            <section className="card p-4 space-y-4" aria-labelledby="assumptions-heading">
+              <h3 id="assumptions-heading" className="text-sm font-semibold text-ink">
+                {t("implications.assumptionsHeading")}
+              </h3>
+              <div className="space-y-2">
+                <Segmented<TemplateId>
+                  label={t("implications.pathLabel")}
+                  value={template}
+                  options={TEMPLATE_PATHS.map((p) => ({
+                    value: p.id,
+                    label: t(PATH_LABEL_KEYS[p.id]),
+                  }))}
+                  onChange={onTemplateChange}
+                />
+                <PathExplainer
+                  pathFit={pathFit}
+                  chaserName={chaserName}
+                  year={year}
+                  onTemplateChange={onTemplateChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Segmented<PopulationVariant>
+                  label={t("implications.populationLabel")}
+                  value={populationVariant}
+                  options={[
+                    { value: "low", label: t("implications.popLow") },
+                    { value: "medium", label: t("implications.popMedium") },
+                    { value: "high", label: t("implications.popHigh") },
+                  ]}
+                  onChange={(variant) =>
+                    onControlsChange({ ...controls, populationVariant: variant })
+                  }
+                />
+                <p className="text-xs text-ink-muted">
+                  {t("implications.populationSource")} {t("implications.populationCaveat")}{" "}
+                  <a
+                    href={FERNANDEZ_VILLAVERDE_LECTURE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="focus-ring rounded-sm text-[var(--color-accent)] underline underline-offset-2"
+                  >
+                    {t("implications.populationCaveatLink")}
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    href={FERNANDEZ_VILLAVERDE_RESEARCH}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="focus-ring rounded-sm text-[var(--color-accent)] underline underline-offset-2"
+                  >
+                    {t("implications.populationResearchLink")}
+                  </a>
+                </p>
+              </div>
+            </section>
+
+            {/* 4. Everything else, for people who want to dig in */}
+            <details className="card group">
+              <summary className="focus-ring flex cursor-pointer list-none items-center justify-between rounded-[14px] px-4 py-3 text-sm font-semibold text-ink">
+                <span>
+                  {t("implications.moreHeading")}
+                  {controls.customized && (
+                    <span className="ml-2 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-muted">
+                      {t("implications.customAssumptions")}
+                    </span>
+                  )}
+                </span>
+                <svg
+                  className="size-4 text-ink-faint transition-transform duration-200 group-open:rotate-180"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth={1.75}
+                    strokeLinecap="round"
+                  />
+                </svg>
               </summary>
-              <div className="mt-2 space-y-1 text-[11px] text-ink-muted">
+              <div className="space-y-4 px-4 pb-4">
+                <div className="space-y-1.5">
+                  <div className="text-xs text-ink-muted">{t("implications.scenarioLabel")}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {IMPLICATION_SCENARIOS.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => handleScenarioChange(s.id)}
+                        aria-pressed={scenario === s.id}
+                        className={[
+                          "pressable focus-ring rounded-full px-2.5 py-1 text-xs font-medium",
+                          scenario === s.id
+                            ? "bg-ink text-surface"
+                            : "bg-surface text-ink-muted hover:text-ink",
+                        ].join(" ")}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-ink-faint">{scenarioDef.blurb}</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="text-xs text-ink-muted">{t("implications.supplyHeading")}</div>
+                  <ElectricityWaterfall snapshot={snapshot} />
+                </div>
+
+                <ElectricityAssumptionsEditor
+                  assumptions={assumptions}
+                  onChange={updateAssumptions}
+                />
+
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                  <span>
+                    {t("implications.totalGdp")}: {formatDollars(macro.gdpTotalCurrent)} →{" "}
+                    {formatDollars(macro.gdpTotalFuture)}
+                  </span>
+                  {observedElectricity && (
+                    <span>
+                      {t("implications.observedMix", { year: observedElectricity.year })}:{" "}
+                      {(["coal", "nuclear", "wind", "solar"] as const)
+                        .filter((k) => (observedElectricity.shares[k] ?? 0) >= 1)
+                        .map((k) => `${k} ${observedElectricity.shares[k]!.toFixed(0)}%`)
+                        .join(" · ")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </details>
+
+            <details className="card">
+              <summary className="focus-ring cursor-pointer list-none rounded-[14px] px-4 py-3 text-sm font-semibold text-ink">
+                {t("implications.sourcesHeading")}
+              </summary>
+              <div className="space-y-1 px-4 pb-4 text-[11px] text-ink-muted">
                 {snapshot.provenance.map((source) => (
                   <div key={`${source.indicator}:${source.observedYear}:${source.source}`}>
                     {source.indicator}: {source.source}
@@ -617,18 +709,13 @@ export function ImplicationsSlideOver({
                   </div>
                 ))}
                 <div>
-                  Template: {templateLabel} · UN {populationVariant} population ·{" "}
-                  {assumptions.gridLossPct}% losses · {assumptions.netImportsPct}% net imports
+                  {templateLabel} · UN {populationVariant} · {assumptions.gridLossPct}% losses ·{" "}
+                  {assumptions.netImportsPct}% net imports
                 </div>
               </div>
             </details>
 
-            {/* Disclaimer */}
-            <p className="text-xs text-ink-muted text-center pt-2">
-              Illustrative scenario, not a forecast or complete power-system plan. Peak demand,
-              storage, reliability, reserves, networks, curtailment, and construction constraints
-              are outside this annual-energy comparison.
-            </p>
+            <p className="text-center text-xs text-ink-faint">{t("implications.disclaimer")}</p>
           </div>
         )}
       </div>
